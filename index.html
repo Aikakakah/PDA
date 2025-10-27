@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDA Replica</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="pda-window">
+  <div class="pda-header">
+    <div class="pda-nav">
+      <button class="pda-tab active" data-tab="notes">Notekeeper</button>
+      <button class="pda-tab" data-tab="settings">Settings</button>
+    </div>
+    <button class="pda-close">×</button>
+  </div>
+
+  <div class="pda-body">
+    <div class="pda-tab-content active" id="notes">
+      <div class="notekeeper">
+        <div class="notes" id="noteContainer"></div>
+        <input type="text" id="noteInput" placeholder="Type a note and press Enter...">
+      </div>
+    </div>
+
+    <div class="pda-tab-content" id="settings">
+      <div class="settings">
+        <button class="settings-button">
+          <div class="option-name">Flashlight</div>
+          <div class="option-description">Toggle the PDA light</div>
+        </button>
+        <button class="settings-button">
+          <div class="option-name">Music Player</div>
+          <div class="option-description">Access your cassette library</div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
