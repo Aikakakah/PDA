@@ -136,9 +136,26 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden}
 .note button{border:none;background:transparent;color:#ff7777;font-weight:700;cursor:pointer}
 .note-input{margin-top:8px;display:flex;gap:6px}
 .note-input input{flex:1;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:#222;color:var(--text);outline:none;font-family:inherit;}
+/* STYLING FOR NOTEKEEPER ADD BUTTON */
+.note-input button {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    background: var(--accent); /* Use accent color for button */
+    color: #fff;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: bold;
+    transition: background 0.1s;
+}
+.note-input button:hover {
+    background: #7a3c80; /* Slightly lighter on hover */
+}
+
 
 /* Crew Manifest UI specific */
-.manifest-list{display:flex;flex-direction:column;gap:4px;font-size:0.9em;}
+.crew-manifest{height:100%; display: flex; flex-direction: column;}
+.manifest-list{flex:1; overflow-y: auto; display:flex;flex-direction:column;gap:4px;font-size:0.9em;}
 .manifest-list h4{color:var(--info);margin:10px 0 2px;border-bottom:1px solid #333}
 .manifest-entry{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dotted #333;align-items:center;}
 .manifest-entry .name{font-weight:bold;color:var(--text);}
@@ -212,4 +229,37 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden}
     :root{--width:92vw;--height:86vh}
     .pda{width:92vw;height:86vh}
     .program-grid{grid-template-columns:1fr}
+}
+
+/* --- Scrollbar Styling for Webkit Browsers (Chrome, Safari, Edge) --- */
+
+/* Track */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    background: transparent; /* Makes the main track area invisible */
+}
+
+/* Handle (The movable part) */
+::-webkit-scrollbar-thumb {
+    background: #444448; /* Darker than the panel, but lighter than the track */
+    border-radius: 10px;
+    border: 2px solid var(--inner); /* Creates a dark border to match the background */
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: #55555c; /* Slightly lighter on hover */
+}
+
+/* Corner (where vertical and horizontal meet) */
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* Hide scrollbar in Firefox for a cleaner look, but keep scrolling functional */
+/* If you want visible scrollbars in Firefox, you can omit this block */
+.view, .notes-wrap, .chat-messages, .manifest-list {
+    scrollbar-width: thin; /* "auto" or "thin" */
+    scrollbar-color: #444448 var(--inner); /* thumb color track color */
 }
