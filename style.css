@@ -14,7 +14,7 @@
     --width: 576px;
     --height: 450px;
     --radius: 10px;
-    --book-width: 300px; /* Width of the book */
+    --book-width: 630px; /* Width of the book */
     --book-height: 400px; /* Height of the book */
     font-family: 'Share Tech Mono', ui-monospace, monospace;
 }
@@ -84,17 +84,18 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden; gap
 .book-page {
     flex-grow: 1;
     display: flex;
+    justify-content: space-evenly;
     align-items: center;
-    justify-content: center;
     overflow: hidden;
     cursor: pointer; /* Cursor indicates interactivity */
 }
 
 .book-page img {
-    max-width: 100%;
+    max-width: 50%;
     max-height: 100%;
     object-fit: contain;
     transition: opacity 0.3s ease-in-out;
+    margin: 0 5px;
 }
 /* --- END BOOK WIDGET STYLES --- */
 

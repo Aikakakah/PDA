@@ -94,7 +94,7 @@
     // --- NEW BOOK ELEMENTS ---
     const bookPrev = el('bookPrev');
     const bookNext = el('bookNext');
-    const bookPageContainer = el('bookPage');
+    const bookPagesContainer = el('bookPagesContainer');
     const pageNumberDisplay = el('pageNumber');
 
 
@@ -108,43 +108,77 @@
 
     // --- BOOK WIDGET LOGIC ---
     function updateBook() {
-        const page = state.book.currentPage;
+        const leftPage = state.book.currentPage;
+        const rightPage = leftPage + 1;
         const max = state.book.maxPages;
 
+        let content = '';
+        let pageText = '';
+
+        if (leftPage >= 1 && leftPage <= max) {
+        // Always display the left page
+          content += `<img src="Pages/Page_${leftPage}.png" alt="Page ${leftPage}" />`;
+          pageText += `Pages ${leftPage}`;
+
+          if (rightPage <= max) {
+                // Display the right page if it's within the max limit
+                content += `<img src="Pages/Page_${rightPage}.png" alt="Page ${rightPage}" />`;
+                pageText += ` & ${rightPage}`;
+            } else {
+                // Placeholder for the last right-hand page if the total is odd
+                content += `<div class="single-page-spacer"></div>`;
+            }
+        }
         // 1. Update Image
-        bookPageContainer.innerHTML = `<img src="Pages/Page_${page}.png" alt="Page ${page}" />`;
+        //bookPageContainer.innerHTML = `<img src="Pages/Page_${page}.png" alt="Page ${page}" />`;
+        bookPagesContainer.innerHTML = content;
 
         // 2. Update Page Number
-        pageNumberDisplay.textContent = `Page ${page}`;
+        //pageNumberDisplay.textContent = `Page ${page}`;
+        pageNumberDisplay.textContent = pageText;
 
         // 3. Update Controls (Disable buttons at limits)
-        bookPrev.disabled = (page <= 1);
-        bookNext.disabled = (page >= max);
+        // bookPrev.disabled = (page <= 1);
+        // bookNext.disabled = (page >= max);
+        bookPrev.disabled = (leftPage <= 1);
+        bookNext.disabled = (leftPage + 2 > max);
     }
 
     function flipPage(direction) {
-        let newPage = state.book.currentPage + direction;
+        let newPage = state.book.currentPage + (direction * 2); 
+        const max = state.book.maxPages;
 
-        if (newPage >= 1 && newPage <= state.book.maxPages) {
-            // Add a temporary fade out/in effect
-            const img = bookPageContainer.querySelector('img');
-            if (img) img.style.opacity = 0;
+        // Calculate the maximum valid starting page for a flip
+        // Max valid starting page is max - 1 if max is even, or max if max is odd (to show the last page)
+        const maxValidStartPage = max % 2 === 0 ? max - 1 : max;
+        
+        if (newPage >= 1 && newPage <= maxValidStartPage) {
+             
+             // Add a temporary fade out/in effect
+             const imgs = bookPagesContainer.querySelectorAll('img');
+             if (imgs) imgs.forEach(img => img.style.opacity = 0);
 
-            setTimeout(() => {
+             setTimeout(() => {
                 state.book.currentPage = newPage;
                 updateBook();
-                const newImg = bookPageContainer.querySelector('img');
-                if (newImg) newImg.style.opacity = 1;
-            }, 300); // Wait for fade-out transition time
+                const newImgs = bookPagesContainer.querySelectorAll('img');
+                if (newImgs) newImgs.forEach(img => img.style.opacity = 1);
+             }, 300);
         }
-    }
+        // This ensures that if you are at max-1 (an even number of pages) or max (an odd number of pages) and click next, it stays.
+        else if (direction === 1 && state.book.currentPage < maxValidStartPage) {
+             // Specifically handle the flip to the last odd page if needed
+             state.book.currentPage = maxValidStartPage;
+             updateBook();
+          }
+     }
 
     // Add event listeners for the book
     bookNext.addEventListener('click', () => flipPage(1));
     bookPrev.addEventListener('click', () => flipPage(-1));
     
     // Clicking the page itself flips forward
-    bookPageContainer.addEventListener('click', () => flipPage(1));
+    bookPagesContainer.addEventListener('click', () => flipPage(1));
 
 
     // --- HOME VIEW LOGIC ---
