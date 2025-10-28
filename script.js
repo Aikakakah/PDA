@@ -55,6 +55,12 @@
         settings: {
             ringtone: ["E", "D", "C", "G", "C", "G"],
             accentColor: "#5e2b63"
+        },
+        // --- NEW BOOK STATE ---
+        book: {
+            currentPage: 1,
+            // You will need to adjust this max based on the number of images in your "Pages" folder
+            maxPages: 15 
         }
     };
 
@@ -85,6 +91,13 @@
     const testRingtoneBtn = el('testRingtoneBtn');
     const setRingtoneBtn = el('setRingtoneBtn');
 
+    // --- NEW BOOK ELEMENTS ---
+    const bookPrev = el('bookPrev');
+    const bookNext = el('bookNext');
+    const bookPageContainer = el('bookPage');
+    const pageNumberDisplay = el('pageNumber');
+
+
     // Quick helpers
     function showView(v) {
         Object.values(views).forEach(x => x.classList.remove('active'));
@@ -92,6 +105,47 @@
         // Hide program header if not in a program view
         el('progHeader').style.display = (v === 'program' ? 'flex' : 'none');
     }
+
+    // --- BOOK WIDGET LOGIC ---
+    function updateBook() {
+        const page = state.book.currentPage;
+        const max = state.book.maxPages;
+
+        // 1. Update Image
+        bookPageContainer.innerHTML = `<img src="Pages/Page_${page}.png" alt="Page ${page}" />`;
+
+        // 2. Update Page Number
+        pageNumberDisplay.textContent = `Page ${page}`;
+
+        // 3. Update Controls (Disable buttons at limits)
+        bookPrev.disabled = (page <= 1);
+        bookNext.disabled = (page >= max);
+    }
+
+    function flipPage(direction) {
+        let newPage = state.book.currentPage + direction;
+
+        if (newPage >= 1 && newPage <= state.book.maxPages) {
+            // Add a temporary fade out/in effect
+            const img = bookPageContainer.querySelector('img');
+            if (img) img.style.opacity = 0;
+
+            setTimeout(() => {
+                state.book.currentPage = newPage;
+                updateBook();
+                const newImg = bookPageContainer.querySelector('img');
+                if (newImg) newImg.style.opacity = 1;
+            }, 300); // Wait for fade-out transition time
+        }
+    }
+
+    // Add event listeners for the book
+    bookNext.addEventListener('click', () => flipPage(1));
+    bookPrev.addEventListener('click', () => flipPage(-1));
+    
+    // Clicking the page itself flips forward
+    bookPageContainer.addEventListener('click', () => flipPage(1));
+
 
     // --- HOME VIEW LOGIC ---
     function updateHome() {
@@ -459,15 +513,11 @@
     renderPrograms();
     setInterval(updateHome, 1000);
     updateHome();
+    updateBook(); // Initialize the book widget
 
     // Re-apply current accent color (if changed in another session or pre-set)
     document.documentElement.style.setProperty('--accent', state.settings.accentColor);
     el('accentH').style.background = state.settings.accentColor;
     el('accentV').style.background = state.settings.accentColor;
     accentPicker.value = state.settings.accentColor;
-
-    // Optional: Start on the Programs view instead of Home
-    // showView('programs');
-    // el('tab-programs').setAttribute('aria-pressed', 'true');
-
 })();
