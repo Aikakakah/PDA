@@ -1,45 +1,127 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>PDA Replica</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div id="pda" class="pda" style="left:calc(50% - 288px); top:calc(50% - 225px);">
+    <!-- accent bars (H & V) -->
+    <div id="accentH" class="accent-h"></div>
+    <div id="accentV" class="accent-v"></div>
 
-<div class="pda-window">
-  <div class="pda-header">
-    <div class="pda-nav">
-      <button class="pda-tab active" data-tab="notes">Notekeeper</button>
-      <button class="pda-tab" data-tab="settings">Settings</button>
-    </div>
-    <button class="pda-close">×</button>
-  </div>
+    <!-- header / nav -->
+    <div id="header" class="header" title="Drag to move">
+      <div class="left">
+        <button class="nav-btn" data-tab="home" id="tab-home" aria-pressed="true" title="Home">
+          <!-- home glyph -->
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden><path fill="currentColor" d="M12 3l9 8h-3v8h-12v-8h-3z"/></svg>
+        </button>
+        <button class="nav-btn" data-tab="programs" id="tab-programs" title="Programs">
+          <svg viewBox="0 0 24 24" width="18" height="18"><rect x="3" y="4" width="18" height="16" rx="2" fill="currentColor"/></svg>
+        </button>
+        <button class="nav-btn" data-tab="settings" id="tab-settings" title="Settings">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 8a4 4 0 100 8 4 4 0 000-8z"/><path fill="currentColor" d="M20.4 15.5l1.2 2-1.8 1-1.7-1.9a8 8 0 01-2 1l-.5 2h-2l-.5-2a8 8 0 01-2-1L6.9 18l-1.8-1 1.2-2A8 8 0 015.6 13l-2-.5V10l2-.5a8 8 0 011.7-2L5.6 5 7.4 4l1.7 1.9a8 8 0 012-1l.5-2h2l.5 2a8 8 0 012 1L17.1 4l1.8 1-1.2 2a8 8 0 011.7 2L20.4 15.5z"/></svg>
+        </button>
+      </div>
 
-  <div class="pda-body">
-    <div class="pda-tab-content active" id="notes">
-      <div class="notekeeper">
-        <div class="notes" id="noteContainer"></div>
-        <input type="text" id="noteInput" placeholder="Type a note and press Enter...">
+      <div class="title">PDA System <span id="programTitleMini" class="program-mini hidden"></span></div>
+
+      <div class="right">
+        <!-- Light toggle -->
+        <button class="icon" id="btn-light" title="Toggle Light" aria-pressed="false">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M6 2h12v2H6zM10 6h4v2h-4zM12 10a4 4 0 00-4 4c0 1.657 1.343 3 3 3h2c1.657 0 3-1.343 3-3a4 4 0 00-4-4z"/></svg>
+        </button>
+
+        <!-- Stylus (edit) -->
+        <button class="icon" id="btn-stylus" title="Toggle Stylus" aria-pressed="false">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M3 21l3-1 11-11 1-3-3 1-11 11zM14 6l2 2"/></svg>
+        </button>
+
+        <!-- Fullscreen -->
+        <button class="icon" id="btn-full" title="Toggle Fullscreen">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M7 14H5v4h4v-2H7v-2zm10 0v2h-2v2h4v-4h-2zM7 6h2V4H5v4h2V6zm10 0v2h2V4h-4v2h2z"/></svg>
+        </button>
+
+        <!-- Eject / power off -->
+        <button class="icon" id="btn-eject" title="Eject / Power">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 3l10 12H2zM4 17h16v2H4z"/></svg>
+        </button>
       </div>
     </div>
 
-    <div class="pda-tab-content" id="settings">
-      <div class="settings">
-        <button class="settings-button">
-          <div class="option-name">Flashlight</div>
-          <div class="option-description">Toggle the PDA light</div>
-        </button>
-        <button class="settings-button">
-          <div class="option-name">Music Player</div>
-          <div class="option-description">Access your cassette library</div>
-        </button>
+    <!-- program-header row (similar to ProgramTitle / close icons) -->
+    <div class="prog-header" id="progHeader">
+      <div class="left mini-info">
+        <div id="lightIndicator" class="chip hidden">Light ON</div>
+      </div>
+      <div class="right">
+        <button class="small" id="progClose" title="Close program">✕</button>
+      </div>
+    </div>
+
+    <!-- main content area -->
+    <div class="content">
+      <!-- HOME VIEW -->
+      <section id="view-home" class="view active">
+        <div class="inner">
+          <div class="info-line"><strong>Owner:</strong> <span id="owner">Bonnie Byrne</span></div>
+          <div class="info-line"><strong>ID:</strong> <span id="idline">Bonnie Byrne, <span id="job" class="job">Janitor</span></span></div>
+          <div class="info-line"><strong>Station:</strong> <span id="station">NTTD Manta Station PR-960</span></div>
+          <div class="info-line"><strong>Alert Level:</strong> <span id="alert" class="alert green">Green</span></div>
+          <div class="info-line"><strong>Shift duration:</strong> <span id="shift">00:00:00</span></div>
+          <div class="info-line"><strong>Current date:</strong> <span id="date">26 October 2655</span></div>
+          <div class="info-line"><strong>Instructions:</strong> <span id="instructions">Do your job.</span></div>
+        </div>
+      </section>
+
+      <!-- PROGRAMS VIEW -->
+      <section id="view-programs" class="view">
+        <div class="program-grid" id="programGrid">
+          <!-- tiles inserted by JS -->
+        </div>
+      </section>
+
+      <!-- SETTINGS VIEW -->
+      <section id="view-settings" class="view">
+        <div class="settings-list">
+          <div class="setting-row" id="ringtoneRow">
+            <div class="setting-title">Ringtone</div>
+            <div class="setting-desc">Change your PDA's ringtone</div>
+          </div>
+          <div class="setting-row">
+            <label class="setting-title">Accent</label>
+            <input id="accentPicker" type="color" value="#5e2b63" />
+          </div>
+        </div>
+      </section>
+
+      <!-- PROGRAM VIEW (cartridge content) -->
+      <section id="view-program" class="view">
+        <div class="program-area" id="programArea">
+          <!-- dynamic cartridge UI (Notekeeper, Manifest etc.) -->
+        </div>
+      </section>
+    </div>
+
+    <!-- footer -->
+    <div class="footer">
+      <div class="left">Robust#OS ™</div>
+      <div class="right"><span id="serial">CLS-2282-0865</span></div>
+    </div>
+
+    <!-- power overlay for eject/power off -->
+    <div id="powerOverlay" class="power-overlay hidden">
+      <div class="power-box">
+        <div class="power-icon">⏻</div>
+        <div class="power-text">PDA is powered off</div>
+        <button id="powerOn" class="power-btn">Power On</button>
       </div>
     </div>
   </div>
-</div>
 
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
