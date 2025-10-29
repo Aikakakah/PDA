@@ -14,8 +14,8 @@
    --width: 576px;
    --height: 450px;
    --radius: 10px;
-   --book-width: 630px; /* Width of the book spread */
-   --book-height: 400px; /* Height of the book spread */
+   --book-width: 630px; /* Width of the book */
+   --book-height: 400px; /* Height of the book */
    font-family: 'Share Tech Mono', ui-monospace, monospace;
 }
 
@@ -42,7 +42,7 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden; gap
 }
 .pda.powered-off{filter:brightness(0.3);} /* Dim when powered off */
 
-/* --- NEW BOOK WIDGET STYLES (Compatible with Turn.js) --- */
+/* --- NEW BOOK WIDGET STYLES --- */
 .book-widget {
    display: flex;
    flex-direction: column;
@@ -81,38 +81,71 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden; gap
    color: var(--text);
 }
 
-/* This is the Turn.js viewport container */
 .book-page {
-   width: var(--book-width);
-   height: var(--book-height);
-   background: #000; /* Book background for debugging */
-   box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+   flex-grow: 1;
+   position: relative; /* Crucial for Peel.js children */
+   display: block; 
+   overflow: hidden;
+   cursor: grab; /* Indicates drag interactivity */
 }
 
-/* Styles for the individual page elements created by Turn.js */
-.book-page > div {
-   background-color: #f7f7f7;
-   background-size: 100% 100%;
-   display: flex;
-   justify-content: center;
-   align-items: center;
-   color: #333;
-   overflow: hidden; /* Hide anything outside the page boundary */
-}
+/* --- PEEL.JS STYLES --- */
 
-/* Pages use images for content */
-.book-page > div img {
+/* 1. Base Peel Container */
+.book.peel {
+   position: absolute; 
+   top: 0;
+   left: 0;
    width: 100%;
    height: 100%;
-   object-fit: cover;
-   display: block;
+   perspective: 1500px;
+   transform-style: preserve-3d;
 }
-/* --- END BOOK WIDGET STYLES --- */
+
+/* 2. Peel Elements (Top, Back, Bottom, Content) */
+.peel-top, .peel-back, .peel-bottom, .peel-content {
+   position: absolute;
+   top: 0;
+   left: 0;
+   width: 100%;
+   height: 100%;
+   overflow: hidden; 
+   background: var(--pda-bg); 
+}
+
+/* 3. Image Styling within Peel Containers for two-page spread */
+.peel-content img, .peel-back img {
+    display: block;
+    width: 200%; /* Image holds two pages side-by-side */
+    height: 100%;
+    object-fit: contain; 
+    transition: opacity 0.3s ease-in-out;
+    margin: 0; 
+}
+
+/* Ensure the first page (peel-content) shows the first half of the 200% wide image */
+.peel-content img {
+    transform: translateX(0);
+}
+
+/* Ensure the back page (peel-back) shows the second half of the 200% wide image */
+.peel-back img {
+    transform: translateX(-50%);
+}
+
+/* Placeholder for the single back page on the last spread */
+.single-page-spacer {
+    width: 100%;
+    height: 100%;
+    background: var(--panel);
+}
+
+/* --- END PEEL.JS STYLES --- */
 
 
 /* inner container (display) */
 .content, .header, .footer, .prog-header{box-sizing:border-box}
-/* header */
+/* ... (Rest of existing CSS styles remain unchanged) ... */
 .header{
    height:44px;
    display:flex;
@@ -302,6 +335,7 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden; gap
 .program-mini{font-size:12px;color:var(--muted);margin-left:8px}
 
 @media (max-width:960px){
+   /* Adjust layout for smaller screens to stack the PDA and Book */
    body {
       flex-direction: column;
       gap: 20px;
@@ -314,26 +348,33 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden; gap
    .program-grid{grid-template-columns:1fr}
 }
 
+/* --- Scrollbar Styling for Webkit Browsers (Chrome, Safari, Edge) --- */
+
+/* Track */
 ::-webkit-scrollbar {
-   width: 8px;
+  width: 8px;
    height: 8px;
-   background: transparent;
+   background: transparent; /* Makes the main track area invisible */
 }
 
+/* Handle (The movable part) */
 ::-webkit-scrollbar-thumb {
-   background: #444448; 
+   background: #444448; /* Darker than the panel, but lighter than the track */
    border-radius: 10px;
-   border: 2px solid var(--inner);
+   border: 2px solid var(--inner); /* Creates a dark border to match the background */
 }
 
+/* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
    background: #55555c; /* Slightly lighter on hover */
 }
 
+/* Corner (where vertical and horizontal meet) */
 ::-webkit-scrollbar-corner {
    background: transparent;
 }
 
+/* Hide scrollbar in Firefox for a cleaner look, but keep scrolling functional */
 .view, .notes-wrap, .chat-messages, .manifest-list {
    scrollbar-width: thin; /* "auto" or "thin" */
    scrollbar-color: #444448 var(--inner); /* thumb color track color */
