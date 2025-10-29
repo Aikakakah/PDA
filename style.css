@@ -1,22 +1,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 
 :root{
-    --bg: #111111;
-    --pda-bg: #1f1f22;
-    --panel: #242427;
-    --inner: #2b2b2e;
-    --accent: #5e2b63; /* default purple-ish */
-    --muted: #a9a9a9;
-    --text: #e6e6e6;
-    --danger: #e06c75;
-    --ok: #6ad07a;
-    --info: #4ac7d0; /* Blue for roles */
-    --width: 576px;
-    --height: 450px;
-    --radius: 10px;
-    --book-width: 630px; /* Width of the book */
-    --book-height: 400px; /* Height of the book */
-    font-family: 'Share Tech Mono', ui-monospace, monospace;
+   --bg: #111111;
+   --pda-bg: #1f1f22;
+   --panel: #242427;
+   --inner: #2b2b2e;
+   --accent: #5e2b63; /* default purple-ish */
+   --muted: #a9a9a9;
+   --text: #e6e6e6;
+   --danger: #e06c75;
+   --ok: #6ad07a;
+   --info: #4ac7d0; /* Blue for roles */
+   --width: 576px;
+   --height: 450px;
+   --radius: 10px;
+   --book-width: 630px; /* Width of the book spread */
+   --book-height: 400px; /* Height of the book spread */
+   font-family: 'Share Tech Mono', ui-monospace, monospace;
 }
 
 html,body{height:100%;margin:0;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
@@ -26,95 +26,105 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden; gap
 /* PDA window shell */
 /* CHANGE: Remove absolute positioning from PDA */
 .pda{
-    /* position:absolute; <--- REMOVED */
-    width:var(--width);
-    height:var(--height);
-    border-radius:calc(var(--radius) + 6px);
-    padding:8px;
-    box-shadow:0 8px 28px rgba(0,0,0,.7), 0 0 10px rgba(0,0,0,.4);
-    background: linear-gradient(180deg, #2b0d23 0%, #2b0d23 100%); /* outer frame */
-    box-sizing:border-box;
-    user-select:none;
-    transition: filter 0.3s;
-    /* REMOVE absolute positioning rules */
-    left: initial !important;
-    top: initial !important;
+   /* position:absolute; <--- REMOVED */
+   width:var(--width);
+   height:var(--height);
+   border-radius:calc(var(--radius) + 6px);
+   padding:8px;
+   box-shadow:0 8px 28px rgba(0,0,0,.7), 0 0 10px rgba(0,0,0,.4);
+   background: linear-gradient(180deg, #2b0d23 0%, #2b0d23 100%); /* outer frame */
+   box-sizing:border-box;
+   user-select:none;
+   transition: filter 0.3s;
+   /* REMOVE absolute positioning rules */
+   left: initial !important;
+   top: initial !important;
 }
 .pda.powered-off{filter:brightness(0.3);} /* Dim when powered off */
 
-/* --- NEW BOOK WIDGET STYLES --- */
+/* --- NEW BOOK WIDGET STYLES (Compatible with Turn.js) --- */
 .book-widget {
-    display: flex;
-    flex-direction: column;
-    width: var(--book-width);
-    height: var(--book-height);
-    background: #1a1a1b; /* Dark background */
-    border: 3px solid var(--accent);
-    border-radius: 6px;
-    box-shadow: 0 8px 20px rgba(0,0,0,.5);
-    padding: 10px;
+   display: flex;
+   flex-direction: column;
+   width: var(--book-width);
+   height: var(--book-height);
+   background: #1a1a1b; /* Dark background */
+   border: 3px solid var(--accent);
+   border-radius: 6px;
+   box-shadow: 0 8px 20px rgba(0,0,0,.5);
+   padding: 10px;
 }
 
 .book-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 5px 0 10px;
-    border-bottom: 1px solid #333;
-    color: var(--muted);
-    font-size: 14px;
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   padding: 5px 0 10px;
+   border-bottom: 1px solid #333;
+   color: var(--muted);
+   font-size: 14px;
 }
 
 .book-controls button {
-    background: transparent;
-    border: none;
-    color: var(--accent);
-    cursor: pointer;
-    font-size: 1.2em;
-    padding: 5px;
+   background: transparent;
+   border: none;
+   color: var(--accent);
+   cursor: pointer;
+   font-size: 1.2em;
+   padding: 5px;
 }
 .book-controls button:disabled {
-    color: #444;
-    cursor: default;
+   color: #444;
+   cursor: default;
 }
 .book-controls button:hover:not(:disabled) {
-    color: var(--text);
+   color: var(--text);
 }
 
+/* This is the Turn.js viewport container */
 .book-page {
-    flex-grow: 1;
-    display: flex;
-    justify-content: space-evenly;
-    align-items: center;
-    overflow: hidden;
-    cursor: pointer; /* Cursor indicates interactivity */
+   width: var(--book-width);
+   height: var(--book-height);
+   background: #000; /* Book background for debugging */
+   box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
 }
 
-.book-page img {
-    max-width: 50%;
-    max-height: 100%;
-    object-fit: contain;
-    transition: opacity 0.3s ease-in-out;
-    margin: 0 5px;
+/* Styles for the individual page elements created by Turn.js */
+.book-page > div {
+   background-color: #f7f7f7;
+   background-size: 100% 100%;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   color: #333;
+   overflow: hidden; /* Hide anything outside the page boundary */
+}
+
+/* Pages use images for content */
+.book-page > div img {
+   width: 100%;
+   height: 100%;
+   object-fit: cover;
+   display: block;
 }
 /* --- END BOOK WIDGET STYLES --- */
 
 
 /* inner container (display) */
 .content, .header, .footer, .prog-header{box-sizing:border-box}
-/* ... (Rest of existing CSS styles remain unchanged) ... */
+/* header */
 .header{
-    height:44px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    background:var(--panel);
-    border-radius:6px;
-    padding:6px 8px;
-    gap:8px;
-    cursor:grab;
-    border:2px solid rgba(0,0,0,0.4);
-    box-shadow: inset 0 -2px 0 rgba(0,0,0,0.2);
+   height:44px;
+   display:flex;
+   align-items:center;
+   justify-content:space-between;
+   background:var(--panel);
+   border-radius:6px;
+   padding:6px 8px;
+   gap:8px;
+   cursor:grab;
+   border:2px solid rgba(0,0,0,0.4);
+   box-shadow: inset 0 -2px 0 rgba(0,0,0,0.2);
 }
 
 /* accent bars */
@@ -124,9 +134,9 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden; gap
 /* header left nav */
 .header .left{display:flex;gap:6px;align-items:center}
 .nav-btn{
-    display:flex;align-items:center;justify-content:center;
-    width:34px;height:34px;border-radius:6px;border:none;background:transparent;color:var(--text);cursor:pointer;
-    transition:background .12s, color .12s, transform .06s;
+   display:flex;align-items:center;justify-content:center;
+   width:34px;height:34px;border-radius:6px;border:none;background:transparent;color:var(--text);cursor:pointer;
+   transition:background .12s, color .12s, transform .06s;
 }
 .nav-btn:hover{background:rgba(255,255,255,0.02)}
 .nav-btn[aria-pressed="true"]{background:var(--inner);border:1px solid var(--accent)}
@@ -137,7 +147,7 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden; gap
 /* header right icons */
 .header .right{display:flex;gap:6px;align-items:center}
 .icon{
-    width:34px;height:34px;border-radius:6px;background:transparent;border:none;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;
+   width:34px;height:34px;border-radius:6px;background:transparent;border:none;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;
 }
 .icon:active{transform:translateY(1px)}
 .icon[aria-pressed="true"]{color:var(--accent)} /* Toggle icon style */
@@ -150,14 +160,14 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden; gap
 
 /* content area */
 .content{
-    background:linear-gradient(180deg,var(--inner),#232325);
-    margin-top:6px;
-    border-radius:8px;
-    padding:12px;
-    height: calc(100% - 140px);
-    overflow:hidden;
-    border:2px solid rgba(0,0,0,0.3);
-    box-shadow: inset 0 -6px 12px rgba(0,0,0,0.35);
+   background:linear-gradient(180deg,var(--inner),#232325);
+   margin-top:6px;
+   border-radius:8px;
+   padding:12px;
+   height: calc(100% - 140px);
+   overflow:hidden;
+   border:2px solid rgba(0,0,0,0.3);
+   box-shadow: inset 0 -6px 12px rgba(0,0,0,0.35);
 }
 
 /* view management */
@@ -177,8 +187,8 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden; gap
 /* program grid */
 .program-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .tile{
-    background:#2b2b2f;border:1px solid rgba(255,255,255,0.03);padding:12px;border-radius:6px;display:flex;align-items:center;gap:10px;cursor:pointer;
-    transition: background 0.1s;
+   background:#2b2b2f;border:1px solid rgba(255,255,255,0.03);padding:12px;border-radius:6px;display:flex;align-items:center;gap:10px;cursor:pointer;
+   transition: background 0.1s;
 }
 .tile .glyph{width:44px;height:44px;border-radius:6px;background:linear-gradient(#272729,#333336);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--muted);font-size:1.5em;}
 .tile .label{font-size:15px;color:var(--text)}
@@ -204,18 +214,18 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden; gap
 .note-input input{flex:1;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:#222;color:var(--text);outline:none;font-family:inherit;}
 /* STYLING FOR NOTEKEEPER ADD BUTTON */
 .note-input button {
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: none;
-    background: var(--accent); /* Use accent color for button */
-    color: #fff;
-    cursor: pointer;
-    font-family: inherit;
-    font-weight: bold;
-    transition: background 0.1s;
+   padding: 8px 12px;
+   border-radius: 6px;
+   border: none;
+   background: var(--accent); /* Use accent color for button */
+   color: #fff;
+   cursor: pointer;
+   font-family: inherit;
+   font-weight: bold;
+   transition: background 0.1s;
 }
 .note-input button:hover {
-    background: #7a3c80; /* Slightly lighter on hover */
+   background: #7a3c80; /* Slightly lighter on hover */
 }
 
 
@@ -261,7 +271,7 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden; gap
 
 /* power overlay */
 .power-overlay{
-    position:absolute;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;border-radius:calc(var(--radius) + 6px);
+   position:absolute;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;border-radius:calc(var(--radius) + 6px);
 }
 .power-box{background:#111;padding:20px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);display:flex;flex-direction:column;align-items:center;gap:12px}
 .power-icon{font-size:36px;color:var(--muted)}
@@ -270,12 +280,12 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden; gap
 
 /* Modal Styling (Ringtone) */
 .modal{
-    position:absolute;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;
-    z-index:100;
+   position:absolute;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;
+   z-index:100;
 }
 .modal-content{
-    background:var(--panel);padding:20px;border-radius:8px;border:2px solid var(--accent);
-    width:250px;display:flex;flex-direction:column;align-items:center;gap:15px;position:relative;
+   background:var(--panel);padding:20px;border-radius:8px;border:2px solid var(--accent);
+   width:250px;display:flex;flex-direction:column;align-items:center;gap:15px;position:relative;
 }
 .modal-close{position:absolute;top:5px;right:5px;font-size:1.5em;color:var(--muted);transition:color 0.1s;}
 .modal-close:hover{color:var(--danger);}
@@ -292,47 +302,39 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden; gap
 .program-mini{font-size:12px;color:var(--muted);margin-left:8px}
 
 @media (max-width:960px){
-    /* Adjust layout for smaller screens to stack the PDA and Book */
-    body {
-        flex-direction: column;
-        gap: 20px;
-    }
+   body {
+      flex-direction: column;
+      gap: 20px;
+   }
 }
 
 @media (max-width:600px){
-    :root{--width:92vw;--height:86vh}
-    .pda{width:92vw;height:86vh}
-    .program-grid{grid-template-columns:1fr}
+   :root{--width:92vw;--height:86vh}
+   .pda{width:92vw;height:86vh}
+   .program-grid{grid-template-columns:1fr}
 }
 
-/* --- Scrollbar Styling for Webkit Browsers (Chrome, Safari, Edge) --- */
-
-/* Track */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-    background: transparent; /* Makes the main track area invisible */
+   width: 8px;
+   height: 8px;
+   background: transparent;
 }
 
-/* Handle (The movable part) */
 ::-webkit-scrollbar-thumb {
-    background: #444448; /* Darker than the panel, but lighter than the track */
-    border-radius: 10px;
-    border: 2px solid var(--inner); /* Creates a dark border to match the background */
+   background: #444448; 
+   border-radius: 10px;
+   border: 2px solid var(--inner);
 }
 
-/* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-    background: #55555c; /* Slightly lighter on hover */
+   background: #55555c; /* Slightly lighter on hover */
 }
 
-/* Corner (where vertical and horizontal meet) */
 ::-webkit-scrollbar-corner {
-    background: transparent;
+   background: transparent;
 }
 
-/* Hide scrollbar in Firefox for a cleaner look, but keep scrolling functional */
 .view, .notes-wrap, .chat-messages, .manifest-list {
-    scrollbar-width: thin; /* "auto" or "thin" */
-    scrollbar-color: #444448 var(--inner); /* thumb color track color */
+   scrollbar-width: thin; /* "auto" or "thin" */
+   scrollbar-color: #444448 var(--inner); /* thumb color track color */
 }
