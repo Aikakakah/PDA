@@ -137,55 +137,41 @@
 
 // Initialize StPageFlip
 const initializePageFlip = () => {
- // 1. Initialize the PageFlip instance
- const bookSpreadWidth = parseInt(
-    getComputedStyle(document.documentElement).getPropertyValue('--book-width')
-  ) || 630;
-  const singlePageWidth = Math.round(bookSpreadWidth / 2);
-
-  const pageFlip = new St.PageFlip(el('book'), {
-    width: singlePageWidth, // width of one page
-    height: 400,            // match your CSS --book-height
-    startPage: 0,
-    size: 'fixed'
-  });
-
- // 2. Load pages from HTML elements with class '.my-page'
- pageFlip.loadFromHTML(document.querySelectorAll('.my-page'));
- pageFlipInstance = pageFlip;
-
- // 3. Connect the navigation buttons
- bookPrev.addEventListener('click', () => {
-    if (pageFlipInstance && pageFlipInstance.hasPrevPage()) {
-        pageFlipInstance.flipPrev();
-      }
+    // 1. Initialize the PageFlip instance
+    const pageFlip = new St.PageFlip(el('book'), {
+       width: 300,  // Width of a single page (half of the full book display)
+       height: 400, // Height of a single page
+       startPage: 0,
+       size: 'fixed',
+       drawShadow: true, // Enable shadows for a better 3D effect
+       showCover: true // Ensures the cover is treated specially
     });
 
- bookNext.addEventListener('click', () => {
-    // CORRECT API CALL: Use flipNext()
-        if (pageFlipInstance && pageFlipInstance.hasNextPage()) {
-          pageFlipInstance.flipNext();
-        }
-      });
+    // 2. Load pages from HTML elements with class '.my-page'
+    pageFlip.loadFromHTML(document.querySelectorAll('.my-page'));
+    pageFlipInstance = pageFlip;
 
- // 4. Update the page controls when a flip is finished
- pageFlip.on('init', (e) => {
-    requestAnimationFrame(() => updatePageControls(e.object || pageFlipInstance));
-  });
+    // 3. Connect the navigation buttons
+    bookPrev.addEventListener('click', () => {
+       // CORRECT API CALL: Use flipPrev()
+       pageFlipInstance.flipPrev(); 
+    });
 
-  pageFlip.on('flip', (e) => {
-    updatePageControls(e.object || pageFlipInstance);
-  });
- 
- // 5. Run initial update to set the correct state for the Cover page
- window.addEventListener('resize', () => {
-    if (!pageFlipInstance) return;
-    try {
-      pageFlipInstance.updateFromHtml();
-    } catch {}
-    updatePageControls(pageFlipInstance);
-  });
-};
+    bookNext.addEventListener('click', () => {
+       // CORRECT API CALL: Use flipNext()
+       pageFlipInstance.flipNext(); 
+    });
+
+    // 4. Update the page controls when a flip is finished
+    pageFlip.on('flip', (e) => {
+       updatePageControls(e.object);
+    });
+    
+    // 5. Run initial update to set the correct state for the Cover page
+    pageFlip.on('init', (e) => {
+       updatePageControls(e.object);
+    });
+   };
 
 
    // --- HOME VIEW LOGIC ---
