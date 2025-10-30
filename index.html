@@ -6,25 +6,49 @@
     <title>PDA Replica</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/turn.js@4/dist/turn.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/peeljs@latest/dist/peel.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/page-flip/dist/css/page-flip.css">
+    <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
 </head>
 <body>
-  <div id="bookWidget" class="book-widget">
-    <div class="book-controls">
-      <button id="bookPrev" title="Previous Page">
-        <i class="fas fa-chevron-left"></i>
-      </button>
-      <div id="pageNumber">Loading...</div>
-      <button id="bookNext" title="Next Page">
-        <i class="fas fa-chevron-right"></i>
-      </button>
-    </div>
   
-    <div id="book" class="book peel"></div>
-  </div>
+    <div class="book-widget">
+      <!-- <div class="book-controls">
+        <button id="bookPrev" title="Previous Page">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <span id="pageNumber">Cover</span>
+        <button id="bookNext" title="Next Page">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+      </div> -->
+
+        <div id="book" class="book-page">
+            <div class="my-page page-cover page-cover-top" data-density="hard">
+                <img src="Pages/Page_Cover.png" alt="Page Cover" />
+            </div>
+            <div class="my-page">
+                <img src="Pages/Page_2.png" alt="Page two" />
+            </div>
+            <div class="my-page">
+                <img src="Pages/Page_3.png" alt="Page three" />
+            </div>
+            <div class="my-page">
+                <img src="Pages/Page_4.png" alt="Page four" />
+            </div>
+            <div class="my-page">
+              <img src="Pages/Page_5.png" alt="Page four" />
+            </div>
+            <div class="my-page">
+              <img src="Pages/Page_6.png" alt="Page four" />
+            </div>
+            <div class="my-page">
+              <img src="Pages/Page_7.png" alt="Page four" />
+            </div>
+            <div class="my-page page-cover page-cover-top" data-density="hard">
+                <img src="Pages/Page_Last.png" alt="Last page" />
+            </div>
+        </div>
+        </div>
     
     <div id="pda" class="pda" style="left:calc(50% - 288px); top:calc(50% - 225px);">
         <div id="accentH" class="accent-h"></div>

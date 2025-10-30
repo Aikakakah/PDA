@@ -14,7 +14,7 @@
    --width: 576px;
    --height: 450px;
    --radius: 10px;
-   --book-width: 630px; /* Width of the book */
+   --book-width: 630px; /* Width of the book (two pages side-by-side) */
    --book-height: 400px; /* Height of the book */
    font-family: 'Share Tech Mono', ui-monospace, monospace;
 }
@@ -42,7 +42,7 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden; gap
 }
 .pda.powered-off{filter:brightness(0.3);} /* Dim when powered off */
 
-/* --- NEW BOOK WIDGET STYLES --- */
+/* --- STPAGEFLIP BOOK WIDGET STYLES --- */
 .book-widget {
    display: flex;
    flex-direction: column;
@@ -53,6 +53,9 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden; gap
    border-radius: 6px;
    box-shadow: 0 8px 20px rgba(0,0,0,.5);
    padding: 10px;
+   /* FIX: Ensure the book is on top and can receive click/drag events */
+   position: relative; 
+   z-index: 2;
 }
 
 .book-controls {
@@ -83,69 +86,58 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden; gap
 
 .book-page {
    flex-grow: 1;
-   position: relative; /* Crucial for Peel.js children */
+   position: relative; 
    display: block; 
-   overflow: hidden;
+   /* FIX: Remove 'overflow: hidden' which was clipping the 3D flip animation */
+   overflow: visible; 
+   /* ADD: Ensure the element is set up for 3D transforms */
+   transform-style: preserve-3d;
    cursor: grab; /* Indicates drag interactivity */
 }
 
-/* --- PEEL.JS STYLES --- */
-
-/* 1. Base Peel Container */
-.book.peel {
-   position: absolute; 
-   top: 0;
-   left: 0;
-   width: 100%;
-   height: 100%;
-   perspective: 1500px;
-   transform-style: preserve-3d;
-}
-
-/* 2. Peel Elements (Top, Back, Bottom, Content) */
-.peel-top, .peel-back, .peel-bottom, .peel-content {
-   position: absolute;
-   top: 0;
-   left: 0;
-   width: 100%;
-   height: 100%;
-   overflow: hidden; 
-   background: var(--pda-bg); 
-}
-
-/* 3. Image Styling within Peel Containers for two-page spread */
-.peel-content img, .peel-back img {
-    display: block;
-    width: 200%; /* Image holds two pages side-by-side */
-    height: 100%;
-    object-fit: contain; 
-    transition: opacity 0.3s ease-in-out;
-    margin: 0; 
-}
-
-/* Ensure the first page (peel-content) shows the first half of the 200% wide image */
-.peel-content img {
-    transform: translateX(0);
-}
-
-/* Ensure the back page (peel-back) shows the second half of the 200% wide image */
-.peel-back img {
-    transform: translateX(-50%);
-}
-
-/* Placeholder for the single back page on the last spread */
-.single-page-spacer {
+/* STPAGEFLIP SPECIFIC PAGE AND IMAGE STYLES */
+/* .my-page is the container for each individual page in StPageFlip */
+.my-page {
     width: 100%;
     height: 100%;
-    background: var(--panel);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--pda-bg); /* Default page background */
+    /* Ensure no text content leaks outside of the page boundary */
+    overflow: hidden; 
+}
+/* Ensure the image fills the .my-page container */
+.my-page img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Prevents cropping, or use 'cover' if you prefer filling the space */
+    margin: 0;
+}
+.page-text {
+  height: 100%;
+  flex-grow: 1;
+  font-size: 80%;
+  text-align: justify;
+  margin-top: 10px;
+  padding-top: 10px;
+  box-sizing: border-box;
+  border-top: solid 1px hsl(35, 55, 90);
 }
 
-/* --- END PEEL.JS STYLES --- */
+.page-footer {
+  height: 30px;
+  border-top: solid 1px hsl(35, 55, 90);
+  font-size: 80%;
+  color: hsl(35, 20, 50);
+}
+
+/* --- END STPAGEFLIP BOOK WIDGET STYLES --- */
 
 
 /* inner container (display) */
 .content, .header, .footer, .prog-header{box-sizing:border-box}
-/* ... (Rest of existing CSS styles remain unchanged) ... */
 .header{
    height:44px;
    display:flex;

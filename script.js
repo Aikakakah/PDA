@@ -5,7 +5,7 @@
       owner: "Ramona Orthall",
       id: "Ramona Orthall",
       job: "Scientist",
-      station: "NTTD Manta Station PR-960", // Corrected per Crew Manifest image
+      station: "NTTD Manta Station PR-960", 
       alert: "Green",
       instructions: "Don't stray far.",
       currentDate: new Date(),
@@ -18,7 +18,7 @@
          { uid: 2, name: "Notekeeper", icon: "NK", type: "notekeeper" },
          { uid: 3, name: "Station news", icon: "News", type: "news" },
          { uid: 4, name: "NanoChat", icon: "NC", type: "nanochat" },
-         { uid: 5, name: "Settings", icon: "⚙️", type: "settings" } // Added Settings program
+         { uid: 5, name: "Settings", icon: "⚙️", type: "settings" } 
       ],
       notes: ["Check filter", "Bring gloves"],
       // Crew Manifest Data (simulated)
@@ -56,11 +56,9 @@
          ringtone: ["E", "D", "C", "G", "C", "G"],
          accentColor: "#5e2b63"
       },
-      // --- NEW BOOK STATE ---
       book: {
-         currentPage: 1,
-         // You will need to adjust this max based on the number of images in your "Pages" folder
-         maxPages: 15 
+        currentPage: 1,
+        maxPages: 6
       }
    };
 
@@ -90,230 +88,177 @@
    const ringtoneDisplay = el('ringtoneDisplay');
    const testRingtoneBtn = el('testRingtoneBtn');
    const setRingtoneBtn = el('setRingtoneBtn');
-
-   // --- NEW BOOK ELEMENTS ---
    const bookPrev = el('bookPrev');
    const bookNext = el('bookNext');
-   const bookPagesContainer = el('bookPagesContainer');
    const pageNumberDisplay = el('pageNumber');
-   const bookPeelEl = el('bookPeel');
-
-   // ADDED PEEL.JS INSTANCE
-   let peelInstance = null;
-
 
    // Quick helpers
    function showView(v) {
-      Object.values(views).forEach(x => x.classList.remove('active'));
-      views[v].classList.add('active');
-      // Hide program header if not in a program view
-      el('progHeader').style.display = (v === 'program' ? 'flex' : 'none');
+       Object.values(views).forEach(x => x.classList.remove('active'));
+       views[v].classList.add('active');
+       // Hide program header if not in a program view
+       el('progHeader').style.display = (v === 'program' ? 'flex' : 'none');
    }
+   // --- PageFlip instance ---
+   let pageFlipInstance = null;
 
-   // --- BOOK WIDGET LOGIC ---
-   function updateBook() {
-      const leftPage = state.book.currentPage;
-      const rightPage = leftPage + 1;
-      const max = state.book.maxPages;
+   // --- Update page controls ---
+   const updatePageControls = (pageFlip) => {
+     if (!pageFlip) return;
+     const bounds = pageFlip.getBounds && pageFlip.getBounds();
+     if (!bounds) return;
 
-      let pageText = '';
-
-      if (peelInstance) {
-         // Peel.js content needs to be set. It will manage the peel-top/back/content elements.
-         let contentHTML = '';
-         
-         // Left (Current) Page Image: Goes into peel-content
-         if (leftPage >= 1 && leftPage <= max) {
-            contentHTML = `<img src="Pages/Page_${leftPage}.png" alt="Page ${leftPage}" />`;
-            pageText += `Pages ${leftPage}`;
-         }
-
-         // Right (Next) Page Image: Used for the peel-back
-         let backHTML = '';
-         if (rightPage <= max) {
-            backHTML = `<img src="Pages/Page_${rightPage}.png" alt="Page ${rightPage}" />`;
-            pageText += ` & ${rightPage}`;
-         } else {
-            // Placeholder for the last right-hand page if the total is odd
-            backHTML = `<div class="single-page-spacer"></div>`;
-         }
-
-         // Set the content on the Peel instance
-         peelInstance.setContent(contentHTML);
-         peelInstance.setBack(backHTML);
-         
-         // Update the current page in the Peel instance
-         peelInstance.setCurrentPage(leftPage);
-         peelInstance.setTotalPages(max);
-
-      } else {
-         // Fallback: Simple image swap logic (Shouldn't be needed with Peel.js)
-         let content = '';
-         if (leftPage >= 1 && leftPage <= max) {
-            content += `<img src="Pages/Page_${leftPage}.png" alt="Page ${leftPage}" />`;
-            pageText += `Pages ${leftPage}`;
-            if (rightPage <= max) {
-               content += `<img src="Pages/Page_${rightPage}.png" alt="Page ${rightPage}" />`;
-               pageText += ` & ${rightPage}`;
-            } else {
-               content += `<div class="single-page-spacer"></div>`;
-            }
-         }
-         // Fallback update directly to the container if Peel.js is missing
-         bookPagesContainer.innerHTML = content;
+     try {
+        bookPrev.disabled = !pageFlip.hasPrevPage();
+        bookNext.disabled = !pageFlip.hasNextPage();
+      } catch {
+        bookPrev.disabled = true;
+        bookNext.disabled = true;
       }
 
-      // 2. Update Page Number
-      pageNumberDisplay.textContent = pageText;
+      const currentPageIndex = pageFlip.getCurrentPageIndex
+      ? pageFlip.getCurrentPageIndex()
+      : 0;
+    const pageCount = pageFlip.getPageCount
+      ? pageFlip.getPageCount()
+      : 0;
 
-      // 3. Update Controls (Disable buttons at limits)
-      const maxValidStartPage = max % 2 === 0 ? max - 1 : max;
-      bookPrev.disabled = (leftPage <= 1);
-      bookNext.disabled = (leftPage >= maxValidStartPage);
-   }
+    if (currentPageIndex === 0) {
+      pageNumberDisplay.textContent = 'Cover';
+    } else if (currentPageIndex === pageCount - 1) {
+      pageNumberDisplay.textContent = 'Back Cover';
+    } else {
+      pageNumberDisplay.textContent = `Page ${currentPageIndex + 1} / ${pageCount}`;
+    }
+  };
 
-   function flipPage(direction) {
-      if (!peelInstance) return;
+    
+    
 
-      const isNext = direction === 1;
-      const max = state.book.maxPages;
-      const maxValidStartPage = max % 2 === 0 ? max - 1 : max;
-      const targetPage = state.book.currentPage + (direction * 2);
+// Initialize StPageFlip
+const initializePageFlip = () => {
+ // 1. Initialize the PageFlip instance
+ const bookSpreadWidth = parseInt(
+    getComputedStyle(document.documentElement).getPropertyValue('--book-width')
+  ) || 630;
+  const singlePageWidth = Math.round(bookSpreadWidth / 2);
 
-      // Check if the intended target is within the valid range
-      if (isNext && targetPage > maxValidStartPage) return;
-      if (!isNext && targetPage < 1) return;
+  const pageFlip = new St.PageFlip(el('book'), {
+    width: singlePageWidth, // width of one page
+    height: 400,            // match your CSS --book-height
+    startPage: 0,
+    size: 'fixed'
+  });
 
-      // Update state immediately for the Peel animation setup
-      state.book.currentPage = targetPage;
+ // 2. Load pages from HTML elements with class '.my-page'
+ pageFlip.loadFromHTML(document.querySelectorAll('.my-page'));
+ pageFlipInstance = pageFlip;
 
-      // Update the Peel contents to show the next pages
-      // We must do this BEFORE peeling so the back of the peel is correct.
-      updateBook(); 
-
-      // Trigger the page-turn animation on the Peel instance
-      if (isNext) {
-         // Peel forward (animates the current page away)
-         peelInstance.peelTo(peelInstance.getDimensions().width); 
-      } else {
-         // Peel backward (animates the current page away backwards)
-         peelInstance.peelTo(0); 
+ // 3. Connect the navigation buttons
+ bookPrev.addEventListener('click', () => {
+    if (pageFlipInstance && pageFlipInstance.hasPrevPage()) {
+        pageFlipInstance.flipPrev();
       }
-   }
+    });
 
-   // Add event listeners for the book
-   bookNext.addEventListener('click', () => flipPage(1));
-   bookPrev.addEventListener('click', () => flipPage(-1));
-   
-   // Removed: Clicking the page itself flips forward (Peel.js handles drag)
-   // bookPagesContainer.addEventListener('click', () => flipPage(1));
+ bookNext.addEventListener('click', () => {
+    // CORRECT API CALL: Use flipNext()
+        if (pageFlipInstance && pageFlipInstance.hasNextPage()) {
+          pageFlipInstance.flipNext();
+        }
+      });
 
+ // 4. Update the page controls when a flip is finished
+ pageFlip.on('init', (e) => {
+    requestAnimationFrame(() => updatePageControls(e.object || pageFlipInstance));
+  });
 
-   // --- PEEL.JS INITIALIZATION ---
-   function initializePeel() {
-      if (typeof Peel === 'undefined') {
-         console.error('Peel.js library not loaded.');
-         return;
-      }
-
-      try {
-         // Initialize Peel on the wrapper element
-         peelInstance = new Peel(bookPeelEl);
-         peelInstance.setMode('book'); // Set to book mode
-
-         // Set the initial content
-         updateBook(); 
-         
-         // Add your requested drag handler
-         peelInstance.handleDrag(function(evt, x, y) {
-            this.setPeelPosition(x, y);
-         });
-         
-         // Add event listener for when the page peel animation ends
-         peelInstance.on('peel:end', function(position) {
-            // After the animation, reset the peel to zero position.
-            // The state.book.currentPage is already updated, so we just re-render
-            this.setPeelPosition(0); 
-            updateBook(); 
-         });
-         
-      } catch (e) {
-         console.error('Error initializing Peel.js:', e);
-      }
-   }
+  pageFlip.on('flip', (e) => {
+    updatePageControls(e.object || pageFlipInstance);
+  });
+ 
+ // 5. Run initial update to set the correct state for the Cover page
+ window.addEventListener('resize', () => {
+    if (!pageFlipInstance) return;
+    try {
+      pageFlipInstance.updateFromHtml();
+    } catch {}
+    updatePageControls(pageFlipInstance);
+  });
+};
 
 
    // --- HOME VIEW LOGIC ---
    function updateHome() {
-      el('owner').textContent = state.owner;
-      el('idline').innerHTML = `${state.id}, <span id="job" class="job">${state.job}</span>`;
-      el('station').textContent = state.station;
-      el('instructions').textContent = state.instructions;
-      el('date').textContent = state.currentDate.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' });
+      el('owner').textContent = state.owner; 
+      el('idline').innerHTML = `${state.id}, <span id="job" class="job">${state.job}</span>`; 
+      el('station').textContent = state.station; 
+      el('instructions').textContent = state.instructions; 
+      el('date').textContent = state.currentDate.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' }); 
 
       // Update alert level
-      el('alert').textContent = state.alert;
-      el('alert').className = 'alert ' + state.alert.toLowerCase();
+      el('alert').textContent = state.alert; 
+      el('alert').className = 'alert ' + state.alert.toLowerCase(); 
 
       // shift duration
-      const elapsed = Date.now() - state.shiftStart;
-      const hh = String(Math.floor(elapsed / 3600000)).padStart(2, '0');
-      const mm = String(Math.floor((elapsed % 3600000) / 60000)).padStart(2, '0');
-      const ss = String(Math.floor((elapsed % 60000) / 1000)).padStart(2, '0');
-      el('shift').textContent = `${hh}:${mm}:${ss}`;
+      const elapsed = Date.now() - state.shiftStart; 
+      const hh = String(Math.floor(elapsed / 3600000)).padStart(2, '0'); 
+      const mm = String(Math.floor((elapsed % 3600000) / 60000)).padStart(2, '0'); 
+      const ss = String(Math.floor((elapsed % 60000) / 1000)).padStart(2, '0'); 
+      el('shift').textContent = `${hh}:${mm}:${ss}`; 
    }
 
    // --- PROGRAM LOGIC ---
 
    // Render program tiles
    function renderPrograms() {
-      programGrid.innerHTML = '';
-      for (const p of state.programs) {
-         const tile = document.createElement('div');
-         tile.className = 'tile';
-         tile.dataset.uid = p.uid;
-         tile.innerHTML = `<div class="glyph">${p.icon}</div><div class="label">${p.name}</div>`;
-         tile.addEventListener('click', () => openProgram(p));
-         programGrid.appendChild(tile);
+      programGrid.innerHTML = ''; 
+      for (const p of state.programs) { 
+         const tile = document.createElement('div'); 
+         tile.className = 'tile'; 
+         tile.dataset.uid = p.uid; 
+         tile.innerHTML = `<div class="glyph">${p.icon}</div><div class="label">${p.name}</div>`; 
+         tile.addEventListener('click', () => openProgram(p)); 
+         programGrid.appendChild(tile); 
       }
    }
 
    // Open a program view (cartridge)
    function openProgram(p) {
-      programTitleMini.textContent = p.name;
-      programTitleMini.classList.remove('hidden');
-      showView('program');
-      programArea.innerHTML = ''; // Clear program UI
+      programTitleMini.textContent = p.name; 
+      programTitleMini.classList.remove('hidden'); 
+      showView('program'); 
+      programArea.innerHTML = ''; // Clear program UI 
 
-      switch (p.type) {
+      switch (p.type) { 
          case 'notekeeper':
-            renderNotekeeper();
+            renderNotekeeper(); 
             break;
          case 'manifest':
-            renderManifest();
+            renderManifest(); 
             break;
          case 'nanochat':
-            renderNanoChat();
+            renderNanoChat(); 
             break;
          case 'news':
-            renderStationNews();
+            renderStationNews(); 
             break;
          case 'settings':
             // Settings is in its own main tab, but if clicked from here, show the main tab
-            showView('settings');
-            document.querySelectorAll('.nav-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
-            el('tab-settings').setAttribute('aria-pressed', 'true');
-            programTitleMini.classList.add('hidden');
+            showView('settings'); 
+            document.querySelectorAll('.nav-btn').forEach(b => b.setAttribute('aria-pressed', 'false')); 
+            el('tab-settings').setAttribute('aria-pressed', 'true'); 
+            programTitleMini.classList.add('hidden'); 
             break;
          default:
-            programArea.innerHTML = `<div class="cartridge-header">${p.name}</div><div class="muted">This cartridge is simulated.</div>`;
+            programArea.innerHTML = `<div class="cartridge-header">${p.name}</div><div class="muted">This cartridge is simulated.</div>`; 
       }
    }
 
    // Notekeeper UI (Updated to match previous response)
    function renderNotekeeper() {
-      const wrap = document.createElement('div');
-      wrap.className = 'notekeeper';
+      const wrap = document.createElement('div'); 
+      wrap.className = 'notekeeper'; 
       wrap.innerHTML = `
          <div class="cartridge-header">Notekeeper</div>
          <div class="notes-wrap" id="notesWrap"></div>
@@ -321,82 +266,82 @@
             <input id="noteInput" placeholder="Type a note and press Enter" />
             <button id="addNoteBtn">Add</button>
          </div>
-      `;
-      programArea.appendChild(wrap);
+      `; 
+      programArea.appendChild(wrap); 
 
-      const notesWrap = wrap.querySelector('#notesWrap');
-      const noteInput = wrap.querySelector('#noteInput');
-      const addBtn = wrap.querySelector('#addNoteBtn');
+      const notesWrap = wrap.querySelector('#notesWrap'); 
+      const noteInput = wrap.querySelector('#noteInput'); 
+      const addBtn = wrap.querySelector('#addNoteBtn'); 
 
       function refreshNotes() {
-         notesWrap.innerHTML = '';
-         for (const n of state.notes) {
-            const row = document.createElement('div');
-            row.className = 'note';
-            const span = document.createElement('div');
-            span.textContent = n;
-            const rem = document.createElement('button');
-            rem.textContent = '×';
-            rem.addEventListener('click', () => {
-               state.notes = state.notes.filter(x => x !== n);
-               refreshNotes();
-            });
-            row.appendChild(span);
-            row.appendChild(rem);
-            notesWrap.appendChild(row);
+         notesWrap.innerHTML = ''; 
+         for (const n of state.notes) { 
+            const row = document.createElement('div'); 
+            row.className = 'note'; 
+            const span = document.createElement('div'); 
+            span.textContent = n; 
+            const rem = document.createElement('button'); 
+            rem.textContent = '×'; 
+            rem.addEventListener('click', () => { 
+               state.notes = state.notes.filter(x => x !== n); 
+               refreshNotes(); 
+            }); 
+            row.appendChild(span); 
+            row.appendChild(rem); 
+            notesWrap.appendChild(row); 
          }
       }
 
-      addBtn.addEventListener('click', () => {
-         const v = noteInput.value.trim();
-         if (!v) return;
-         state.notes.push(v);
-         noteInput.value = '';
-         refreshNotes();
-      });
+      addBtn.addEventListener('click', () => { 
+         const v = noteInput.value.trim(); 
+         if (!v) return; 
+         state.notes.push(v); 
+         noteInput.value = ''; 
+         refreshNotes(); 
+      }); 
 
-      noteInput.addEventListener('keydown', (e) => {
-         if (e.key === 'Enter') addBtn.click();
-      });
+      noteInput.addEventListener('keydown', (e) => { 
+         if (e.key === 'Enter') addBtn.click(); 
+      }); 
 
-      refreshNotes();
+      refreshNotes(); 
    }
 
    // Crew Manifest UI
    function renderManifest() {
-      const wrap = document.createElement('div');
-      wrap.className = 'crew-manifest';
-      wrap.innerHTML = `<div class="cartridge-header">${state.station} Crew Manifest</div><div class="manifest-list" id="manifestList"></div>`;
-      programArea.appendChild(wrap);
-      const manifestList = wrap.querySelector('#manifestList');
+      const wrap = document.createElement('div'); 
+      wrap.className = 'crew-manifest'; 
+      wrap.innerHTML = `<div class="cartridge-header">${state.station} Crew Manifest</div><div class="manifest-list" id="manifestList"></div>`; 
+      programArea.appendChild(wrap); 
+      const manifestList = wrap.querySelector('#manifestList'); 
 
-      const groupedCrew = state.crew.reduce((acc, member) => {
-         acc[member.rank] = acc[member.rank] || [];
-         acc[member.rank].push(member);
-         return acc;
-      }, {});
+      const groupedCrew = state.crew.reduce((acc, member) => { 
+         acc[member.rank] = acc[member.rank] || []; 
+         acc[member.rank].push(member); 
+         return acc; 
+      }, {}); 
 
-      for (const rank in groupedCrew) {
-         const rankHeader = document.createElement('h4');
-         rankHeader.textContent = rank;
-         manifestList.appendChild(rankHeader);
+      for (const rank in groupedCrew) { 
+         const rankHeader = document.createElement('h4'); 
+         rankHeader.textContent = rank; 
+         manifestList.appendChild(rankHeader); 
 
-         groupedCrew[rank].forEach(member => {
-            const entry = document.createElement('div');
-            entry.className = 'manifest-entry';
+         groupedCrew[rank].forEach(member => { 
+            const entry = document.createElement('div'); 
+            entry.className = 'manifest-entry'; 
             entry.innerHTML = `
                <div class="name">${member.name}</div>
                <div class="role"><span class="rank">${member.rank}</span>: ${member.role}</div>
-            `;
-            manifestList.appendChild(entry);
-         });
+            `; 
+            manifestList.appendChild(entry); 
+         }); 
       }
    }
 
    // NanoChat UI
    function renderNanoChat() {
-      const wrap = document.createElement('div');
-      wrap.className = 'nanochat';
+      const wrap = document.createElement('div'); 
+      wrap.className = 'nanochat'; 
       wrap.innerHTML = `
          <div class="chat-header">NanoChat</div>
          <div class="chat-body">
@@ -407,73 +352,73 @@
             <input id="chatInput" placeholder="Message ${state.nanochat.channels[state.nanochat.currentContact].name}..." />
             <button id="chatSendBtn"><i class="fas fa-paper-plane"></i></button>
          </div>
-      `;
-      programArea.appendChild(wrap);
+      `; 
+      programArea.appendChild(wrap); 
 
-      const sidebar = el('chatSidebar');
-      const messagesContainer = el('chatMessages');
-      const input = el('chatInput');
-      const sendBtn = el('chatSendBtn');
+      const sidebar = el('chatSidebar'); 
+      const messagesContainer = el('chatMessages'); 
+      const input = el('chatInput'); 
+      const sendBtn = el('chatSendBtn'); 
 
       function renderSidebar() {
-         sidebar.innerHTML = '';
-         for (const contactId in state.nanochat.channels) {
-            const channel = state.nanochat.channels[contactId];
-            const contactDiv = document.createElement('div');
-            contactDiv.classList.add('chat-contact');
-            contactDiv.textContent = channel.name;
-            contactDiv.dataset.contactId = contactId;
-            if (contactId === state.nanochat.currentContact) {
-               contactDiv.classList.add('active');
-               input.placeholder = `Message ${channel.name}...`;
-            }
-            contactDiv.addEventListener('click', () => {
-               state.nanochat.currentContact = contactId;
-               renderSidebar();
-               renderMessages();
-            });
-            sidebar.appendChild(contactDiv);
+         sidebar.innerHTML = ''; 
+         for (const contactId in state.nanochat.channels) { 
+            const channel = state.nanochat.channels[contactId]; 
+            const contactDiv = document.createElement('div'); 
+            contactDiv.classList.add('chat-contact'); 
+            contactDiv.textContent = channel.name; 
+            contactDiv.dataset.contactId = contactId; 
+            if (contactId === state.nanochat.currentContact) { 
+               contactDiv.classList.add('active'); 
+               input.placeholder = `Message ${channel.name}...`; 
+            } 
+            contactDiv.addEventListener('click', () => { 
+               state.nanochat.currentContact = contactId; 
+               renderSidebar(); 
+               renderMessages(); 
+            }); 
+            sidebar.appendChild(contactDiv); 
          }
       }
 
       function renderMessages() {
-         messagesContainer.innerHTML = '';
-         const messages = state.nanochat.channels[state.nanochat.currentContact].messages;
+         messagesContainer.innerHTML = ''; 
+         const messages = state.nanochat.channels[state.nanochat.currentContact].messages; 
 
-         messages.forEach(msg => {
-            const row = document.createElement('div');
-            row.className = 'message-row ' + msg.type;
-            row.innerHTML = `<div class="message-bubble ${msg.type}">${msg.text}</div>`;
-            messagesContainer.appendChild(row);
-         });
+         messages.forEach(msg => { 
+            const row = document.createElement('div'); 
+            row.className = 'message-row ' + msg.type; 
+            row.innerHTML = `<div class="message-bubble ${msg.type}">${msg.text}</div>`; 
+            messagesContainer.appendChild(row); 
+         }); 
 
-         messagesContainer.scrollTop = messagesContainer.scrollHeight;
+         messagesContainer.scrollTop = messagesContainer.scrollHeight; 
       }
 
       function sendMessage() {
-         const text = input.value.trim();
-         if (text) {
-            state.nanochat.channels[state.nanochat.currentContact].messages.push({
-               sender: state.owner,
-               text: text,
-               type: "sent"
-            });
-            input.value = '';
-            renderMessages();
+         const text = input.value.trim(); 
+         if (text) { 
+            state.nanochat.channels[state.nanochat.currentContact].messages.push({ 
+               sender: state.owner, 
+               text: text, 
+               type: "sent" 
+            }); 
+            input.value = ''; 
+            renderMessages(); 
          }
       }
 
-      sendBtn.addEventListener('click', sendMessage);
-      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(); });
+      sendBtn.addEventListener('click', sendMessage); 
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(); }); 
 
-      renderSidebar();
-      renderMessages();
+      renderSidebar(); 
+      renderMessages(); 
    }
 
    // Station News UI
    function renderStationNews() {
-      const wrap = document.createElement('div');
-      wrap.className = 'station-news';
+      const wrap = document.createElement('div'); 
+      wrap.className = 'station-news'; 
       wrap.innerHTML = `
          <div class="cartridge-header">Station News Feed</div>
          <div class="news-title">Robust Media Broadcast</div>
@@ -486,135 +431,136 @@
             <button title="Next"><i class="fas fa-chevron-right"></i></button>
             <button title="Play Music"><i class="fas fa-music"></i></button>
          </div>
-      `;
-      programArea.appendChild(wrap);
+      `; 
+      programArea.appendChild(wrap); 
    }
 
    // --- SETTINGS/UTILITY LOGIC ---
 
    // Play ringtone (simple beep for now)
    function playRingtone() {
-      const notes = state.settings.ringtone;
+      const notes = state.settings.ringtone; 
       // Simple tone generation (requires browser support for AudioContext)
-      if (!window.AudioContext && !window.webkitAudioContext) return;
+      if (!window.AudioContext && !window.webkitAudioContext) return; 
 
-      const noteDurations = { "E": 200, "D": 200, "C": 200, "G": 200 }; // Milliseconds
-      const noteFrequencies = { "E": 329.63, "D": 293.66, "C": 261.63, "G": 392.00 }; // Hz
+      const noteDurations = { "E": 200, "D": 200, "C": 200, "G": 200 }; // Milliseconds 
+      const noteFrequencies = { "E": 329.63, "D": 293.66, "C": 261.63, "G": 392.00 }; // Hz 
 
-      let delay = 0;
-      notes.forEach(noteName => {
-         const frequency = noteFrequencies[noteName];
-         const duration = noteDurations[noteName];
+      let delay = 0; 
+      notes.forEach(noteName => { 
+         const frequency = noteFrequencies[noteName]; 
+         const duration = noteDurations[noteName]; 
 
-         if (frequency && duration) {
-            setTimeout(() => {
-               const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-               const oscillator = audioCtx.createOscillator();
-               oscillator.type = 'sine';
-               oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
-               oscillator.connect(audioCtx.destination);
-               oscillator.start();
-               setTimeout(() => {
-                  oscillator.stop();
+         if (frequency && duration) { 
+            setTimeout(() => { 
+               const audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
+               const oscillator = audioCtx.createOscillator(); 
+               oscillator.type = 'sine'; 
+               oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime); 
+               oscillator.connect(audioCtx.destination); 
+               oscillator.start(); 
+               setTimeout(() => { 
+                  oscillator.stop(); 
                   // Close context if no further sounds are expected to save resources
-                  setTimeout(() => audioCtx.close(), 10);
-               }, duration);
-            }, delay);
-            delay += duration + 50; // Add a small pause
+                  setTimeout(() => audioCtx.close(), 10); 
+               }, duration); 
+            }, delay); 
+            delay += duration + 50; // Add a small pause 
          }
-      });
+      }); 
    }
 
    // Modal Events
-   ringtoneRow.addEventListener('click', () => {
+   ringtoneRow.addEventListener('click', () => { 
       // Render current notes in modal
-      ringtoneDisplay.innerHTML = state.settings.ringtone.map(note => `<span>${note}</span>`).join('');
-      ringtoneModal.classList.remove('hidden');
-   });
+      ringtoneDisplay.innerHTML = state.settings.ringtone.map(note => `<span>${note}</span>`).join(''); 
+      ringtoneModal.classList.remove('hidden'); 
+   }); 
 
-   closeRingtoneModal.addEventListener('click', () => ringtoneModal.classList.add('hidden'));
-   testRingtoneBtn.addEventListener('click', playRingtone);
-   setRingtoneBtn.addEventListener('click', () => {
+   closeRingtoneModal.addEventListener('click', () => ringtoneModal.classList.add('hidden')); 
+   testRingtoneBtn.addEventListener('click', playRingtone); 
+   setRingtoneBtn.addEventListener('click', () => { 
       // In a real app, this would save the selection. Here, it just closes.
-      alert('Ringtone set to: ' + state.settings.ringtone.join(' - '));
-      ringtoneModal.classList.add('hidden');
-   });
+      alert('Ringtone set to: ' + state.settings.ringtone.join(' - ')); 
+      ringtoneModal.classList.add('hidden'); 
+   }); 
 
    // --- EVENT LISTENERS / INITIALIZATION ---
 
    // Tab clicks
-   tabs.forEach(btn => {
-      btn.addEventListener('click', () => {
-         const tab = btn.dataset.tab;
-         document.querySelectorAll('.nav-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
-         btn.setAttribute('aria-pressed', 'true');
-         programTitleMini.classList.add('hidden');
-         showView(tab);
-      });
-   });
+   tabs.forEach(btn => { 
+      btn.addEventListener('click', () => { 
+         const tab = btn.dataset.tab; 
+         document.querySelectorAll('.nav-btn').forEach(b => b.setAttribute('aria-pressed', 'false')); 
+         btn.setAttribute('aria-pressed', 'true'); 
+         programTitleMini.classList.add('hidden'); 
+         showView(tab); 
+      }); 
+   }); 
 
    // Program close
-   progClose.addEventListener('click', () => {
-      programTitleMini.classList.add('hidden');
-      showView('programs');
+   progClose.addEventListener('click', () => { 
+      programTitleMini.classList.add('hidden'); 
+      showView('programs'); 
       // Reset tab pressed state to 'Programs'
-      document.querySelectorAll('.nav-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
-      el('tab-programs').setAttribute('aria-pressed', 'true');
-   });
+      document.querySelectorAll('.nav-btn').forEach(b => b.setAttribute('aria-pressed', 'false')); 
+      el('tab-programs').setAttribute('aria-pressed', 'true'); 
+   }); 
 
    // Light toggle
-   btnLight.addEventListener('click', () => {
-      state.flashlight = !state.flashlight;
-      btnLight.setAttribute('aria-pressed', String(state.flashlight));
-      lightIndicator.classList.toggle('hidden', !state.flashlight);
-   });
+   btnLight.addEventListener('click', () => { 
+      state.flashlight = !state.flashlight; 
+      btnLight.setAttribute('aria-pressed', String(state.flashlight)); 
+      lightIndicator.classList.toggle('hidden', !state.flashlight); 
+   }); 
 
    // Stylus toggle
-   btnStylus.addEventListener('click', () => {
-      state.stylus = !state.stylus;
-      btnStylus.setAttribute('aria-pressed', String(state.stylus));
+   btnStylus.addEventListener('click', () => { 
+      state.stylus = !state.stylus; 
+      btnStylus.setAttribute('aria-pressed', String(state.stylus)); 
       // Stylus highlight logic remains in the script as it ties to state and DOM
-   });
+   }); 
 
    // Fullscreen
-   btnFull.addEventListener('click', () => {
-      if (!document.fullscreenElement) {
-         pda.requestFullscreen?.();
-      } else {
-         document.exitFullscreen?.();
-      }
-   });
+   btnFull.addEventListener('click', () => { 
+      if (!document.fullscreenElement) { 
+         pda.requestFullscreen?.(); 
+      } else { 
+         document.exitFullscreen?.(); 
+      } 
+   }); 
 
    // Power / Eject
-   btnEject.addEventListener('click', () => {
-      powerOverlay.classList.remove('hidden');
-      pda.classList.add('powered-off');
-      state.poweredOn = false;
-   });
-   powerOn.addEventListener('click', () => {
-      powerOverlay.classList.add('hidden');
-      pda.classList.remove('powered-off');
-      state.poweredOn = true;
-   });
+   btnEject.addEventListener('click', () => { 
+      powerOverlay.classList.remove('hidden'); 
+      pda.classList.add('powered-off'); 
+      state.poweredOn = false; 
+   }); 
+   powerOn.addEventListener('click', () => { 
+      powerOverlay.classList.add('hidden'); 
+      pda.classList.remove('powered-off'); 
+      state.poweredOn = true; 
+   }); 
 
    // Accent color picker
-   accentPicker.addEventListener('input', (e) => {
-      const c = e.target.value;
-      document.documentElement.style.setProperty('--accent', c);
-      el('accentH').style.background = c;
-      el('accentV').style.background = c;
-   });
+   accentPicker.addEventListener('input', (e) => { 
+      const c = e.target.value; 
+      document.documentElement.style.setProperty('--accent', c); 
+      el('accentH').style.background = c; 
+      el('accentV').style.background = c; 
+   }); 
 
    // --- INITIAL RENDER ---
-   renderPrograms();
-   setInterval(updateHome, 1000);
-   updateHome();
-   initializePeel(); // Initialize Peel.js
-   // Removed old updateBook() call as it's now in initializePeel()
+   renderPrograms(); 
+   setInterval(updateHome, 1000); 
+   updateHome(); 
+   
+   // Initialize StPageFlip
+   window.addEventListener('DOMContentLoaded', initializePageFlip);
 
    // Re-apply current accent color (if changed in another session or pre-set)
-   document.documentElement.style.setProperty('--accent', state.settings.accentColor);
-   el('accentH').style.background = state.settings.accentColor;
-   el('accentV').style.background = state.settings.accentColor;
-   accentPicker.value = state.settings.accentColor;
+   document.documentElement.style.setProperty('--accent', state.settings.accentColor); 
+   el('accentH').style.background = state.settings.accentColor; 
+   el('accentV').style.background = state.settings.accentColor; 
+   accentPicker.value = state.settings.accentColor; 
 })();
