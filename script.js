@@ -177,6 +177,7 @@
             startPage: 0,
             size: 'fixed', 
             drawShadow: true,
+            maxShadowOpacity: 0.35,
             showCover: true,
             flippingTime: 700 
         });
