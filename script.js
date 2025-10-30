@@ -162,6 +162,7 @@
             startPage: 0,
             size: 'fixed', 
             drawShadow: true,
+            maxShadowOpacity: 0.5, // Half shadow intensity
             showCover: true,
             flippingTime: 700 
         });
