@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 
 :root{
-   --bg: #eda7a7;
+   --bg: #461a1a;
    --pda-bg: #1f1f22;
    --panel: #242427;
    --inner: #2b2b2e;
@@ -49,12 +49,15 @@ body{
 /* CHANGE: Remove absolute positioning from PDA */
 .pda{
    /* position:absolute; <--- REMOVED */
+   display: flex;
+   justify-content: center; /* Centers horizontally */
+   align-items: center; /* Centers vertically */
    width:var(--width);
    height:var(--height);
    border-radius:calc(var(--radius) + 6px);
    padding:8px;
    box-shadow:0 8px 28px rgba(0,0,0,.7), 0 0 10px rgba(0,0,0,.4);
-   background: linear-gradient(180deg, #2b0d23 0%, #2b0d23 100%); /* outer frame */
+   background: linear-gradient(180deg, rgb(70, 22, 57) 0%, #250b1e 100%); /* outer frame */
    box-sizing:border-box;
    user-select:none;
    transition: filter 0.3s;
@@ -206,7 +209,20 @@ body{
    border:2px solid rgba(0,0,0,0.4);
    box-shadow: inset 0 -2px 0 rgba(0,0,0,0.2);
 }
-
+/* PDA Screen */
+.PDA-screen {
+  display: inline-block;   /* shrink-wrap to content */
+  background: rgb(18, 18, 18);
+  border-radius: 8px;
+  padding: 4px;
+  margin: 0 auto;
+  /* border: 6px solid rgb(9, 255, 0); */
+  position: relative;      /* keep relative for overlays */
+  overflow: visible;       /* allow elements to overflow */
+  box-shadow: inset 0 -6px 12px rgba(0,0,0,0.35);
+  width: 535px;
+  height: 380px;
+}
 /* header left nav */
 .header .left{display:flex;gap:6px;align-items:center}
 .nav-btn{
@@ -237,13 +253,12 @@ body{
 /* content area */
 .content{
    background:linear-gradient(180deg,var(--inner),#232325);
-   margin-top:6px;
    border-radius:8px;
    padding:12px;
-   height: calc(100% - 140px);
+   height: 300px;
    overflow:hidden;
    border:2px solid rgba(0,0,0,0.3);
-   box-shadow: inset 0 -6px 12px rgba(0,0,0,0.35);
+   box-shadow: inset 0 -3px 6px rgba(0,0,0,0.35);
 }
 
 /* view management */
@@ -253,7 +268,7 @@ body{
 
 /* info lines */
 .info-line{font-size:15px;color:var(--muted)}
-.info-line strong{color:var(--text);width:120px;display:inline-block}
+.info-line strong{color:var(--text);width:130px;display:inline-block}
 
 /* alert colors */
 .alert.green{color:var(--ok)}
@@ -340,7 +355,7 @@ body{
 .news-controls button{background:transparent;border:none;color:var(--accent);cursor:pointer;}
 
 /* footer */
-.footer{height:34px;margin-top:6px;background:linear-gradient(180deg,#141414,#101010);border-radius:6px;padding:6px 10px;display:flex;justify-content:space-between;align-items:center;border:1px solid rgba(255,255,255,0.02);font-size:13px;color:var(--muted)}
+.footer{height:34px;margin-top:0px;background:linear-gradient(180deg,#141414c2,#181818);border-radius:6px;padding:6px 10px;display:flex;justify-content:space-between;align-items:center;border:1px solid rgba(255,255,255,0.02);font-size:13px;color:var(--muted)}
 
 /* chip */
 .chip{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:6px;font-size:13px;color:var(--text)}

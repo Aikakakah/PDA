@@ -76,10 +76,10 @@
    const btnEject = el('btn-eject');
    const powerOverlay = el('powerOverlay');
    const powerOn = el('powerOn');
-   const progClose = el('progClose');
+//    const progClose = el('progClose');
    const programArea = el('programArea');
    const programTitleMini = el('programTitleMini');
-   const lightIndicator = el('lightIndicator');
+//    const lightIndicator = el('lightIndicator');
    const ringtoneRow = el('ringtoneRow');
    const ringtoneModal = el('ringtoneModal');
    const closeRingtoneModal = el('closeRingtoneModal');
@@ -236,8 +236,8 @@
 
    // Open a program view (cartridge)
    function openProgram(p) {
-      programTitleMini.textContent = p.name; 
-      programTitleMini.classList.remove('hidden'); 
+    //   programTitleMini.textContent = p.name; 
+    //   programTitleMini.classList.remove('hidden'); 
       showView('program'); 
       programArea.innerHTML = ''; // Clear program UI 
 
@@ -259,7 +259,7 @@
             showView('settings'); 
             document.querySelectorAll('.nav-btn').forEach(b => b.setAttribute('aria-pressed', 'false')); 
             el('tab-settings').setAttribute('aria-pressed', 'true'); 
-            programTitleMini.classList.add('hidden'); 
+            // programTitleMini.classList.add('hidden'); 
             break;
          default:
             programArea.innerHTML = `<div class="cartridge-header">${p.name}</div><div class="muted">This cartridge is simulated.</div>`; 
@@ -510,20 +510,20 @@
    }); 
 
    // Program close
-   progClose.addEventListener('click', () => { 
-      programTitleMini.classList.add('hidden'); 
-      showView('programs'); 
-      // Reset tab pressed state to 'Programs'
-      document.querySelectorAll('.nav-btn').forEach(b => b.setAttribute('aria-pressed', 'false')); 
-      el('tab-programs').setAttribute('aria-pressed', 'true'); 
-   }); 
+//    progClose.addEventListener('click', () => { 
+//       programTitleMini.classList.add('hidden'); 
+//       showView('programs'); 
+//       // Reset tab pressed state to 'Programs'
+//       document.querySelectorAll('.nav-btn').forEach(b => b.setAttribute('aria-pressed', 'false')); 
+//       el('tab-programs').setAttribute('aria-pressed', 'true'); 
+//    }); 
 
    // Light toggle
-   btnLight.addEventListener('click', () => { 
-      state.flashlight = !state.flashlight; 
-      btnLight.setAttribute('aria-pressed', String(state.flashlight)); 
-      lightIndicator.classList.toggle('hidden', !state.flashlight); 
-   }); 
+//    btnLight.addEventListener('click', () => { 
+//       state.flashlight = !state.flashlight; 
+//       btnLight.setAttribute('aria-pressed', String(state.flashlight)); 
+//       lightIndicator.classList.toggle('hidden', !state.flashlight); 
+//    }); 
 
    // Stylus toggle
    btnStylus.addEventListener('click', () => { 
