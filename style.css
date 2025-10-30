@@ -118,12 +118,39 @@ body{
 .page-content {
   width: 100%;
   height: 100%;
-  /* Key change: Ensure the page content fills the container and aligns the image */
   display: flex; 
   justify-content: center; /* Center the image horizontally */
   align-items: center; /* Center the image vertically */
   padding: 0; 
 }
+.my-page.inner-cover-front::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.001); /* not visible, but fixes inset rendering */
+  pointer-events: none;
+  z-index: 2;
+  box-shadow: inset -20px 0 40px -7px rgba(67, 16, 16, 0.9);
+}
+.my-page.inner-cover-back::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.001); /* not visible, but fixes inset rendering */
+  pointer-events: none;
+  z-index: 2;
+  box-shadow: inset 20px 0 40px -7px rgba(67, 16, 16, 0.9);
+}
+.my-page.p1::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.001); /* not visible, but fixes inset rendering */
+  pointer-events: none;
+  z-index: 2;
+  box-shadow: inset 3px 0 15px -3px rgba(0, 0, 0, 0.5),inset 10px 0 25px -7px rgba(109, 83, 59, 0.7);
+}
+
 
 /* 2. Page Image (Your img tags) */
 .my-page img {
@@ -137,29 +164,29 @@ body{
 
 /* 3. Cover Overrides (Based on st.pageflip's hard/cover styles) */
 .my-page.page-cover {
-  background-color: #333336; /* Darker, solid color for covers */
+  background-color: #333336;
 }
 
-/* Cover shadows for a better 3D effect */
 .my-page.page-cover-top {
-  /* Shadow for the front cover */
   box-shadow: inset 0px 0 35px 0px rgba(0, 0, 0, 0.9), -5px 0 10px 2px rgba(0, 0, 0, 0.7);
 }
 
 .my-page.page-cover-bottom {
-  /* Shadow for the back cover */
   box-shadow: inset 0px 0 35px 0px rgba(0, 0, 0, 0.9), 10px 0 10px 0px rgba(0, 0, 0, 0.7);
 }
 
-/* Paper Page Shadows (Adjusted for soft, non-glossy look) */
-.my-page.--left::before {
-    box-shadow: inset -5px 0 20px -5px rgba(0, 0, 0, 0.7);
+/* Paper Page Shadows*/
+.my-page.page-left::before {
+    box-shadow: inset -7px 0 25px -7px rgba(109, 83, 59, 0.7);
+    box-shadow: inset -3px 0 20px -3px rgba(0, 0, 0, 0.5);
+    box-shadow: inset -1px 0 20px -3px rgba(0, 0, 0, 0.7);
 }
 
-.my-page.--right::before {
-    box-shadow: inset 5px 0 20px -5px rgba(0, 0, 0, 0.7);
+.my-page.page-right::before {
+    box-shadow: inset 7px 0 25px -7px rgba(109, 83, 59, 0.7);
+    box-shadow: inset 3px 0 20px -3px rgba(0, 0, 0, 0.5);
+    box-shadow: inset 1px 0 20px -3px rgba(0, 0, 0, 0.7);
 }
-
 
 /* --- END STPAGEFLIP BOOK WIDGET STYLES --- */
 
