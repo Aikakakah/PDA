@@ -14,14 +14,36 @@
    --width: 576px;
    --height: 450px;
    --radius: 10px;
-   --book-width: 630px; /* Width of the book (two pages side-by-side) */
-   --book-height: 400px; /* Height of the book */
+   /* 🚀 NEW: DEFINE YOUR SCALING FACTOR HERE (e.g., 25% = 0.25) */
+  --scale-factor: 0.37; 
+  /* * CALCULATED BOOK SIZE (1104x1452 original image size)
+   * Single Page Width: 1104px * var(--scale-factor)
+   * Single Page Height: 1452px * var(--scale-factor)
+   */
+  /* **Full Book Width (2 pages):** 2 * 1104px * scale-factor */
+  --book-width: calc(2 * 1104px * var(--scale-factor)); 
+  /* **Full Book Height (1 page):** 1452px * scale-factor */
+  --book-height: calc(1452px * var(--scale-factor)); 
    font-family: 'Share Tech Mono', ui-monospace, monospace;
 }
 
-html,body{height:100%;margin:0;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+html,body{
+  height:100%;
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased}
 /* CHANGE: Use Flexbox to center and align the PDA and Book */
-body{display:flex;align-items:center;justify-content:center;overflow:hidden; gap: 40px;}
+body{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden; 
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  gap: 20px;
+  overflow-x: hidden; }
 
 /* PDA window shell */
 /* CHANGE: Remove absolute positioning from PDA */
@@ -48,11 +70,13 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden; gap
    flex-direction: column;
    width: var(--book-width);
    height: var(--book-height);
-   background: #1a1a1b; /* Dark background */
-   border: 3px solid var(--accent);
-   border-radius: 6px;
+   max-width: calc(100vw - 80px);
+   max-height: calc(100vh - 100px);
+   background: #660009; /* Dark background */
+   /* border: 3px solid var(--accent); */
+   border-radius: 2px;
    box-shadow: 0 8px 20px rgba(0,0,0,.5);
-   padding: 10px;
+   padding: 2px;
    /* FIX: Ensure the book is on top and can receive click/drag events */
    position: relative; 
    z-index: 2;
@@ -145,7 +169,7 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden; gap
 
 /* Shadow for the internal right page (when open) */
 .my-page.--right { 
-  box-shadow: inset 7px 0 30px -7px rgba(0, 0, 0, 0.4);
+  box-shadow: inset 7px 0 30px -7px rgba(0, 0, 0, 0.984);
 }
 
 /* Shadow for the internal left page (when open) */

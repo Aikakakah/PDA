@@ -134,45 +134,70 @@
 
     
     
+  const initializePageFlip = () => {
+    const bookEl = el('book');
 
-// Initialize StPageFlip
-const initializePageFlip = () => {
-    // 1. Initialize the PageFlip instance
-    const pageFlip = new St.PageFlip(el('book'), {
-       width: 300,  // Width of a single page (half of the full book display)
-       height: 400, // Height of a single page
-       startPage: 0,
-       size: 'fixed',
-       drawShadow: true, // Enable shadows for a better 3D effect
-       showCover: true // Ensures the cover is treated specially
-    });
+    // 1. Get the current computed page dimensions from CSS
+    // The book width is set in CSS as: calc(2 * 1104px * var(--scale-factor))
+    const rootStyle = getComputedStyle(document.documentElement);
+    // Get the computed values (in pixels)
+    const bookWidth = parseFloat(rootStyle.getPropertyValue('--book-width'));
+    const bookHeight = parseFloat(rootStyle.getPropertyValue('--book-height'));
 
-    // 2. Load pages from HTML elements with class '.my-page'
-    pageFlip.loadFromHTML(document.querySelectorAll('.my-page'));
-    pageFlipInstance = pageFlip;
+    // 2. Calculate the dimensions of a single page
+    const singlePageW = bookWidth / 2;
+    const singlePageH = bookHeight;
 
-    // 3. Connect the navigation buttons
-    bookPrev.addEventListener('click', () => {
-       // CORRECT API CALL: Use flipPrev()
-       pageFlipInstance.flipPrev(); 
-    });
+    // Sanity check to prevent initialization with invalid values
+    if (isNaN(singlePageW) || isNaN(singlePageH) || singlePageW < 100) {
+        console.error("PageFlip initialization failed: Invalid computed book dimensions. Check your :root variables in style.css.");
+        // Attempt to fall back to the default pixel size for a last-ditch effort
+        const scaleFactor = parseFloat(rootStyle.getPropertyValue('--scale-factor')) || 1;
+        const fallbackW = 1104 * scaleFactor;
+        const fallbackH = 1452 * scaleFactor;
+        
+        const pageFlip = new St.PageFlip(bookEl, {
+            width: fallbackW, 
+            height: fallbackH, 
+            startPage: 0,
+            size: 'fixed', 
+            drawShadow: true,
+            showCover: true,
+            flippingTime: 700 
+        });
+        // Continue loading pages
+        pageFlip.loadFromHTML(document.querySelectorAll('.my-page'));
+        pageFlipInstance = pageFlip;
+    } else {
+        // 3. Initialize St.PageFlip with the correct single-page dimensions
+        const pageFlip = new St.PageFlip(bookEl, {
+            width: singlePageW, // Correct single page width
+            height: singlePageH, // Correct single page height
+            startPage: 0,
+            size: 'fixed', 
+            drawShadow: true,
+            showCover: true,
+            flippingTime: 700 
+        });
 
-    bookNext.addEventListener('click', () => {
-       // CORRECT API CALL: Use flipNext()
-       pageFlipInstance.flipNext(); 
-    });
+        // Load pages and keep a reference
+        pageFlip.loadFromHTML(document.querySelectorAll('.my-page'));
+        pageFlipInstance = pageFlip;
+    }
 
-    // 4. Update the page controls when a flip is finished
-    pageFlip.on('flip', (e) => {
-       updatePageControls(e.object);
-    });
-    
-    // 5. Run initial update to set the correct state for the Cover page
-    pageFlip.on('init', (e) => {
-       updatePageControls(e.object);
-    });
-   };
 
+    // 4. Attach button listeners and update controls
+    // These elements now exist because of the HTML fix (Step 1A)
+    if (bookPrev && bookNext) {
+        bookPrev.addEventListener('click', () => pageFlipInstance.flipPrev());
+        bookNext.addEventListener('click', () => pageFlipInstance.flipNext());
+
+        // Update controls on init/flip/load
+        pageFlipInstance.on('flip', (e) => updatePageControls(e.object));
+        pageFlipInstance.on('init', (e) => updatePageControls(e.object));
+        pageFlipInstance.on('load', (e) => updatePageControls(e.object));
+    }
+};
 
    // --- HOME VIEW LOGIC ---
    function updateHome() {
