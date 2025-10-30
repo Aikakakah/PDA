@@ -57,9 +57,6 @@
 
     <!-- PDA -->
     <div id="pda" class="pda">
-        <div id="accentH" class="accent-h"></div>
-        <div id="accentV" class="accent-v"></div>
-
         <div id="header" class="header" title="Drag to move">
             <div class="left">
                 <button class="nav-btn" data-tab="home" id="tab-home" aria-pressed="true" title="Home">
@@ -68,9 +65,7 @@
                 <button class="nav-btn" data-tab="programs" id="tab-programs" title="Programs">
                     <svg viewBox="0 0 24 24" width="18" height="18"><rect x="3" y="4" width="18" height="16" rx="2" fill="currentColor"/></svg>
                 </button>
-                <button class="nav-btn" data-tab="settings" id="tab-settings" title="Settings">
-                    <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 8a4 4 0 100 8 4 4 0 000-8z"/><path fill="currentColor" d="M20.4 15.5l1.2 2-1.8 1-1.7-1.9a8 8 0 01-2 1l-.5 2h-2l-.5-2a8 8 0 01-2-1L6.9 18l-1.8-1 1.2-2A8 8 0 015.6 13l-2-.5V10l2-.5a8 8 0 011.7-2L5.6 5 7.4 4l1.7 1.9a8 8 0 012-1l.5-2h2l.5 2a8 8 0 012 1L17.1 4l1.8 1-1.2 2a8 8 0 011.7 2L20.4 15.5z"/></svg>
-                </button>
+                <button class="nav-btn" data-tab="settings" id="tab-settings" title="Settings"><span style="font-size: 1.5em; line-height: 0;">⛭</span></button>
             </div>
 
             <div class="title">PDA System <span id="programTitleMini" class="program-mini hidden"></span></div>
@@ -126,10 +121,6 @@
                     <div class="setting-row" id="ringtoneRow">
                         <div class="setting-title">Ringtone</div>
                         <div class="setting-desc">Change your PDA's ringtone</div>
-                    </div>
-                    <div class="setting-row">
-                        <label class="setting-title">Accent</label>
-                        <input id="accentPicker" type="color" value="#5e2b63" />
                     </div>
                 </div>
             </section>

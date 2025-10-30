@@ -18,7 +18,7 @@
          { uid: 2, name: "Notekeeper", icon: "NK", type: "notekeeper" },
          { uid: 3, name: "Station news", icon: "News", type: "news" },
          { uid: 4, name: "NanoChat", icon: "NC", type: "nanochat" },
-         { uid: 5, name: "Settings", icon: "⚙️", type: "settings" } 
+         { uid: 5, name: "Settings", icon: "⛭", type: "settings" } 
       ],
       notes: ["Check filter", "Bring gloves"],
       // Crew Manifest Data (simulated)
@@ -54,7 +54,6 @@
       // Settings Data
       settings: {
          ringtone: ["E", "D", "C", "G", "C", "G"],
-         accentColor: "#5e2b63"
       },
       book: {
         currentPage: 1,
@@ -75,7 +74,6 @@
    const btnStylus = el('btn-stylus');
    const btnFull = el('btn-full');
    const btnEject = el('btn-eject');
-   const accentPicker = el('accentPicker');
    const powerOverlay = el('powerOverlay');
    const powerOn = el('powerOn');
    const progClose = el('progClose');
@@ -555,14 +553,6 @@
       state.poweredOn = true; 
    }); 
 
-   // Accent color picker
-   accentPicker.addEventListener('input', (e) => { 
-      const c = e.target.value; 
-      document.documentElement.style.setProperty('--accent', c); 
-      el('accentH').style.background = c; 
-      el('accentV').style.background = c; 
-   }); 
-
    // --- INITIAL RENDER ---
    renderPrograms(); 
    setInterval(updateHome, 1000); 
@@ -570,10 +560,4 @@
    
    // Initialize StPageFlip
    window.addEventListener('DOMContentLoaded', initializePageFlip);
-
-   // Re-apply current accent color (if changed in another session or pre-set)
-   document.documentElement.style.setProperty('--accent', state.settings.accentColor); 
-   el('accentH').style.background = state.settings.accentColor; 
-   el('accentV').style.background = state.settings.accentColor; 
-   accentPicker.value = state.settings.accentColor; 
 })();
