@@ -235,8 +235,8 @@ body{
   transform: skewX(20deg); /* Optional: Adds a slanted look to the shine */
 }
 
-.PDA-screen:hover:before {
-  animation: slide 1s;
+.PDA-screen.shine-active::before {
+  animation: slide 1.5s;
 }
 @keyframes slide {
   0% {
@@ -245,6 +245,9 @@ body{
   100% {
     left: 110%;
   }
+}
+.PDA-screen::before {
+  animation: none;
 }
 
 /* header left nav */
