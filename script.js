@@ -58,6 +58,15 @@
         }
     };
 
+    const preloadedNotes = {};
+    const noteNames = ["a","asharp","b","c","csharp","d","dsharp","e","f","fsharp","g","gsharp"];
+    
+    for (const n of noteNames) {
+        const a = new Audio(`/Audio/${n}.ogg`);
+        a.preload = "auto";
+        preloadedNotes[n] = a;
+    }
+
     // Advance date by ~630 years
     state.currentDate.setFullYear(state.currentDate.getFullYear() + 630);
 
@@ -471,41 +480,32 @@
     // Play ringtone
     function playRingtone() {
         const notes = state.settings.ringtone;
-        if (!window.AudioContext && !window.webkitAudioContext) return;
-
-        const noteDurations = { "E": 200, "D": 200, "C": 200, "G": 200 };
-        const noteFrequencies = {
-            "C": 261.63, "C#": 277.18,
-            "D": 293.66, "D#": 311.13,
-            "E": 329.63,
-            "F": 349.23, "F#": 369.99,
-            "G": 392.00, "G#": 415.30,
-            "A": 440.00, "A#": 466.16,
-            "B": 493.88
-          };
-
-        let delay = 0;
-        notes.forEach(noteName => {
-            const frequency = noteFrequencies[noteName];
-            const duration = noteDurations[noteName];
-
-            if (frequency && duration) {
-                setTimeout(() => {
-                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    const oscillator = audioCtx.createOscillator();
-                    oscillator.type = 'square';
-                    oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
-                    oscillator.connect(audioCtx.destination);
-                    oscillator.start();
-                    setTimeout(() => {
-                        oscillator.stop();
-                        setTimeout(() => audioCtx.close(), 10);
-                    }, duration);
-                }, delay);
-                delay += duration + 50;
-            }
-        });
+        if (!notes || notes.length === 0) return;
+    
+        const RINGTONE_LENGTH = 6;
+        const NOTE_TEMPO = 300; // BPM
+        const NOTE_DELAY = 60 / NOTE_TEMPO; // 0.2s per note
+        const VOLUME = 0.6;
+        const AUDIO_PATH = "/Audio/Effects/RingtoneNotes/";
+    
+        let i = 0;
+        const playNext = () => {
+            if (i >= notes.length || i >= RINGTONE_LENGTH) return;
+    
+            const note = notes[i].toLowerCase();
+            const audio = preloadedNotes[note]?.cloneNode() || new Audio(`${AUDIO_PATH}${note}.ogg`);
+            audio.volume = VOLUME;
+            audio.play().catch(() => {});
+    
+            i++;
+            setTimeout(playNext, NOTE_DELAY * 1000);
+        };
+    
+        playNext();
     }
+    
+    
+    
 
     // --- INITIALIZATION after DOM ready ---
     document.addEventListener('DOMContentLoaded', () => {
