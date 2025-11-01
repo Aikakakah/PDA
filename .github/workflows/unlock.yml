@@ -1,0 +1,28 @@
+name: Unlock Secret
+
+on:
+  workflow_dispatch:
+    inputs:
+      code:
+        description: "Hashed ringtone code"
+        required: true
+
+jobs:
+  unlock:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch secret from private repo
+        id: fetch
+        env:
+          GH_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
+        run: |
+          CODE="${{ github.event.inputs.code }}"
+          FILE_URL="https://api.github.com/repos/Aikakakah/Ramona-s-Book/contents/answers/${CODE}.json"
+          DATA=$(curl -s -H "Authorization: token $GH_TOKEN" $FILE_URL)
+          CONTENT=$(echo "$DATA" | jq -r '.content' | base64 -d || true)
+          echo "content<<EOF" >> $GITHUB_OUTPUT
+          echo "$CONTENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Print the unlocked content
+        run: echo "${{ steps.fetch.outputs.content }}"
