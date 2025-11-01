@@ -414,7 +414,23 @@ body{
 .action-btn{padding:8px 15px;border-radius:6px;border:none;background:var(--accent);color:#fff;cursor:pointer;}
 .action-btn:hover{background:#7a3c80;}
 
-
+.ringtone-note-input{
+   width: 25px; /* Fixed width for single character */
+   text-align: center;
+   background: #333;
+   padding: 5px 0; /* Padding adjustment due to fixed width */
+   border-radius: 4px;
+   color: var(--info);
+   font-weight: bold;
+   border: 1px solid #444; /* Small border */
+   outline: none;
+   font-family: 'Share Tech Mono', ui-monospace, monospace;
+   font-size: 1em;
+   text-transform: uppercase; /* Ensure note is uppercase for consistency */
+}
+.ringtone-note-input:focus {
+    border-color: var(--accent); /* Highlight on focus */
+}
 /* utility */
 .hidden{display:none}
 .program-mini{font-size:12px;color:var(--muted);margin-left:8px}

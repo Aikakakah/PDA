@@ -1,4 +1,3 @@
-// PDA Replica script (fixed / hardened)
 (() => {
     // --- State ---
     const state = {
@@ -98,12 +97,10 @@
 
     // Quick helpers
     function showView(v) {
-        // if views not yet set, fail gracefully
         if (!views || Object.keys(views).length === 0) return;
         Object.values(views).forEach(x => x?.classList?.remove('active'));
         if (views[v]) views[v].classList.add('active');
 
-        // Hide program header if not in a program view (guard if progHeader missing)
         const progHeader = el('progHeader');
         if (progHeader) {
             progHeader.style.display = (v === 'program' ? 'flex' : 'none');
@@ -113,7 +110,6 @@
     // --- PageFlip instance ---
     let pageFlipInstance = null;
 
-    // --- Update page controls ---
     const updatePageControls = (pageFlip) => {
         if (!pageFlip) return;
         const bounds = pageFlip.getBounds && pageFlip.getBounds();
@@ -143,10 +139,7 @@
 
     const initializePageFlip = () => {
         const bookEl = el('book');
-        if (!bookEl) {
-            console.warn('initializePageFlip: #book element not found.');
-            return;
-        }
+        if (!bookEl) return;
 
         const rootStyle = getComputedStyle(document.documentElement);
         const bookWidth = parseFloat(rootStyle.getPropertyValue('--book-width'));
@@ -155,10 +148,7 @@
         const singlePageH = bookHeight;
 
         let pageFlip = null;
-
-        // If computed values are invalid, fallback to defaults
         if (isNaN(singlePageW) || isNaN(singlePageH) || singlePageW < 100) {
-            console.warn("PageFlip initialization: invalid CSS size; using fallback sizes.");
             const scaleFactor = parseFloat(rootStyle.getPropertyValue('--scale-factor')) || 1;
             const fallbackW = 1104 * scaleFactor;
             const fallbackH = 1452 * scaleFactor;
@@ -186,23 +176,19 @@
             });
         }
 
-        // Load pages (safe query)
         const pages = document.querySelectorAll('.my-page');
         if (pages.length) pageFlip.loadFromHTML(pages);
 
         pageFlipInstance = pageFlip;
 
-        // Wire up buttons if present
         if (bookPrev) bookPrev.addEventListener('click', () => pageFlipInstance?.flipPrev());
         if (bookNext) bookNext.addEventListener('click', () => pageFlipInstance?.flipNext());
 
-        // Update controls on events (guard if pageFlipInstance lacks .on)
         if (pageFlipInstance && typeof pageFlipInstance.on === 'function') {
             pageFlipInstance.on('flip', (e) => updatePageControls(e.object));
             pageFlipInstance.on('init', (e) => updatePageControls(e.object));
             pageFlipInstance.on('load', (e) => updatePageControls(e.object));
         } else {
-            // Fallback immediate update
             updatePageControls(pageFlipInstance);
         }
     };
@@ -219,10 +205,7 @@
                 if (now - lastPlayed > COOLDOWN_MS) {
                     lastPlayed = now;
                     pdaScreen.classList.add('shine-active');
-                    const animationDurationMs = 1500;
-                    setTimeout(() => pdaScreen.classList.remove('shine-active'), animationDurationMs);
-                } else {
-                    // cooldown - do nothing
+                    setTimeout(() => pdaScreen.classList.remove('shine-active'), 1500);
                 }
             });
         }
@@ -254,10 +237,8 @@
 
     // --- PROGRAM LOGIC ---
     function renderPrograms() {
-        if (!programGrid) {
-            console.warn('renderPrograms: #programGrid not found.');
-            return;
-        }
+        const programGrid = el('programGrid'); //new
+        if (!programGrid) return;
         programGrid.innerHTML = '';
         for (const p of state.programs) {
             const tile = document.createElement('div');
@@ -270,12 +251,8 @@
     }
 
     function openProgram(p) {
-        // ensure programArea exists
-        if (!programArea) {
-            console.warn('openProgram: programArea not found.');
-            return;
-        }
-
+        const programArea = el('programArea'); //new
+        if (!programArea) return;
         showView('program');
         programArea.innerHTML = '';
 
@@ -296,54 +273,87 @@
 
     // Notekeeper
     function renderNotekeeper() {
-        const wrap = document.createElement('div');
-        wrap.className = 'notekeeper';
-        wrap.innerHTML = `
+        const programArea = el('programArea');
+        programArea.innerHTML = `
             <div class="cartridge-header">Notekeeper</div>
             <div class="notes-wrap" id="notesWrap"></div>
             <div class="note-input">
                 <input id="noteInput" placeholder="Type a note and press Enter" />
                 <button id="addNoteBtn">Add</button>
-            </div>
-        `;
-        programArea.appendChild(wrap);
-
-        const notesWrap = wrap.querySelector('#notesWrap');
-        const noteInput = wrap.querySelector('#noteInput');
-        const addBtn = wrap.querySelector('#addNoteBtn');
+            </div>`;
+        const notesWrap = el('notesWrap');
+        const noteInput = el('noteInput');
+        const addBtn = el('addNoteBtn');
 
         function refreshNotes() {
-            if (!notesWrap) return;
             notesWrap.innerHTML = '';
             for (const n of state.notes) {
-                const row = document.createElement('div');
-                row.className = 'note';
-                const span = document.createElement('div');
-                span.textContent = n;
-                const rem = document.createElement('button');
-                rem.textContent = '×';
-                rem.addEventListener('click', () => {
+                const div = document.createElement('div');
+                div.className = 'note';
+                div.innerHTML = `<span>${n}</span><button>×</button>`;
+                div.querySelector('button').addEventListener('click', () => {
                     state.notes = state.notes.filter(x => x !== n);
                     refreshNotes();
                 });
-                row.appendChild(span);
-                row.appendChild(rem);
-                notesWrap.appendChild(row);
+                notesWrap.appendChild(div);
             }
         }
-
-        addBtn.addEventListener('click', () => {
+        addBtn.onclick = () => {
             const v = noteInput.value.trim();
-            if (!v) return;
-            state.notes.push(v);
-            noteInput.value = '';
-            refreshNotes();
-        });
-
-        noteInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addBtn.click(); });
-
+            if (v) { state.notes.push(v); noteInput.value = ''; refreshNotes(); }
+        };
+        noteInput.onkeydown = e => { if (e.key === 'Enter') addBtn.click(); };
         refreshNotes();
     }
+    // function renderNotekeeper() {
+    //     const wrap = document.createElement('div');
+    //     wrap.className = 'notekeeper';
+    //     wrap.innerHTML = `
+    //         <div class="cartridge-header">Notekeeper</div>
+    //         <div class="notes-wrap" id="notesWrap"></div>
+    //         <div class="note-input">
+    //             <input id="noteInput" placeholder="Type a note and press Enter" />
+    //             <button id="addNoteBtn">Add</button>
+    //         </div>
+    //     `;
+    //     programArea.appendChild(wrap);
+
+    //     const notesWrap = wrap.querySelector('#notesWrap');
+    //     const noteInput = wrap.querySelector('#noteInput');
+    //     const addBtn = wrap.querySelector('#addNoteBtn');
+
+    //     function refreshNotes() {
+    //         if (!notesWrap) return;
+    //         notesWrap.innerHTML = '';
+    //         for (const n of state.notes) {
+    //             const row = document.createElement('div');
+    //             row.className = 'note';
+    //             const span = document.createElement('div');
+    //             span.textContent = n;
+    //             const rem = document.createElement('button');
+    //             rem.textContent = '×';
+    //             rem.addEventListener('click', () => {
+    //                 state.notes = state.notes.filter(x => x !== n);
+    //                 refreshNotes();
+    //             });
+    //             row.appendChild(span);
+    //             row.appendChild(rem);
+    //             notesWrap.appendChild(row);
+    //         }
+    //     }
+
+        // addBtn.addEventListener('click', () => {
+        //     const v = noteInput.value.trim();
+        //     if (!v) return;
+        //     state.notes.push(v);
+        //     noteInput.value = '';
+        //     refreshNotes();
+        // });
+
+    //     noteInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addBtn.click(); });
+
+    //     refreshNotes();
+    // }
 
     // Manifest
     function renderManifest() {
@@ -424,14 +434,12 @@
             if (!messagesContainer) return;
             messagesContainer.innerHTML = '';
             const messages = state.nanochat.channels[state.nanochat.currentContact].messages || [];
-
             messages.forEach(msg => {
                 const row = document.createElement('div');
                 row.className = 'message-row ' + msg.type;
                 row.innerHTML = `<div class="message-bubble ${msg.type}">${msg.text}</div>`;
                 messagesContainer.appendChild(row);
             });
-
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
@@ -476,10 +484,136 @@
         programArea.appendChild(wrap);
     }
 
+    // --- Unlock flow (client-side) ---
+    // NOTE: This function assumes you have a secure server-side endpoint (e.g. GitHub Action
+    // webhook, Cloudflare Worker, Netlify Function) at /api/unlock that:
+    //  - accepts POST { code: "<hash>" }
+    //  - validates the code and uses your PRIVATE_REPO_TOKEN server-side to fetch the secret
+    //  - returns { ok: true, content: "<secret text or JSON>" } on success
+    // Do NOT put tokens in client JS. Implement /api/unlock server-side.
+
+    // SHA256 helper (hex)
+    async function sha256Hex(str) {
+        const buf = new TextEncoder().encode(str);
+        const hash = await crypto.subtle.digest("SHA-256", buf);
+        return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+    async function checkRingtone(ringtone) {
+        // Convert the ringtone array (like [E, E, E, E, E, E]) into a string
+        const key = ringtone.map(n => n.toLowerCase()).join('');
+        
+        // Only fetch if the key matches a known answer
+        if (key === 'eeeeee') {
+            await loadNewsArticle(key);
+        }
+    }
+    
+    let currentArticleIndex = 0;
+let articles = []; // Holds all loaded articles (like EEEEEE.json, etc.)
+
+async function loadNewsArticle(key) {
+    const url = `https://raw.githubusercontent.com/Aikakakah/Ramona-s-Book/main/${key}.json`;
+    try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Failed to load article");
+        const article = await res.json();
+
+        // Push to list if not already there
+        if (!articles.find(a => a.key === key)) {
+            articles.push({ key, ...article });
+        }
+
+        currentArticleIndex = articles.findIndex(a => a.key === key);
+        renderUnlockedNews(article);
+    } catch (err) {
+        console.error("Error loading article:", err);
+    }
+}
+
+function renderUnlockedNews(article) {
+    const wrap = document.createElement('div');
+    wrap.className = 'station-news';
+    wrap.innerHTML = `
+        <div class="cartridge-header">Station News Feed</div>
+        <div class="news-title">${article.title}</div>
+        <div class="news-content">
+            <p>${article.content[0]}</p>
+            <p class="muted">${article.content[1]}</p>
+        </div>
+        <div class="news-controls">
+            <button id="news-prev" title="Previous"><i class="fas fa-chevron-left"></i></button>
+            <button id="news-next" title="Next"><i class="fas fa-chevron-right"></i></button>
+            <button id="news-music" title="Play Music"><i class="fas fa-music"></i></button>
+        </div>
+    `;
+
+    const programArea = document.querySelector('.program-area');
+    programArea.innerHTML = ''; // Clear previous page
+    programArea.appendChild(wrap);
+
+    // Button handlers
+    wrap.querySelector('#news-prev').addEventListener('click', () => changeArticle(-1));
+    wrap.querySelector('#news-next').addEventListener('click', () => changeArticle(1));
+}
+
+function changeArticle(direction) {
+    if (articles.length <= 1) return;
+
+    currentArticleIndex += direction;
+    if (currentArticleIndex < 0) currentArticleIndex = articles.length - 1;
+    if (currentArticleIndex >= articles.length) currentArticleIndex = 0;
+
+    renderUnlockedNews(articles[currentArticleIndex]);
+}
+
+    
+    // Call your server-side unlock endpoint with the ringtone code hash
+    async function attemptUnlockCurrentRingtone() {
+        try {
+            // join notes to string (you can choose format — keep consistent with filenames in private repo)
+            const ringtoneString = state.settings.ringtone.join("");
+            // derive short code — here we use first 12 hex chars (you can adapt)
+            const fullHash = await sha256Hex(ringtoneString);
+            const code = fullHash.slice(0, 12);
+
+            // POST to your secure server endpoint (you must implement this)
+            const resp = await fetch('/api/unlock', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code })
+            });
+
+            if (!resp.ok) {
+                console.warn('Unlock request failed', resp.status);
+                return;
+            }
+
+            const body = await resp.json();
+            if (body.ok && body.content) {
+                displaySecret(body.content);
+            } else {
+                console.warn('Unlock response denied or empty', body);
+            }
+        } catch (err) {
+            console.error('Unlock attempt error', err);
+        }
+    }
+
+    // Put unlocked secret into Notekeeper (or anywhere appropriate)
+    function displaySecret(secretText) {
+        // For now append a special note in Notekeeper and open Notekeeper program
+        state.notes.push("🔓 Unlocked: " + (typeof secretText === 'string' ? secretText : JSON.stringify(secretText)));
+        // open Notekeeper UI
+        openProgram({ uid: 2, name: "Notekeeper", icon: "NK", type: "notekeeper" });
+    }
     
     // Play ringtone
     function playRingtone() {
-        const notes = state.settings.ringtone;
+        // Collect current ringtone from the input fields in the modal
+        const currentRingtone = Array.from(document.querySelectorAll('.ringtone-note-input')).map(input => input.value.toUpperCase());
+        
+        // --- The rest of the function remains the same as before, but uses currentRingtone ---
+        const notes = currentRingtone;
         if (!notes || notes.length === 0) return;
     
         const RINGTONE_LENGTH = 6;
@@ -493,6 +627,13 @@
             if (i >= notes.length || i >= RINGTONE_LENGTH) return;
     
             const note = notes[i].toLowerCase();
+            // Check if the input is a valid note before playing
+            if (!preloadedNotes[note]) { 
+                i++;
+                setTimeout(playNext, NOTE_DELAY * 1000);
+                return;
+            }
+    
             const audio = preloadedNotes[note]?.cloneNode() || new Audio(`${AUDIO_PATH}${note}.ogg`);
             audio.volume = VOLUME;
             audio.play().catch(() => {});
@@ -500,8 +641,10 @@
             i++;
             setTimeout(playNext, NOTE_DELAY * 1000);
         };
-    
+    // Pass the new ringtone to checkRingtone
+        checkRingtone(currentRingtone); 
         playNext();
+        
     }
     
     
@@ -596,15 +739,31 @@
         }
 
         // Ringtone modal
-        if (ringtoneRow && ringtoneModal && ringtoneDisplay) {
+        if (ringtoneRow && ringtoneModal) {
+            // 1. Initial values from state are set in HTML now, so we just wire up the event to show the modal
             ringtoneRow.addEventListener('click', () => {
-                ringtoneDisplay.innerHTML = state.settings.ringtone.map(note => `<span>${note}</span>`).join('');
+                // Update the input values in the modal to match the current state on click
+                const inputs = document.querySelectorAll('.ringtone-note-input');
+                state.settings.ringtone.forEach((note, index) => {
+                    if(inputs[index]) inputs[index].value = note;
+                });
+    
                 ringtoneModal.classList.remove('hidden');
             });
         }
         if (closeRingtoneModal) closeRingtoneModal.addEventListener('click', () => ringtoneModal.classList.add('hidden'));
         if (testRingtoneBtn) testRingtoneBtn.addEventListener('click', playRingtone);
         if (setRingtoneBtn) setRingtoneBtn.addEventListener('click', () => {
+            alert('Ringtone set to: ' + state.settings.ringtone.join(' - '));
+            ringtoneModal.classList.add('hidden');
+        });
+        if (setRingtoneBtn) setRingtoneBtn.addEventListener('click', () => {
+            // 2. Capture the current values from the inputs
+            const currentRingtone = Array.from(document.querySelectorAll('.ringtone-note-input')).map(input => input.value.toUpperCase());
+            
+            // 3. Update the state
+            state.settings.ringtone = currentRingtone;
+            
             alert('Ringtone set to: ' + state.settings.ringtone.join(' - '));
             ringtoneModal.classList.add('hidden');
         });
