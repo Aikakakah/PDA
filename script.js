@@ -283,15 +283,20 @@ import { createSecretHandler } from './secret_handler.js';
     }
 
     // Notekeeper
+    // Notekeeper
     function renderNotekeeper() {
         const programArea = el('programArea');
+        // ADDED wrapper class 'notekeeper-container'
         programArea.innerHTML = `
-            <div class="cartridge-header">Notekeeper</div>
-            <div class="notes-wrap" id="notesWrap"></div>
-            <div class="note-input">
-                <input id="noteInput" placeholder="Type a note and press Enter" />
-                <button id="addNoteBtn">Add</button>
-            </div>`;
+            <div class="notekeeper-container">
+                <div class="cartridge-header">Notekeeper</div>
+                <div class="notes-wrap" id="notesWrap"></div>
+                <div class="note-input">
+                    <input id="noteInput" placeholder="Type a note and press Enter" />
+                    <button id="addNoteBtn">Add</button>
+                </div>
+            </div>`; // END wrapper
+
         const notesWrap = el('notesWrap');
         const noteInput = el('noteInput');
         const addBtn = el('addNoteBtn');
