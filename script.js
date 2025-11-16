@@ -67,7 +67,7 @@ import { createSecretHandler } from './secret_handler.js';
     
     // Adjusted path for local development
     for (const n of noteNames) {
-        const a = new Audio(`/Audio/Effects/RingtoneNotes/${n}.ogg`);
+        const a = new Audio(`/Audio/${n}.ogg`);
         a.preload = "auto";
         preloadedNotes[n] = a;
     }
@@ -431,58 +431,75 @@ import { createSecretHandler } from './secret_handler.js';
     // script.js (Modified playRingtone function)
 
     // Play ringtone and check for news trigger
-    function playRingtone() {
-        // Collect current ringtone from the input fields in the modal
-        const currentRingtone = Array.from(document.querySelectorAll('.ringtone-note-input')).map(input => input.value.toUpperCase());
-        
-        const notes = currentRingtone;
-        if (!notes || notes.length === 0) return;
+    // Play ringtone and check for news trigger
+function playRingtone() {
+    // Collect current ringtone from the input fields in the modal
+    const currentRingtone = Array.from(document.querySelectorAll('.ringtone-note-input')).map(input => input.value.toUpperCase());
     
-        const RINGTONE_LENGTH = 6;
-        const NOTE_TEMPO = 300; // BPM
-        const NOTE_DELAY = 60 / NOTE_TEMPO; // 0.2s per note
-        const VOLUME = 0.6;
-        const AUDIO_PATH = "/Audio/Effects/RingtoneNotes/";
-        
-        // **********************************************
-        // New: Check for news article or secret trigger
-        const key = notes.map(n => n.toLowerCase()).join('');
+    const notes = currentRingtone;
+    if (!notes || notes.length === 0) return;
 
-        // 1. Check for the Secret Code first
-        if (secretHandler.handleSecretRingtone(key)) {
-             // If the secret code was triggered and handled, exit early.
-             // The secret handler manages the visuals (SandyStars.png).
-             return; 
-        }
-        
-        // 2. Check for news article trigger using the module
-        if (newsModule) newsModule.handleNewsArticle(key); 
-        // **********************************************
+    const RINGTONE_LENGTH = 6;
+    const NOTE_TEMPO = 300; // BPM
+    const NOTE_DELAY = 60 / NOTE_TEMPO; // 0.2s per note
+    const VOLUME = 0.6;
+    const AUDIO_PATH = "/Audio/Effects/RingtoneNotes/";
     
-        let i = 0;
-        const playNext = () => {
-            if (i >= notes.length || i >= RINGTONE_LENGTH) return;
-    
-            const note = notes[i].toLowerCase();
-            // Check if the input is a valid note before playing
-            if (!preloadedNotes[note]) { 
-                i++;
-                setTimeout(playNext, NOTE_DELAY * 1000);
-                return;
-            }
-    
-            const audio = preloadedNotes[note]?.cloneNode() || new Audio(`${AUDIO_PATH}${note}.ogg`);
-            audio.volume = VOLUME;
-            audio.play().catch(() => {});
-    
-            i++;
-            setTimeout(playNext, NOTE_DELAY * 1000);
-        };
-        
-        playNext();
-        
+    // **********************************************
+    // New: Check for news article or secret trigger
+    const key = notes.map(n => n.toLowerCase()).join('');
+
+    // 1. Check for the Secret Code first
+    if (secretHandler.handleSecretRingtone(key)) {
+         // If the secret code was triggered and handled, exit early.
+         // The secret handler manages the visuals (SandyStars.png).
+         return; 
     }
     
+    // 2. Check for news article trigger using the module
+    if (newsModule) newsModule.handleNewsArticle(key); 
+    // **********************************************
+
+    let i = 0;
+    const playNext = () => {
+        if (i >= notes.length || i >= RINGTONE_LENGTH) return;
+    
+        const inputNote = notes[i].toUpperCase();
+        let note;
+
+        // Logic to handle sharp notes (e.g., C# is converted to 'csharp')
+        if (inputNote.length > 1 && inputNote.endsWith('#')) {
+            note = inputNote[0].toLowerCase() + 'sharp';
+        } else {
+            // Handle natural notes (e.g., C is converted to 'c')
+            note = inputNote[0]?.toLowerCase();
+        }
+
+        // Fallback for invalid characters or empty input
+        if (!note) {
+            i++;
+            setTimeout(playNext, NOTE_DELAY * 1000);
+            return;
+        }
+
+        // Check if the note is a valid note before playing
+        if (!preloadedNotes[note]) { 
+            i++;
+            setTimeout(playNext, NOTE_DELAY * 1000);
+            return;
+        }
+
+        const audio = preloadedNotes[note]?.cloneNode() || new Audio(`${AUDIO_PATH}${note}.ogg`);
+        audio.volume = VOLUME;
+        audio.play().catch(() => {});
+    
+        i++;
+        setTimeout(playNext, NOTE_DELAY * 1000);
+    };
+    
+    playNext();
+    
+}
 
     // --- INITIALIZATION after DOM ready ---
     document.addEventListener('DOMContentLoaded', () => {
@@ -577,6 +594,18 @@ import { createSecretHandler } from './secret_handler.js';
         }
 
         // Ringtone modal
+        const selectAllText = (event) => {
+            event.target.select();
+        };
+
+        // Attach auto-select listener to all ringtone input fields
+        const ringtoneInputs = document.querySelectorAll('.ringtone-note-input');
+        ringtoneInputs.forEach(input => {
+            input.addEventListener('focus', selectAllText);
+        });
+        // --- END NEW CODE ---
+
+        // Ringtone modal
         if (ringtoneRow && ringtoneModal) {
             ringtoneRow.addEventListener('click', () => {
                 // Update the input values in the modal to match the current state on click
@@ -597,7 +626,7 @@ import { createSecretHandler } from './secret_handler.js';
             // 3. Update the state
             state.settings.ringtone = currentRingtone;
             
-            alert('Ringtone set to: ' + state.settings.ringtone.join(' - '));
+            // alert('Ringtone set to: ' + state.settings.ringtone.join(' - '));
             ringtoneModal.classList.add('hidden');
             
             // Re-check the ringtone immediately after setting it
