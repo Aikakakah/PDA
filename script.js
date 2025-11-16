@@ -1,4 +1,5 @@
 import { createNewsModule } from './news.js';
+import { createSecretHandler } from './secret_handler.js';
 
 (() => {
     // --- State ---
@@ -51,7 +52,7 @@ import { createNewsModule } from './news.js';
             }
         },
         settings: {
-            ringtone: ["E", "D", "C", "G", "C", "G"]
+            ringtone: ["A", "A", "A", "A", "A", "G"]
         },
         book: {
             currentPage: 1,
@@ -98,6 +99,7 @@ import { createNewsModule } from './news.js';
     let pageNumberDisplay = null;
     
     let newsModule = null; // Variable to hold the instantiated news module
+    let secretHandler = null;
 
     // Helper to fetch element safely
     const el = id => document.getElementById(id);
@@ -425,6 +427,10 @@ import { createNewsModule } from './news.js';
     }
     
     // Play ringtone and check for news trigger
+    // Play ringtone and check for news trigger
+    // script.js (Modified playRingtone function)
+
+    // Play ringtone and check for news trigger
     function playRingtone() {
         // Collect current ringtone from the input fields in the modal
         const currentRingtone = Array.from(document.querySelectorAll('.ringtone-note-input')).map(input => input.value.toUpperCase());
@@ -439,8 +445,17 @@ import { createNewsModule } from './news.js';
         const AUDIO_PATH = "/Audio/Effects/RingtoneNotes/";
         
         // **********************************************
-        // New: Check for news article trigger using the module
+        // New: Check for news article or secret trigger
         const key = notes.map(n => n.toLowerCase()).join('');
+
+        // 1. Check for the Secret Code first
+        if (secretHandler.handleSecretRingtone(key)) {
+             // If the secret code was triggered and handled, exit early.
+             // The secret handler manages the visuals (SandyStars.png).
+             return; 
+        }
+        
+        // 2. Check for news article trigger using the module
         if (newsModule) newsModule.handleNewsArticle(key); 
         // **********************************************
     
@@ -502,6 +517,7 @@ import { createNewsModule } from './news.js';
         // Initialize the News Module, passing the shared state and helper functions/elements
         newsModule = createNewsModule(state, el, showView, ringtoneModal);
 
+        secretHandler = createSecretHandler(el, showView, ringtoneModal);
         // Render programs (safe)
         renderPrograms();
 
