@@ -1,5 +1,6 @@
 import { createNewsModule } from './news.js';
 import { createSecretHandler } from './secret_handler.js';
+import { createNanoChatTriggers } from './nanochat_triggers.js';
 
 (() => {
     const state = {
@@ -101,6 +102,7 @@ import { createSecretHandler } from './secret_handler.js';
 
     let newsModule = null; // Variable to hold the instantiated news module
     let secretHandler = null;
+    let nanoChatTriggers = null; // Variable to hold the instantiated nanochat triggers
 
     // Helper to fetch element safely
     const el = id => document.getElementById(id);
@@ -420,10 +422,23 @@ import { createSecretHandler } from './secret_handler.js';
         const number = contactNumberInput.value.trim();
         
         if (name && number) {
-            // Placeholder: Add your actual contact creation logic here
-            // (e.g., updating state.nanochat.channels)
-            console.log(`Attempting to create new chat with: ${name} (${number})`);
+            // Create a unique contact ID from the name (lowercase, no spaces)
+            const contactId = name.toLowerCase().replace(/\s+/g, '');
             
+            // Add the new contact to state.nanochat.channels
+            state.nanochat.channels[contactId] = {
+                name: name,
+                messages: []
+            };
+            
+            // Switch to the new contact
+            state.nanochat.currentContact = contactId;
+            
+            // Re-render sidebar and messages
+            renderSidebar();
+            renderMessages();
+            
+            // Close modal and clear inputs
             newChatModal.classList.add('hidden');
             contactNameInput.value = '';
             contactNumberInput.value = '';
@@ -480,6 +495,12 @@ import { createSecretHandler } from './secret_handler.js';
                 });
                 input.value = '';
                 renderMessages();
+                
+                // Check for special NanoChat triggers
+                const currentContactName = state.nanochat.channels[state.nanochat.currentContact].name;
+                if (nanoChatTriggers) {
+                    nanoChatTriggers.checkAndTrigger(currentContactName, text);
+                }
             }
         }
 
@@ -601,6 +622,10 @@ function playRingtone() {
         newsModule = createNewsModule(state, el, showView, ringtoneModal);
 
         secretHandler = createSecretHandler(el, showView, ringtoneModal);
+        
+        // Initialize NanoChat Triggers
+        nanoChatTriggers = createNanoChatTriggers();
+        
         // Render programs (safe)
         renderPrograms();
 
