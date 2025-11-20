@@ -1077,8 +1077,9 @@ body:has(.top-right-drawer-panel.open) .pan-button.top-right-drawer {
     top: 0;
     right: 4%;
     background: var(--panel);
-    border: 1px solid rgba(255,255,255,0.04);
-    border-radius: 8px;
+    border: 15px solid var(--accent);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.6);
     overflow: auto;
     width: 540px;
