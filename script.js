@@ -853,24 +853,28 @@ function playRingtone() {
 
         // Pan button functionality
         const panDownBtn = el('panDownBtn');
-        const panUpBtn = el('panUpBtn');
-        const secondPageContainer = el('secondPageContainer');
+    const panUpBtn = el('panUpBtn');
+    const secondPageContainer = el('secondPageContainer');
 
-        if (panDownBtn) {
-            panDownBtn.addEventListener('click', () => {
-                if (secondPageContainer) {
-                    secondPageContainer.classList.remove('hidden');
-                }
-            });
-        }
+    if (panDownBtn) {
+        panDownBtn.addEventListener('click', () => {
+            if (secondPageContainer) {
+                // Remove legacy hidden class if it exists
+                secondPageContainer.classList.remove('hidden'); 
+                // Add active class to trigger the CSS slide-up transform
+                secondPageContainer.classList.add('active');
+            }
+        });
+    }
 
-        if (panUpBtn) {
-            panUpBtn.addEventListener('click', () => {
-                if (secondPageContainer) {
-                    secondPageContainer.classList.add('hidden');
-                }
-            });
-        }
+    if (panUpBtn) {
+        panUpBtn.addEventListener('click', () => {
+            if (secondPageContainer) {
+                // Remove active class to slide it back down
+                secondPageContainer.classList.remove('active');
+            }
+        });
+    }
     });
 
 })();
