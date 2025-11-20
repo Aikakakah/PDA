@@ -1058,20 +1058,6 @@ body{
     transform: translateX(-50%);
 }
 
-.pan-button.top-right-drawer {
-  top: 10px;
-  left: 75%;
-  transform: translateX(-50%);
-  transition: top 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
-}
-
-/* When drawer is open, slide the button down with it */
-.top-right-drawer-panel.open ~ .pan-button.top-right-drawer,
-body:has(.top-right-drawer-panel.open) .pan-button.top-right-drawer {
-  top: calc(20vh + 10px); /* Move button to bottom of the 20vh drawer + original margin */
-}
-
-/* Top-right drawer panel that slides down from the top, like second-page-container */
 .top-right-drawer-panel {
     position: fixed;
     top: 0;
@@ -1086,7 +1072,7 @@ body:has(.top-right-drawer-panel.open) .pan-button.top-right-drawer {
         inset 0 -8px 12px rgba(0,0,0,0.4),
         inset -8px 0 12px rgba(0,0,0,0.4),
         inset 8px 0 12px rgba(0,0,0,0.4);
-    overflow: auto;
+    overflow: visible;
     width: 540px;
     height: 20vh; /* about 25% of viewport */
     transform: translateY(-100%); /* Start above viewport */
@@ -1094,10 +1080,64 @@ body:has(.top-right-drawer-panel.open) .pan-button.top-right-drawer {
     z-index: 10;
     margin: -2px 8px 0 0;
     perspective: 1000px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
-.top-right-drawer-panel .drawer-inner{padding:10px;box-sizing:border-box;color:var(--text);height:100%;overflow-y:auto}
+
+.pan-button.top-right-drawer {
+    position: absolute;
+    /* Hangs well below the drawer panel */
+    bottom: -60px; 
+    left: 50%;
+    transform: translateX(-50%);
+    
+    /* Size: Wider and taller to accommodate the curve */
+    width: 340px;
+    height: 45px;
+    
+    /* SHAPE: Use borders to create the "Rod" look */
+    background: transparent; /* Hollow center */
+    
+    /* The "Metal" - Thick borders for the handle thickness */
+    border: 10px solid #8a7856; /* Base Bronze Color */
+    border-top: none; /* Open at the top where it enters the drawer */
+    
+    /* CURVE: Deep radius on bottom corners to create the arch */
+    border-radius: 0 0 40px 40px; 
+    
+    /* TEXTURE & LIGHTING */
+    box-shadow: 
+        /* 1. Bottom Drop Shadow (downwards) */
+        0 8px 15px rgba(0, 0, 0, 0.3),
+        
+        /* 2. NEW: Top Drop Shadow (casting upwards onto the drawer) */
+        0 -8px 10px rgba(0, 0, 0, 0.3),
+
+        /* 3. Inner Shadow (Bottom depth) */
+        inset 0 -10px 10px rgba(0, 0, 0, 0.2),
+        
+        /* 4. NEW: Inner Top Shadow (Darkens the top legs slightly) */
+        inset 0 15px 20px -10px rgba(0, 0, 0, 0.4),
+
+        /* 5. Specular Highlight (The shine on the bottom curve) */
+        /* inset 0 5px 5px rgba(255, 255, 255, 0.25), */
+        
+        /* 6. Outer rim definition */
+        0 1px 0 rgba(0,0,0,0.8);
+
+    /* Layout for the icon */
+    display: flex;
+    align-items: flex-start; /* Align icon to top (empty space) */
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s;
+    z-index: 20;
+}
+
+/* When drawer is open, button moves with it (inherits transform from parent) */
 .top-right-drawer-panel.open{
-    transform: translateY(0); /* Slide down into view */
+    transform: translateY(0); /* Slide all the way up, extending past top of screen */
 }
 
 .pan-button.pan-up {
