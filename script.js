@@ -850,6 +850,27 @@ function playRingtone() {
 
         // Initialize book notes dragging
         initializeBookNotes();
+
+        // Pan button functionality
+        const panDownBtn = el('panDownBtn');
+        const panUpBtn = el('panUpBtn');
+        const secondPageContainer = el('secondPageContainer');
+
+        if (panDownBtn) {
+            panDownBtn.addEventListener('click', () => {
+                if (secondPageContainer) {
+                    secondPageContainer.classList.remove('hidden');
+                }
+            });
+        }
+
+        if (panUpBtn) {
+            panUpBtn.addEventListener('click', () => {
+                if (secondPageContainer) {
+                    secondPageContainer.classList.add('hidden');
+                }
+            });
+        }
     });
 
 })();
