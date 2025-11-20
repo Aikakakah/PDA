@@ -912,3 +912,118 @@ body{
     95% { clip: rect(42px, 9999px, 97px, 0); }
     100% { clip: rect(38px, 9999px, 49px, 0); }
 }
+
+/* --- Book Notes Styling --- */
+
+/* Sticky notes on book pages */
+.book-note {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #fffacd 0%, #ffffe0 100%);
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    padding: 8px;
+    font-size: 12px;
+    color: #333;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    cursor: grab;
+    user-select: none;
+    transition: box-shadow 0.2s;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: pre-wrap;
+    word-break: break-word;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-family: 'Comic Sans MS', cursive;
+    font-weight: bold;
+    right: 20px;
+    top: 20px;
+    z-index: 10;
+}
+
+.book-note:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.book-note.dragging {
+    cursor: grabbing;
+    opacity: 0.7;
+}
+
+/* Floating notes container - holds notes dragged out of the book */
+.floating-notes-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 500;
+}
+
+/* Floating notes that have been dragged out */
+.floating-note {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, #ffeb3b 0%, #ffeb99 100%);
+    border: 2px solid #f0c674;
+    border-radius: 4px;
+    padding: 10px;
+    font-size: 13px;
+    color: #333;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    cursor: move;
+    user-select: none;
+    pointer-events: all;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: pre-wrap;
+    word-break: break-word;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-family: 'Comic Sans MS', cursive;
+    font-weight: bold;
+    z-index: 501;
+    transition: box-shadow 0.2s;
+}
+
+.floating-note:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.floating-note.dragging {
+    cursor: grabbing;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Close button for floating notes */
+.floating-note-close {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: transparent;
+    border: none;
+    color: #333;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.floating-note-close:hover {
+    opacity: 1;
+    color: #d9534f;
+}

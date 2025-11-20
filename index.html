@@ -12,6 +12,9 @@
 <body>
   
     <div class="book-widget">
+      <!-- Floating notes container (notes dragged out of the book) -->
+      <div id="floatingNotesContainer" class="floating-notes-container"></div>
+
       <!-- <div class="book-controls">
         <button id="bookPrev" title="Previous Page">
             <i class="fas fa-chevron-left"></i>
@@ -34,15 +37,19 @@
         </div>
         <div class="my-page p1" data-density="soft">
             <img src="Pages/Page_2.png" alt="Page two" />
+            <div class="book-note" data-note-id="1">📝 Take notes</div>
         </div>
         <div class="my-page page-left" data-density="soft">
             <img src="Pages/Page_3.png" alt="Page three" />
+            <div class="book-note" data-note-id="2">📝 Remember</div>
         </div>
         <div class="my-page page-right">
             <img src="Pages/Page_4.png" alt="Page four" />
+            <div class="book-note" data-note-id="3">📝 Note this</div>
         </div>
         <div class="my-page page-left">
           <img src="Pages/Page_4.png" alt="Page four" />
+          <div class="book-note" data-note-id="4">📝 Sticky note</div>
         </div>
         <div class="my-page inner-cover-back">
           <img src="Pages/Page_Cover.png" alt="Page Cover" />

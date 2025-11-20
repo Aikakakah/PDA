@@ -221,6 +221,149 @@ import { createSecretHandler } from './secret_handler.js';
         }
     };
 
+    // --- FLOATING NOTES SYSTEM ---
+    const floatingNotes = new Map(); // Store floating notes by ID
+    let draggedNoteId = null;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+
+    function initializeBookNotes() {
+        const bookNotes = document.querySelectorAll('.book-note');
+        
+        bookNotes.forEach(note => {
+            note.addEventListener('mousedown', handleNoteMouseDown);
+        });
+    }
+
+    function handleNoteMouseDown(e) {
+        if (e.button !== 0) return; // Only left click
+        
+        const noteId = this.dataset.noteId;
+        const rect = this.getBoundingClientRect();
+        
+        dragOffsetX = e.clientX - rect.left;
+        dragOffsetY = e.clientY - rect.top;
+        
+        // Check if note is already floating
+        if (floatingNotes.has(noteId)) {
+            // Drag existing floating note
+            draggedNoteId = noteId;
+            const floatingNote = floatingNotes.get(noteId);
+            floatingNote.classList.add('dragging');
+            document.addEventListener('mousemove', handleNoteDrag);
+            document.addEventListener('mouseup', handleNoteMouseUp);
+        } else {
+            // Create floating note by dragging
+            draggedNoteId = noteId;
+            this.classList.add('dragging');
+            document.addEventListener('mousemove', handleNoteDrag);
+            document.addEventListener('mouseup', handleNoteMouseUp);
+        }
+        
+        e.preventDefault();
+    }
+
+    function handleNoteDrag(e) {
+        if (!draggedNoteId) return;
+        
+        const noteId = draggedNoteId;
+        let floatingNote = floatingNotes.get(noteId);
+        const bookWidget = document.querySelector('.book-widget');
+        
+        // Create floating note if it doesn't exist
+        if (!floatingNote) {
+            const bookNote = document.querySelector(`[data-note-id="${noteId}"]`);
+            if (!bookNote) return;
+            
+            floatingNote = document.createElement('div');
+            floatingNote.className = 'floating-note dragging';
+            floatingNote.textContent = bookNote.textContent;
+            floatingNote.dataset.noteId = noteId;
+            
+            // Add close button
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'floating-note-close';
+            closeBtn.innerHTML = '✕';
+            closeBtn.addEventListener('click', () => removeFloatingNote(noteId));
+            floatingNote.appendChild(closeBtn);
+            
+            const container = el('floatingNotesContainer');
+            if (container) container.appendChild(floatingNote);
+            
+            floatingNotes.set(noteId, floatingNote);
+            
+            // Hide the original book note
+            bookNote.style.display = 'none';
+            
+            // Attach drag handler to floating note
+            floatingNote.addEventListener('mousedown', handleFloatingNoteMouseDown);
+        }
+        
+        // Calculate position relative to book widget
+        if (bookWidget) {
+            const bookRect = bookWidget.getBoundingClientRect();
+            const relX = e.clientX - bookRect.left - dragOffsetX;
+            const relY = e.clientY - bookRect.top - dragOffsetY;
+            
+            floatingNote.style.left = relX + 'px';
+            floatingNote.style.top = relY + 'px';
+        } else {
+            floatingNote.style.left = (e.clientX - dragOffsetX) + 'px';
+            floatingNote.style.top = (e.clientY - dragOffsetY) + 'px';
+        }
+        
+        e.preventDefault();
+    }
+
+    function handleFloatingNoteMouseDown(e) {
+        if (e.button !== 0) return; // Only left click
+        if (e.target.classList.contains('floating-note-close')) return; // Don't drag if clicking close button
+        
+        const noteId = this.dataset.noteId;
+        const rect = this.getBoundingClientRect();
+        
+        dragOffsetX = e.clientX - rect.left;
+        dragOffsetY = e.clientY - rect.top;
+        
+        draggedNoteId = noteId;
+        this.classList.add('dragging');
+        document.addEventListener('mousemove', handleNoteDrag);
+        document.addEventListener('mouseup', handleNoteMouseUp);
+        
+        e.preventDefault();
+    }
+
+    function removeFloatingNote(noteId) {
+        const floatingNote = floatingNotes.get(noteId);
+        const bookNote = document.querySelector(`[data-note-id="${noteId}"]`);
+        
+        if (floatingNote) {
+            floatingNote.remove();
+            floatingNotes.delete(noteId);
+        }
+        
+        // Show the original book note again
+        if (bookNote) {
+            bookNote.style.display = '';
+        }
+    }
+
+    function handleNoteMouseUp(e) {
+        if (!draggedNoteId) return;
+        
+        const noteId = draggedNoteId;
+        const bookNote = document.querySelector(`[data-note-id="${noteId}"]`);
+        const floatingNote = floatingNotes.get(noteId);
+        
+        if (bookNote) bookNote.classList.remove('dragging');
+        if (floatingNote) floatingNote.classList.remove('dragging');
+        
+        document.removeEventListener('mousemove', handleNoteDrag);
+        document.removeEventListener('mouseup', handleNoteMouseUp);
+        
+        draggedNoteId = null;
+    }
+
     // HOME view update
     function updateHome() {
         if (el('owner')) el('owner').textContent = state.owner;
@@ -704,6 +847,9 @@ function playRingtone() {
 
         // Shine effect
         initializeShineEffect();
+
+        // Initialize book notes dragging
+        initializeBookNotes();
     });
 
 })();
