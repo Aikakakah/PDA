@@ -1080,7 +1080,12 @@ body:has(.top-right-drawer-panel.open) .pan-button.top-right-drawer {
     border: 15px solid var(--accent);
     border-top: none;
     border-radius: 0 0 8px 8px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    box-shadow: 
+        0 8px 24px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.1),
+        inset 0 -8px 12px rgba(0,0,0,0.4),
+        inset -8px 0 12px rgba(0,0,0,0.4),
+        inset 8px 0 12px rgba(0,0,0,0.4);
     overflow: auto;
     width: 540px;
     height: 20vh; /* about 25% of viewport */
@@ -1088,6 +1093,7 @@ body:has(.top-right-drawer-panel.open) .pan-button.top-right-drawer {
     transition: transform 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
     z-index: 10;
     margin: -2px 8px 0 0;
+    perspective: 1000px;
 }
 .top-right-drawer-panel .drawer-inner{padding:10px;box-sizing:border-box;color:var(--text);height:100%;overflow-y:auto}
 .top-right-drawer-panel.open{
