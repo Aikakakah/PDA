@@ -1049,8 +1049,6 @@ body{
 .pan-button:hover {
   background: rgba(94, 43, 99, 1);
   box-shadow: 0 4px 12px rgba(94, 43, 99, 0.6);
-  /* Keep the centering translate while scaling so the button doesn't jump
-     (hover previously overwrote the translateX(-50%) set on the normal state) */
   transform: translateX(-50%) scale(1.1);
 }
 
@@ -1058,6 +1056,41 @@ body{
     bottom: 10px;
     left: 50%;
     transform: translateX(-50%);
+}
+
+.pan-button.top-right-drawer {
+  top: 10px;
+  left: 75%;
+  transform: translateX(-50%);
+  transition: top 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* When drawer is open, slide the button down with it */
+.top-right-drawer-panel.open ~ .pan-button.top-right-drawer,
+body:has(.top-right-drawer-panel.open) .pan-button.top-right-drawer {
+  top: calc(25vh + 10px); /* Move button to bottom of the 25vh drawer + original margin */
+}
+
+/* Top-right drawer panel that slides down from the top, like second-page-container */
+.top-right-drawer-panel {
+    position: fixed;
+    top: 0;
+    right: 4%;
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    overflow: auto;
+    width: 540px;
+    height: 25vh; /* about 25% of viewport */
+    transform: translateY(-100%); /* Start above viewport */
+    transition: transform 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+    z-index: 2000;
+    margin: 8px 8px 0 0;
+}
+.top-right-drawer-panel .drawer-inner{padding:10px;box-sizing:border-box;color:var(--text);height:100%;overflow-y:auto}
+.top-right-drawer-panel.open{
+    transform: translateY(0); /* Slide down into view */
 }
 
 .pan-button.pan-up {

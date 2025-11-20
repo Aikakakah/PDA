@@ -10,7 +10,29 @@
     <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
 </head>
 <body>
-  
+  <!-- Top-right drawer button and panel -->
+            <button class="pan-button top-right-drawer" title="View topright drawer" aria-label="View topright drawer">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="top-right-drawer-panel">
+                <div class="drawer-inner"><!-- drawer content --></div>
+            </div>
+
+<!-- Pan Down Button -->
+      <button id="panDownBtn" class="pan-button pan-down" title="View second page">
+        <i class="fas fa-chevron-down"></i>
+      </button>
+      
+    <!-- Second Page Container -->
+    <div id="secondPageContainer" class="second-page-container hidden">
+      <button id="panUpBtn" class="pan-button pan-up" title="Back to book">
+        <i class="fas fa-chevron-up"></i>
+      </button>
+      <div class="second-page-content">
+        <div class="placeholder-square"></div>
+      </div>
+    </div>
+
     <div class="book-widget">
       <!-- Floating notes container (notes dragged out of the book) -->
       <div id="floatingNotesContainer" class="floating-notes-container"></div>
@@ -59,21 +81,6 @@
           <img src="Pages/Page_Cover.png" alt="Last page" />
           </div>
         </div>
-      </div>
-
-      
-    </div>
-<!-- Pan Down Button -->
-      <button id="panDownBtn" class="pan-button pan-down" title="View second page">
-        <i class="fas fa-chevron-down"></i>
-      </button>
-    <!-- Second Page Container -->
-    <div id="secondPageContainer" class="second-page-container hidden">
-      <button id="panUpBtn" class="pan-button pan-up" title="Back to book">
-        <i class="fas fa-chevron-up"></i>
-      </button>
-      <div class="second-page-content">
-        <div class="placeholder-square"></div>
       </div>
     </div>
 

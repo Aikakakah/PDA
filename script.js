@@ -851,21 +851,70 @@ function playRingtone() {
         // Initialize book notes dragging
         initializeBookNotes();
 
-        // Pan button functionality
-        const panDownBtn = el('panDownBtn');
+    // Pan button functionality
+    // Keep the primary control accessible by id, but wire all pan-down buttons by class
+    const panDownBtn = el('panDownBtn');
+    const panDownButtons = document.querySelectorAll('.pan-down');
     const panUpBtn = el('panUpBtn');
     const secondPageContainer = el('secondPageContainer');
 
-    if (panDownBtn) {
-        panDownBtn.addEventListener('click', () => {
-            if (secondPageContainer) {
-                // Remove legacy hidden class if it exists
-                secondPageContainer.classList.remove('hidden'); 
-                // Add active class to trigger the CSS slide-up transform
-                secondPageContainer.classList.add('active');
-            }
+    // Attach the same behavior to every element with the .pan-down class (includes the id'd original)
+    if (panDownButtons && panDownButtons.length) {
+        panDownButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (secondPageContainer) {
+                    secondPageContainer.classList.remove('hidden');
+                    secondPageContainer.classList.add('active');
+                }
+            });
         });
     }
+
+    // --- Top-right drawer behavior for .pan-button.top-right-drawer ---
+    (function() {
+        const drawerButtons = document.querySelectorAll('.pan-button.top-right-drawer');
+        if (!drawerButtons || drawerButtons.length === 0) return;
+
+        // Use the drawer panel already in the HTML
+        let drawerPanel = document.querySelector('.top-right-drawer-panel');
+        if (!drawerPanel) return;
+
+        let activeButton = null;
+
+        drawerButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // If same button toggles panel, just close it
+                if (activeButton === btn && drawerPanel.classList.contains('open')) {
+                    drawerPanel.classList.remove('open');
+                    activeButton = null;
+                    return;
+                }
+
+                // Open for this button
+                activeButton = btn;
+                // Slight timeout to allow rendering before transition
+                requestAnimationFrame(() => drawerPanel.classList.add('open'));
+            });
+        });
+
+        // Close on outside click
+        document.addEventListener('click', (ev) => {
+            if (!drawerPanel.classList.contains('open')) return;
+            if (drawerPanel.contains(ev.target)) return;
+            if (Array.from(drawerButtons).some(b => b.contains(ev.target))) return;
+            drawerPanel.classList.remove('open');
+            activeButton = null;
+        });
+
+        // Close on Escape
+        document.addEventListener('keydown', (ev) => {
+            if (ev.key === 'Escape' && drawerPanel.classList.contains('open')) {
+                drawerPanel.classList.remove('open');
+                activeButton = null;
+            }
+        });
+    })();
 
     if (panUpBtn) {
         panUpBtn.addEventListener('click', () => {
