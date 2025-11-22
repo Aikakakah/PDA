@@ -903,7 +903,22 @@ function playRingtone() {
         // Home updater
         setInterval(updateHome, 1000);
         updateHome();
-
+        // --- PDA Flip Logic ---
+        const pdaContainer = el('pda');
+        const flipTriggerBtn = el('btn-flip-trigger'); // The button we added to the header
+        const flipBackBtn = el('btn-flip-back');       // The button on the back
+    
+        if (flipTriggerBtn && pdaContainer) {
+            flipTriggerBtn.addEventListener('click', () => {
+                pdaContainer.classList.add('flipped');
+            });
+        }
+    
+        if (flipBackBtn && pdaContainer) {
+            flipBackBtn.addEventListener('click', () => {
+                pdaContainer.classList.remove('flipped');
+            });
+        }
         // Wire up tab clicks (guard tabs)
         if (tabs && tabs.length) {
             tabs.forEach(btn => {
