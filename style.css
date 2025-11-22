@@ -920,14 +920,9 @@ body{
     position: absolute;
     width: 80px;
     height: 80px;
-    
-    /* --- CHANGED: Remove Centering --- */
-    /* Default position for fresh notes (optional) */
     left: 20px; 
     top: 20px;
-    transform: none; 
-    /* --------------------------------- */
-
+    transform: none;
     background: linear-gradient(135deg, #fffacd 0%, #ffffe0 100%);
     border: 1px solid #ddd;
     border-radius: 2px;
@@ -977,7 +972,7 @@ body{
     z-index: 9999;   /* Above everything */
     width: 80px;
     height: 80px;
-    background: linear-gradient(135deg, #ffeb3b 0%, #ffeb99 100%);
+    background: linear-gradient(135deg, #fffacd 0%, #ffffe0 100%);
     border: 2px solid #f0c674;
     border-radius: 4px;
     padding: 10px;
@@ -986,14 +981,12 @@ body{
     box-shadow: 0 15px 30px rgba(0,0,0,0.4); /* Bigger shadow when floating */
     cursor: grab;
     transform: scale(1.1);
-    /* Flex to center text */
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     font-family: 'Comic Sans MS', cursive;
     font-weight: bold;
-    
     user-select: none;
     box-sizing: border-box;
     transform: scale(1.1); /* Pop effect */
