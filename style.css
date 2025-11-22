@@ -920,6 +920,13 @@ body{
     position: absolute;
     width: 80px;
     height: 80px;
+    
+    /* --- NEW CENTERING LOGIC --- */
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%); 
+    /* --------------------------- */
+    
     background: linear-gradient(135deg, #fffacd 0%, #ffffe0 100%);
     border: 1px solid #ddd;
     border-radius: 2px;
@@ -929,7 +936,7 @@ body{
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     cursor: grab;
     user-select: none;
-    transition: box-shadow 0.2s;
+    transition: opacity 0.2s; /* Removed transform transition to prevent conflict with centering */
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: pre-wrap;
@@ -940,10 +947,7 @@ body{
     text-align: center;
     font-family: 'Comic Sans MS', cursive;
     font-weight: bold;
-    right: 20px;
-    top: 20px;
     z-index: 10;
-    transition: opacity 0.2s, transform 0.1s;
 }
 
 .book-note:hover {
@@ -980,7 +984,7 @@ body{
     color: #333;
     box-shadow: 0 15px 30px rgba(0,0,0,0.4); /* Bigger shadow when floating */
     cursor: grab;
-    
+    transform: scale(1.1);
     /* Flex to center text */
     display: flex;
     align-items: center;

@@ -292,27 +292,38 @@ import { createSecretHandler } from './secret_handler.js';
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', onMouseUp);
 
-            // CHECK DROP ZONE: The Book Widget
-            const bookWidget = document.querySelector('.book-widget');
-            const bookRect = bookWidget.getBoundingClientRect();
+            // 1. Temporarily hide the clone so we can see what is UNDER it
+            clone.style.display = 'none';
 
-            // Is mouse inside the book area?
-            const isOverBook = (
-                e.clientX >= bookRect.left && 
-                e.clientX <= bookRect.right &&
-                e.clientY >= bookRect.top && 
-                e.clientY <= bookRect.bottom
-            );
+            // 2. Get the element directly under the mouse cursor
+            const elementBelow = document.elementFromPoint(e.clientX, e.clientY);
+            
+            // 3. Bring the clone back (in case we didn't drop it successfully)
+            clone.style.display = 'flex';
 
-            if (isOverBook) {
-                // SNAP BACK: Destroy clone, show original
+            // 4. Check if we dropped it on a Book Page
+            // We look for the closest ancestor with class 'my-page'
+            const targetPage = elementBelow ? elementBelow.closest('.my-page') : null;
+
+            if (targetPage) {
+                // --- RE-PARENTING LOGIC ---
+                
+                // Move the original DOM element to the new page container
+                targetPage.appendChild(originalNote);
+                
+                // Make it visible again
+                originalNote.style.visibility = 'visible';
+                originalNote.style.opacity = '1';
+                
+                // Remove the floating clone
                 clone.remove();
-                if (originalNote) {
-                    originalNote.style.visibility = 'visible';
-                    originalNote.style.opacity = '1';
-                }
+                
             } else {
-                // STAY FLOATING: Attach mousedown so we can move it again later
+                // --- DROP FAILED (Not on a page) ---
+                
+                // Check if we are loosely over the book wrapper (for safety) or just outside
+                // For now, we just leave it floating.
+                
                 clone.style.pointerEvents = 'auto';
                 
                 // Re-attach listener to the CLONE for the next drag
@@ -320,7 +331,6 @@ import { createSecretHandler } from './secret_handler.js';
                     if (evt.button !== 0) return;
                     evt.preventDefault();
                     
-                    // Recalculate offset for the new drag
                     const newRect = clone.getBoundingClientRect();
                     const newOffX = evt.clientX - newRect.left;
                     const newOffY = evt.clientY - newRect.top;
