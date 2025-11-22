@@ -292,50 +292,49 @@ import { createSecretHandler } from './secret_handler.js';
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', onMouseUp);
 
-            // 1. Temporarily hide the clone so we can see what is UNDER it
+            // 1. Temporarily hide clone to find element below
             clone.style.display = 'none';
-
-            // 2. Get the element directly under the mouse cursor
             const elementBelow = document.elementFromPoint(e.clientX, e.clientY);
-            
-            // 3. Bring the clone back (in case we didn't drop it successfully)
-            clone.style.display = 'flex';
+            clone.style.display = 'flex'; // Bring it back
 
-            // 4. Check if we dropped it on a Book Page
-            // We look for the closest ancestor with class 'my-page'
+            // 2. Find target page
             const targetPage = elementBelow ? elementBelow.closest('.my-page') : null;
 
             if (targetPage) {
-                // --- RE-PARENTING LOGIC ---
+                // --- CALCULATE RELATIVE POSITION ---
                 
-                // Move the original DOM element to the new page container
+                const pageRect = targetPage.getBoundingClientRect();
+                const cloneRect = clone.getBoundingClientRect();
+
+                // Calculate exactly where the clone is relative to the top-left of the page
+                // This accounts for the page being anywhere on screen
+                const relativeLeft = cloneRect.left - pageRect.left;
+                const relativeTop = cloneRect.top - pageRect.top;
+
+                // Apply these coordinates to the original note
+                originalNote.style.left = relativeLeft + 'px';
+                originalNote.style.top = relativeTop + 'px';
+                
+                // Ensure no transform is interfering
+                originalNote.style.transform = 'none';
+
+                // Move DOM element
                 targetPage.appendChild(originalNote);
                 
-                // Make it visible again
+                // Show it
                 originalNote.style.visibility = 'visible';
                 originalNote.style.opacity = '1';
                 
-                // Remove the floating clone
                 clone.remove();
                 
             } else {
-                // --- DROP FAILED (Not on a page) ---
-                
-                // Check if we are loosely over the book wrapper (for safety) or just outside
-                // For now, we just leave it floating.
-                
+                // --- DROP FAILED ---
                 clone.style.pointerEvents = 'auto';
-                
-                // Re-attach listener to the CLONE for the next drag
                 clone.onmousedown = (evt) => {
                     if (evt.button !== 0) return;
                     evt.preventDefault();
-                    
                     const newRect = clone.getBoundingClientRect();
-                    const newOffX = evt.clientX - newRect.left;
-                    const newOffY = evt.clientY - newRect.top;
-                    
-                    startDraggingFloatingNote(clone, originalNote, newOffX, newOffY);
+                    startDraggingFloatingNote(clone, originalNote, evt.clientX - newRect.left, evt.clientY - newRect.top);
                 };
             }
         };

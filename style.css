@@ -921,12 +921,13 @@ body{
     width: 80px;
     height: 80px;
     
-    /* --- NEW CENTERING LOGIC --- */
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%); 
-    /* --------------------------- */
-    
+    /* --- CHANGED: Remove Centering --- */
+    /* Default position for fresh notes (optional) */
+    left: 20px; 
+    top: 20px;
+    transform: none; 
+    /* --------------------------------- */
+
     background: linear-gradient(135deg, #fffacd 0%, #ffffe0 100%);
     border: 1px solid #ddd;
     border-radius: 2px;
@@ -936,7 +937,7 @@ body{
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     cursor: grab;
     user-select: none;
-    transition: opacity 0.2s; /* Removed transform transition to prevent conflict with centering */
+    transition: opacity 0.2s; 
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: pre-wrap;
