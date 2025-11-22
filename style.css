@@ -25,6 +25,7 @@
   /* **Full Book Height (1 page):** 1452px * scale-factor */
   --book-height: calc(1452px * var(--scale-factor)); 
    font-family: 'Share Tech Mono', ui-monospace, monospace;
+   --pda-depth: 26px; /* The thickness of the device */
 }
 
 html,body{
@@ -62,20 +63,22 @@ body{
    /* REMOVE absolute positioning rules */
    left: initial !important;
    top: initial !important;
-   perspective: 1000px; /* Gives depth to the flip */
+   perspective: 1500px; /* Gives depth to the flip */
     background: transparent; /* Remove background here, it moves to the inner faces */
     box-shadow: none; /* Shadow moves to the inner faces */
     padding: 0; /* Padding moves inside */
+    margin: auto;
 }
 .pda.powered-off{filter:brightness(0.3);} /* Dim when powered off */
+
 .pda-inner {
     position: relative;
     width: 100%;
     height: 100%;
-    text-align: center;
-    transition: transform 0.8s;
+    transition: transform 5s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Bouncy flip */
     transform-style: preserve-3d; /* Critical for 3D effect */
     border-radius: calc(var(--radius) + 6px);
+    transform-origin: 50% 50% calc(var(--pda-depth) / -2);
 }
 
 /* Class added by JS to trigger flip */
@@ -94,29 +97,78 @@ body{
     box-shadow: 0 8px 28px rgba(0,0,0,.7), 0 0 10px rgba(0,0,0,.4);
     /* Re-apply the outer frame gradient from the original .pda class */
     background: linear-gradient(180deg, rgb(70, 22, 57) 0%, #250b1e 100%);
-    
+    will-change: transform;
     /* Flex layout to center content (screen or screws) */
     display: flex;
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
     padding: 8px; /* Moved padding from .pda to faces */
+    -webkit-font-smoothing: antialiased;
 }
 
 /* 4. Specific Front Face Styles */
 .pda-front {
     z-index: 2;
-    transform: rotateY(0deg); /* Default position */
+    transform: rotateY(0deg);
+    background: linear-gradient(180deg, rgb(70, 22, 57) 0%, #250b1e 100%);
+    border: 1px solid #2a0d21;
 }
 
 /* 5. Specific Back Face Styles */
 .pda-back {
-    transform: rotateY(180deg); /* Start flipped away */
+    transform: rotateY(180deg) translateZ(calc(var(--pda-depth) / 2)); /* Start flipped away */
     background: linear-gradient(180deg, #2a0d21 0%, #1a0514 100%); /* Slightly darker back */
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+}
+.pda-wall {
+    position: absolute;
+    background: #180512; /* Dark casing color */
+    border: 1px solid rgba(0,0,0,0.3);
+    backface-visibility: hidden;
+    /* Lighting simulation */
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+}
+
+/* RIGHT SIDE */
+.pda-wall.right {
+    right: calc(var(--pda-depth) / -2); /* Center on the edge */
+    width: var(--pda-depth);
+    /* Make it shorter than 100% so it doesn't poke out of the rounded corners */
+    top: 12px; 
+    bottom: 12px; 
+    transform: rotateY(90deg);
+}
+
+/* LEFT SIDE */
+.pda-wall.left {
+    left: calc(var(--pda-depth) / -2);
+    width: var(--pda-depth);
+    top: 12px;
+    bottom: 12px;
+    transform: rotateY(-90deg);
+}
+
+/* TOP SIDE */
+.pda-wall.top {
+    top: calc(var(--pda-depth) / -2);
+    height: var(--pda-depth);
+    /* Make it narrower than 100% for corners */
+    left: 12px;
+    right: 12px;
+    transform: rotateX(90deg);
+}
+
+/* BOTTOM SIDE */
+.pda-wall.bottom {
+    bottom: calc(var(--pda-depth) / -2);
+    height: var(--pda-depth);
+    left: 12px;
+    right: 12px;
+    transform: rotateX(-90deg);
 }
 
 /* --- Back Panel Details --- */
@@ -343,6 +395,10 @@ body{
   box-shadow: inset 0 -6px 12px rgba(0,0,0,0.35);
   width: 535px;
   height: 380px;
+  transform: translateZ(0); 
+    backface-visibility: hidden; /* Helps Webkit/Chrome sharpen text */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .PDA-screen::before {
