@@ -943,6 +943,7 @@ body{
     right: 20px;
     top: 20px;
     z-index: 10;
+    transition: opacity 0.2s, transform 0.1s;
 }
 
 .book-note:hover {
@@ -967,31 +968,34 @@ body{
 
 /* Floating notes that have been dragged out */
 .floating-note {
-    position: absolute;
-    width: 100px;
-    height: 100px;
+    position: fixed; /* Changed from absolute to fixed for easier coordinate math */
+    z-index: 9999;   /* Above everything */
+    width: 80px;
+    height: 80px;
     background: linear-gradient(135deg, #ffeb3b 0%, #ffeb99 100%);
     border: 2px solid #f0c674;
     border-radius: 4px;
     padding: 10px;
     font-size: 13px;
     color: #333;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    cursor: move;
-    user-select: none;
-    pointer-events: all;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: pre-wrap;
-    word-break: break-word;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.4); /* Bigger shadow when floating */
+    cursor: grab;
+    
+    /* Flex to center text */
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     font-family: 'Comic Sans MS', cursive;
     font-weight: bold;
-    z-index: 501;
-    transition: box-shadow 0.2s;
+    
+    user-select: none;
+    box-sizing: border-box;
+    transform: scale(1.1); /* Pop effect */
+}
+
+.floating-note:active {
+    cursor: grabbing;
 }
 
 .floating-note:hover {

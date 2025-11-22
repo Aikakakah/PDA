@@ -230,9 +230,109 @@ import { createSecretHandler } from './secret_handler.js';
     function initializeBookNotes() {
         const bookNotes = document.querySelectorAll('.book-note');
         
+        // Initialize the original notes inside the book
         bookNotes.forEach(note => {
-            note.addEventListener('mousedown', handleNoteMouseDown);
+            note.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return; // Left click only
+                e.preventDefault();
+                e.stopPropagation(); // Don't flip the page
+
+                // 1. Create the Floating Copy
+                createFloatingNoteFrom(note, e.clientX, e.clientY);
+            });
         });
+    }
+    /**
+     * Spawns a floating copy of a note and starts dragging it immediately.
+     * @param {HTMLElement} originalNote - The note inside the book page.
+     * @param {number} startX - Mouse X position.
+     * @param {number} startY - Mouse Y position.
+     */
+    function createFloatingNoteFrom(originalNote, startX, startY) {
+        const rect = originalNote.getBoundingClientRect();
+        
+        // 1. Create Clone
+        const clone = document.createElement('div');
+        clone.classList.add('floating-note');
+        clone.textContent = originalNote.textContent;
+        clone.dataset.originalId = originalNote.dataset.noteId; // Link back to original
+        
+        // 2. Position exactly where the original is right now
+        clone.style.left = rect.left + 'px';
+        clone.style.top = rect.top + 'px';
+        
+        // 3. Add to Body (Fixed positioning)
+        document.body.appendChild(clone);
+
+        // 4. Hide Original (Use visibility so we don't break 3D page layout)
+        originalNote.style.visibility = 'hidden';
+        originalNote.style.opacity = '0';
+
+        // 5. Calculate offset so we drag from where we clicked
+        const offsetX = startX - rect.left;
+        const offsetY = startY - rect.top;
+
+        // 6. Start Dragging the Clone immediately
+        startDraggingFloatingNote(clone, originalNote, offsetX, offsetY);
+    }
+
+    /**
+     * Handles the logic for dragging an already-floating note.
+     */
+    function startDraggingFloatingNote(clone, originalNote, offsetX, offsetY) {
+        
+        // Mouse Move Handler
+        const onMouseMove = (e) => {
+            clone.style.left = (e.clientX - offsetX) + 'px';
+            clone.style.top = (e.clientY - offsetY) + 'px';
+        };
+
+        // Mouse Up Handler (Drop Logic)
+        const onMouseUp = (e) => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+
+            // CHECK DROP ZONE: The Book Widget
+            const bookWidget = document.querySelector('.book-widget');
+            const bookRect = bookWidget.getBoundingClientRect();
+
+            // Is mouse inside the book area?
+            const isOverBook = (
+                e.clientX >= bookRect.left && 
+                e.clientX <= bookRect.right &&
+                e.clientY >= bookRect.top && 
+                e.clientY <= bookRect.bottom
+            );
+
+            if (isOverBook) {
+                // SNAP BACK: Destroy clone, show original
+                clone.remove();
+                if (originalNote) {
+                    originalNote.style.visibility = 'visible';
+                    originalNote.style.opacity = '1';
+                }
+            } else {
+                // STAY FLOATING: Attach mousedown so we can move it again later
+                clone.style.pointerEvents = 'auto';
+                
+                // Re-attach listener to the CLONE for the next drag
+                clone.onmousedown = (evt) => {
+                    if (evt.button !== 0) return;
+                    evt.preventDefault();
+                    
+                    // Recalculate offset for the new drag
+                    const newRect = clone.getBoundingClientRect();
+                    const newOffX = evt.clientX - newRect.left;
+                    const newOffY = evt.clientY - newRect.top;
+                    
+                    startDraggingFloatingNote(clone, originalNote, newOffX, newOffY);
+                };
+            }
+        };
+
+        // Attach global listeners
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
     }
 
     function handleNoteMouseDown(e) {
@@ -352,10 +452,33 @@ import { createSecretHandler } from './secret_handler.js';
         if (!draggedNoteId) return;
         
         const noteId = draggedNoteId;
-        const bookNote = document.querySelector(`[data-note-id="${noteId}"]`);
+        
+        // --- NEW SNAPPING LOGIC START ---
+        const bookWidget = document.querySelector('.book-widget');
+        const bookRect = bookWidget.getBoundingClientRect();
+        
+        // Check if mouse was released within the boundaries of the book
+        const isOverBook = (
+            e.clientX >= bookRect.left &&
+            e.clientX <= bookRect.right &&
+            e.clientY >= bookRect.top &&
+            e.clientY <= bookRect.bottom
+        );
+
+        // If dropped on the book, "snap" it back in
+        if (isOverBook) {
+            removeFloatingNote(noteId);
+            // We return early because removeFloatingNote handles the cleanup
+            draggedNoteId = null; 
+            document.removeEventListener('mousemove', handleNoteDrag);
+            document.removeEventListener('mouseup', handleNoteMouseUp);
+            return; 
+        }
+        // --- NEW SNAPPING LOGIC END ---
+
         const floatingNote = floatingNotes.get(noteId);
         
-        if (bookNote) bookNote.classList.remove('dragging');
+        // If we didn't drop it on the book, just stop dragging but keep it floating
         if (floatingNote) floatingNote.classList.remove('dragging');
         
         document.removeEventListener('mousemove', handleNoteDrag);
