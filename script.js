@@ -301,17 +301,35 @@ import { createSecretHandler } from './secret_handler.js';
             const targetPage = elementBelow ? elementBelow.closest('.my-page') : null;
 
             if (targetPage) {
-                // --- CALCULATE RELATIVE POSITION ---
+                // --- CALCULATE & CLAMP POSITION ---
                 
                 const pageRect = targetPage.getBoundingClientRect();
                 const cloneRect = clone.getBoundingClientRect();
+                
+                // Dimensions
+                const noteWidth = cloneRect.width;
+                const noteHeight = cloneRect.height;
+                const pageWidth = pageRect.width;
+                const pageHeight = pageRect.height;
+                
+                // Define a small padding so it doesn't touch the very edge
+                const padding = 5; 
 
-                // Calculate exactly where the clone is relative to the top-left of the page
-                // This accounts for the page being anywhere on screen
-                const relativeLeft = cloneRect.left - pageRect.left;
-                const relativeTop = cloneRect.top - pageRect.top;
+                // 1. Calculate raw relative position
+                let relativeLeft = cloneRect.left - pageRect.left;
+                let relativeTop = cloneRect.top - pageRect.top;
 
-                // Apply these coordinates to the original note
+                // 2. Clamp Horizontal (Left/Right & Spine)
+                // prevent Left < padding
+                // prevent Right > pageWidth - noteWidth - padding
+                relativeLeft = Math.max(padding, Math.min(relativeLeft, pageWidth - noteWidth - padding));
+
+                // 3. Clamp Vertical (Top/Bottom)
+                // prevent Top < padding
+                // prevent Bottom > pageHeight - noteHeight - padding
+                relativeTop = Math.max(padding, Math.min(relativeTop, pageHeight - noteHeight - padding));
+
+                // 4. Apply valid coordinates
                 originalNote.style.left = relativeLeft + 'px';
                 originalNote.style.top = relativeTop + 'px';
                 
