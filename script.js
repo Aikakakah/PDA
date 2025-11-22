@@ -851,6 +851,8 @@ function playRingtone() {
         // Initialize book notes dragging
         initializeBookNotes();
 
+        initializeDraggableItems();
+
     // Pan button functionality
     // Keep the primary control accessible by id, but wire all pan-down buttons by class
     const panDownBtn = el('panDownBtn');
@@ -925,5 +927,83 @@ function playRingtone() {
         });
     }
     });
+
+    function initializeDraggableItems() {
+        const items = document.querySelectorAll('.drawer-item');
+        const drawerZone = document.getElementById('drawerDropZone');
+        const drawerPanel = document.querySelector('.top-right-drawer-panel');
+    
+        items.forEach(item => {
+            item.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return; // Left click only
+    
+                e.preventDefault(); // Prevent text selection
+    
+                // 1. Calculate initial offset
+                const rect = item.getBoundingClientRect();
+                const offsetX = e.clientX - rect.left;
+                const offsetY = e.clientY - rect.top;
+    
+                // 2. State tracking
+                const wasFloating = item.classList.contains('floating');
+                
+                // 3. If it was inside the drawer, we need to "pop" it out to body
+                // so it can move freely over everything without being clipped or moved by drawer transforms
+                if (!wasFloating) {
+                    // Match the position exactly where it sits currently
+                    item.style.left = rect.left + 'px';
+                    item.style.top = rect.top + 'px';
+                    item.style.width = rect.width + 'px'; // Maintain size
+                    item.style.height = rect.height + 'px';
+                    
+                    item.classList.add('floating');
+                    document.body.appendChild(item); // Move to body
+                }
+    
+                // 4. Drag Handler
+                const onMouseMove = (moveEvent) => {
+                    item.style.left = (moveEvent.clientX - offsetX) + 'px';
+                    item.style.top = (moveEvent.clientY - offsetY) + 'px';
+                };
+    
+                // 5. Drop Handler
+                const onMouseUp = (upEvent) => {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+    
+                    // Check if we dropped it inside the OPEN drawer
+                    const drawerRect = drawerPanel.getBoundingClientRect();
+                    
+                    // Logic: Is the mouse within the drawer bounds?
+                    // And is the drawer actually open? (Optimization: check class)
+                    const isOverDrawer = (
+                        upEvent.clientX >= drawerRect.left &&
+                        upEvent.clientX <= drawerRect.right &&
+                        upEvent.clientY >= drawerRect.top &&
+                        upEvent.clientY <= drawerRect.bottom
+                    );
+    
+                    if (isOverDrawer && drawerPanel.classList.contains('open')) {
+                        // DOCK IT BACK IN
+                        item.classList.remove('floating');
+                        // Remove manual positioning so Flexbox takes over
+                        item.style.left = '';
+                        item.style.top = '';
+                        item.style.width = '';
+                        item.style.height = '';
+                        
+                        // Move DOM element back into drawer container
+                        drawerZone.appendChild(item);
+                    } else {
+                        // LEAVE IT FLOATING
+                        // It stays appended to body with absolute positioning
+                    }
+                };
+    
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+        });
+    }
 
 })();
