@@ -1203,17 +1203,40 @@ function playRingtone() {
                 if (e.button !== 0) return;
                 e.preventDefault();
 
+                // 1. CHECK IF WE ARE REMOVING FROM SLOT
+                let isUnplacing = false;
+                if (item.classList.contains('placed')) {
+                    isUnplacing = true;
+                    item.classList.remove('placed');
+                    
+                    // Reset the Power Button if it showed an error
+                    if (powerBtn && powerBtn.textContent === "Voltage Error") {
+                        powerBtn.textContent = "System Error";
+                        powerBtn.style.backgroundColor = "#555";
+                    }
+                }
+
                 const rect = item.getBoundingClientRect();
                 const offsetX = e.clientX - rect.left;
                 const offsetY = e.clientY - rect.top;
                 const wasFloating = item.classList.contains('floating');
 
-                // Pop out of drawer if needed
+                // Pop out of drawer OR slot if needed
                 if (!wasFloating) {
                     item.style.left = rect.left + 'px';
                     item.style.top = rect.top + 'px';
-                    item.style.width = rect.width + 'px';
-                    item.style.height = rect.height + 'px';
+                    
+                    // CRITICAL FIX: If we just pulled it from the slot, 
+                    // force dimensions back to normal (horizontal)
+                    if (isUnplacing) {
+                        item.style.width = '40px'; 
+                        item.style.height = '10px';
+                    } else {
+                        // Otherwise (from drawer), keep current visual size
+                        item.style.width = rect.width + 'px';
+                        item.style.height = rect.height + 'px';
+                    }
+
                     item.classList.add('floating');
                     document.body.appendChild(item);
                 }
@@ -1232,7 +1255,7 @@ function playRingtone() {
                         screws.forEach(screw => {
                             if (!screw.classList.contains('removed') && isOverlapping(item, screw)) {
                                 screw.classList.add('removed');
-                                const a = new Audio('/Audio/click_fast.ogg'); // Optional sound
+                                const a = new Audio('/Audio/click_fast.ogg'); 
                                 // a.play().catch(()=>{});
                                 checkPanelStatus();
                             }
@@ -1245,22 +1268,31 @@ function playRingtone() {
                         if (backPanel.classList.contains('detached') && isOverlapping(item, resistorSlot)) {
                             const ohms = item.dataset.ohms;
                             
-                            // Snap to slot
+                            // --- PLACEMENT LOGIC ---
                             item.style.position = 'absolute';
                             item.classList.remove('floating');
-                            // Clear transforms from drag
-                            item.style.left = '0';
-                            item.style.top = '0';
-                            item.style.transform = 'none';
+                            
+                            // CLEAR inline styles so CSS .placed class handles centering/rotation
+                            item.style.left = '';
+                            item.style.top = '';
+                            item.style.width = ''; 
+                            item.style.height = '';
+                            
+                            // Clear drag transforms
+                            item.style.transform = ''; 
+
+                            // Apply rotation/centering class
+                            item.classList.add('placed'); 
                             
                             // Append to slot
-                            resistorSlot.innerHTML = ''; // Clear previous
+                            resistorSlot.innerHTML = ''; 
                             resistorSlot.appendChild(item);
+                            // -----------------------------------------------------
 
                             if (ohms === '220') {
                                 repairPDA();
                             } else {
-                                // Wrong resistor effect (optional)
+                                // Wrong resistor effect
                                 if(powerBtn) {
                                     powerBtn.textContent = "Voltage Error";
                                     powerBtn.style.backgroundColor = "#a00";
@@ -1269,8 +1301,7 @@ function playRingtone() {
                             return; // Stop here, don't return to drawer
                         }
                     }
-
-                    // 3. DRAWER RETURN LOGIC
+                    
                     const drawerRect = drawerPanel.getBoundingClientRect();
                     const isOverDrawer = (
                         upEvent.clientX >= drawerRect.left &&
@@ -1281,10 +1312,15 @@ function playRingtone() {
 
                     if (isOverDrawer && drawerPanel.classList.contains('open')) {
                         item.classList.remove('floating');
+                        
+                        // FIX: Clear position so it rejoins the flex/flow layout
+                        item.style.position = ''; 
+                        
                         item.style.left = '';
                         item.style.top = '';
                         item.style.width = '';
                         item.style.height = '';
+                        item.style.transform = ''; // Ensure no rotation/scale remains
                         
                         // Return to specific container if it's a resistor
                         if(item.classList.contains('resistor-prop')){

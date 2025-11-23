@@ -146,7 +146,7 @@ body{
 /* 5. Specific Back Face Styles */
 .pda-back {
     transform: rotateY(180deg) translateZ(var(--pda-depth));
-    background: linear-gradient(180deg, #2a0d21 0%, #1a0514 100%);
+    background: linear-gradient(180deg, rgb(70, 22, 57) 0%, #250b1e 100%);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -197,6 +197,7 @@ body{
 .pda-back-panel {
     width: 50%;
     height: 50%;
+    top: 30%;
     background: #767687;
     border: 2px solid #333;
     border-radius: 8px;
@@ -224,16 +225,19 @@ body{
 }
 .pda-circuit-board {
     position: absolute;
-    width: 60%;
-    height: 60%;
-    background-color: #0e3c0e; /* Dark PCB Green */
-    background-image: 
-        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
-    background-size: 10px 10px;
+    width: 48%;
+    height: 46%;
+    top: 50%;
+    /* Change the background color to match the SVG base */
+    background-color: #0e3c0e; 
+    
+    /* Load your new image */
+    background-image: url('Images/board.svg'); 
+    background-size: cover; /* Or 'contain' depending on preference */
+    
     border: 2px solid #0a2a0a;
     border-radius: 4px;
-    z-index: 1; /* Lower than panel (which is z-index 2 implicitly or explicitly) */
+    z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -252,34 +256,66 @@ body{
     align-items: center;
     justify-content: center;
     position: relative;
+    right: 38%;
+    top: -3%;
 }
 .coin-text { font-size: 6px; color: #7f8c8d; font-family: sans-serif; }
-.pcb-trace {
+/* 
+/* 5. Vias (Little drill holes) */
+.via {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 2px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #0a2a0a; /* Dark hole */
+    border: 1px solid #b87333; /* Copper ring */
+}
+.via.v1 { top: 18%; left: 42%; }
+.via.v2 { bottom: 30%; right: 12%; }
+.via.v3 { top: 60%; left: 15%; }
+
+/* --- Existing Functional Styles (Keep these) --- */
+.coin-cell {
+    /* ... keep your existing coin-cell styles ... */
+    width: 40px;
     height: 40px;
-    background: #b87333; /* Copper */
-    transform: translate(-50%, 15px);
-    z-index: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #e6e6e6, #bdc3c7);
+    border: 3px solid #95a5a6;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+    margin-bottom: 5px; /* Adjust margin */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 2; /* Sit above traces */
 }
 
+.resistor-slot {
+    width: 10px;
+    height: 40px;
+    border: 1px dashed rgba(255,255,255,0.3);
+    background: rgba(0,0,0,0.2);
+    position: relative; /* Essential for absolute child positioning */
+    margin-top: 15px;
+    z-index: 2;
+    right: 34%;
+    top: -5%;
+}
+
+.pcb-label {
+    /* ... keep existing ... */
+    font-size: 6px;
+    color: #bdc3c7;
+    margin-top: 2px;
+    font-family: monospace;
+    z-index: 2;
+}
 .pcb-label {
     font-size: 6px;
     color: #bdc3c7;
     margin-bottom: 2px;
     font-family: monospace;
-}
-
-/* The Missing Slot */
-.resistor-slot {
-    width: 40px;
-    height: 10px;
-    border: 1px dashed rgba(255,255,255,0.3);
-    background: rgba(0,0,0,0.2);
-    position: relative;
-    margin-top: 10px;
 }
 
 /* --- Resistor Visuals --- */
@@ -329,6 +365,19 @@ body{
     width: 4px;
     background: var(--band-color);
     transform: translateX(-50%);
+}
+/* --- NEW: Resistor Rotation when placed in slot --- */
+.resistor-prop.placed {
+    position: absolute;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) rotate(90deg) !important;
+    
+    /* CHANGE: Allow pointer events so it can be removed */
+    pointer-events: auto; 
+    
+    transition: transform 0.3s ease-out;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
 }
 /* Manufacturer Label on back */
 .pda-label {
