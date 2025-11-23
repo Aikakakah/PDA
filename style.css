@@ -84,7 +84,21 @@ body{
    margin: auto;
 }
 
-.pda.powered-off{filter:brightness(0.3);} /* Dim when powered off */
+.PDA-screen.screen-off .content,
+.PDA-screen.screen-off .header,
+.PDA-screen.screen-off .footer {
+    filter: brightness(0.1) grayscale(1);
+    opacity: 0.2; /* Make it look like a dead LCD */
+    pointer-events: none; /* Prevent clicking buttons when screen is off */
+}
+
+/* Ensure the power overlay (the "System Error" screen) remains visible and bright */
+.power-overlay {
+    z-index: 100;
+    /* Ensure the overlay isn't affected by the screen dimming if it sits inside .content */
+    filter: none !important; 
+    opacity: 1 !important;
+}
 
 .pda-inner {
     position: relative;
@@ -189,6 +203,7 @@ body{
     position: relative;
     box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
     transition: transform 0.6s cubic-bezier(0.6, -0.28, 0.735, 0.045), opacity 0.6s;
+    z-index: 5;
 }
 .pda-back-panel.unlocked {
     cursor: pointer; /* Let user know it's clickable */
@@ -202,9 +217,118 @@ body{
 
 /* 3. Panel Detached State */
 .pda-back-panel.detached {
-    transform: translateY(150%) rotate(15deg); /* Drop down and rotate */
-    opacity: 0;
+    /* Move down 300px and rotate */
+    transform: translateY(300px) rotate(15deg); 
+    opacity: 1; /* Keep visible so we see it "on the table" */
     pointer-events: none;
+}
+.pda-circuit-board {
+    position: absolute;
+    width: 60%;
+    height: 60%;
+    background-color: #0e3c0e; /* Dark PCB Green */
+    background-image: 
+        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 10px 10px;
+    border: 2px solid #0a2a0a;
+    border-radius: 4px;
+    z-index: 1; /* Lower than panel (which is z-index 2 implicitly or explicitly) */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+}
+.coin-cell {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #e6e6e6, #bdc3c7);
+    border: 3px solid #95a5a6;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+.coin-text { font-size: 6px; color: #7f8c8d; font-family: sans-serif; }
+.pcb-trace {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2px;
+    height: 40px;
+    background: #b87333; /* Copper */
+    transform: translate(-50%, 15px);
+    z-index: 0;
+}
+
+.pcb-label {
+    font-size: 6px;
+    color: #bdc3c7;
+    margin-bottom: 2px;
+    font-family: monospace;
+}
+
+/* The Missing Slot */
+.resistor-slot {
+    width: 40px;
+    height: 10px;
+    border: 1px dashed rgba(255,255,255,0.3);
+    background: rgba(0,0,0,0.2);
+    position: relative;
+    margin-top: 10px;
+}
+
+/* --- Resistor Visuals --- */
+.resistor-kit {
+    display: flex;
+    gap: 10px;
+}
+
+.resistor-prop {
+    width: 40px;
+    height: 10px;
+    position: relative;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* The wire line running through */
+.resistor-prop::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: #bdc3c7; /* Silver wire */
+    z-index: 0;
+}
+
+/* The main beige body */
+.resistor-body {
+    width: 24px;
+    height: 8px;
+    background: #f5deb3; /* Beige */
+    border-radius: 2px;
+    position: relative;
+    z-index: 1;
+    box-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+/* The colored band (variable via CSS var) */
+.resistor-body::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--band-color);
+    transform: translateX(-50%);
 }
 /* Manufacturer Label on back */
 .pda-label {
@@ -1268,6 +1392,12 @@ body{
     bottom: 10px;
     left: 50%;
     transform: translateX(-50%);
+}
+.pan-button.flip-external {
+    top: 20px;
+    left: 20px;
+    /* Ensure it sits above the book and PDA */
+    z-index: 2000; 
 }
 
 .top-right-drawer-panel {

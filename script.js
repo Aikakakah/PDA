@@ -952,21 +952,40 @@ function playRingtone() {
         }
 
         // Power / Eject
-        if (btnEject && powerOverlay && pda) {
-            btnEject.addEventListener('click', () => {
-                powerOverlay.classList.remove('hidden');
-                pda.classList.add('powered-off');
-                state.poweredOn = false;
-            });
+        const pdaScreen = document.querySelector('.PDA-screen');
+
+        // Helper to turn screen off
+        const turnOffScreen = () => {
+            if(powerOverlay) powerOverlay.classList.remove('hidden');
+            if(pdaScreen) pdaScreen.classList.add('screen-off'); // Target screen only
+            state.poweredOn = false;
+        };
+
+        // Helper to turn screen on
+        const turnOnScreen = () => {
+            if(powerOverlay) powerOverlay.classList.add('hidden');
+            if(pdaScreen) pdaScreen.classList.remove('screen-off');
+            state.poweredOn = true;
+        };
+
+        // 1. Initial State Check (Apply the off class on load)
+        if(!state.poweredOn) {
+            turnOffScreen();
         }
-        if (powerOn && powerOverlay && pda) {
-            powerOn.addEventListener('click', () => {
-                powerOverlay.classList.add('hidden');
-                pda.classList.remove('powered-off');
-                state.poweredOn = true;
+
+        // 2. Eject Button Listener
+        if (btnEject) {
+            btnEject.addEventListener('click', () => {
+                turnOffScreen();
             });
         }
 
+        // 3. Power On Button Listener
+        if (powerOn) {
+            powerOn.addEventListener('click', () => {
+                turnOnScreen();
+            });
+        }
         // Ringtone modal
         const selectAllText = (event) => {
             event.target.select();
@@ -1098,11 +1117,24 @@ function playRingtone() {
         const drawerZone = document.getElementById('drawerDropZone');
         const drawerPanel = document.querySelector('.top-right-drawer-panel');
 
-        // Reference to PDA parts
+        // PDA References
         const screws = document.querySelectorAll('.screw');
         const backPanel = document.querySelector('.pda-back-panel');
+        const resistorSlot = document.getElementById('resistorSlot');
+        const powerBtn = document.getElementById('powerOn');
+        
+        // 1. Break the PDA initially
+        state.poweredOn = false; 
+        if(pda) pda.classList.add('powered-off');
+        if(powerOverlay) powerOverlay.classList.remove('hidden');
+        if(powerBtn) {
+            powerBtn.disabled = true;
+            powerBtn.textContent = "System Error";
+            powerBtn.style.backgroundColor = "#555";
+            powerBtn.style.cursor = "not-allowed";
+        }
 
-        // Helper: Simple rectangle collision detection
+        // Helper: Collision Detection
         const isOverlapping = (el1, el2) => {
             const rect1 = el1.getBoundingClientRect();
             const rect2 = el2.getBoundingClientRect();
@@ -1114,41 +1146,76 @@ function playRingtone() {
             );
         };
 
-        // Helper: Check if back panel should open
+        // Helper: Check if panel can be opened
         const checkPanelStatus = () => {
             const remaining = document.querySelectorAll('.screw:not(.removed)').length;
             if (remaining === 0) {
                 backPanel.classList.add('unlocked');
-                // Add one-time click listener to remove panel
                 backPanel.addEventListener('click', function removePanel() {
                     if (this.classList.contains('unlocked')) {
                         this.classList.add('detached');
-                        // Optional: Remove listener after action
                         this.removeEventListener('click', removePanel);
                     }
                 });
             }
         };
 
+        // Helper: Repair Success
+        // Helper: Repair Success
+        const repairPDA = () => {
+            // 1. Visual cue (Green glow on slot)
+            const slot = document.getElementById('resistorSlot');
+            slot.style.boxShadow = "0 0 15px #0f0, inset 0 0 10px #0f0"; 
+            
+            // 2. Animate Panel Back On
+            setTimeout(() => {
+                backPanel.classList.remove('detached');
+                backPanel.classList.remove('unlocked');
+                // Optional: Sound effect
+                // new Audio('/Audio/click_fast.ogg').play().catch(()=>{});
+            }, 600);
+
+            // 3. Auto Flip Back to Front
+            setTimeout(() => {
+                // Remove the 'flipped' class to return to front view
+                if(pda) pda.classList.remove('flipped');
+            }, 1200); // Wait for panel to settle, then flip
+
+            // 4. Fix the Power Button Logic & Auto Boot
+            if(powerBtn) {
+                powerBtn.disabled = false;
+                powerBtn.textContent = "Power On";
+                powerBtn.style.backgroundColor = ""; 
+                powerBtn.style.cursor = "pointer";
+                
+                // Boot up AFTER flipping back to front
+                setTimeout(() => {
+                    if(!state.poweredOn) {
+                        powerBtn.click();
+                    }
+                }, 1800); // Wait until flip animation is mostly done
+            }
+        };
+
+        // Drag Logic
         items.forEach(item => {
             item.addEventListener('mousedown', (e) => {
-                if (e.button !== 0) return; 
-                e.preventDefault(); 
+                if (e.button !== 0) return;
+                e.preventDefault();
 
                 const rect = item.getBoundingClientRect();
                 const offsetX = e.clientX - rect.left;
                 const offsetY = e.clientY - rect.top;
-
                 const wasFloating = item.classList.contains('floating');
-                
+
+                // Pop out of drawer if needed
                 if (!wasFloating) {
                     item.style.left = rect.left + 'px';
                     item.style.top = rect.top + 'px';
-                    item.style.width = rect.width + 'px'; 
+                    item.style.width = rect.width + 'px';
                     item.style.height = rect.height + 'px';
-                    
                     item.classList.add('floating');
-                    document.body.appendChild(item); 
+                    document.body.appendChild(item);
                 }
 
                 const onMouseMove = (moveEvent) => {
@@ -1160,20 +1227,50 @@ function playRingtone() {
                     document.removeEventListener('mousemove', onMouseMove);
                     document.removeEventListener('mouseup', onMouseUp);
 
-                    // --- LOGIC: CHECK SCREW INTERACTION ---
-                    // Only valid if we are holding the screwdriver
+                    // 1. SCREWDRIVER LOGIC
                     if (item.classList.contains('screwdriver-prop')) {
                         screws.forEach(screw => {
-                            // If we dropped the screwdriver over a screw that isn't removed yet
                             if (!screw.classList.contains('removed') && isOverlapping(item, screw)) {
                                 screw.classList.add('removed');
+                                const a = new Audio('/Audio/click_fast.ogg'); // Optional sound
+                                // a.play().catch(()=>{});
                                 checkPanelStatus();
                             }
                         });
                     }
-                    // --------------------------------------
 
-                    // Logic: Check if dropped back in drawer
+                    // 2. RESISTOR LOGIC
+                    if (item.classList.contains('resistor-prop')) {
+                        // Only works if panel is gone
+                        if (backPanel.classList.contains('detached') && isOverlapping(item, resistorSlot)) {
+                            const ohms = item.dataset.ohms;
+                            
+                            // Snap to slot
+                            item.style.position = 'absolute';
+                            item.classList.remove('floating');
+                            // Clear transforms from drag
+                            item.style.left = '0';
+                            item.style.top = '0';
+                            item.style.transform = 'none';
+                            
+                            // Append to slot
+                            resistorSlot.innerHTML = ''; // Clear previous
+                            resistorSlot.appendChild(item);
+
+                            if (ohms === '220') {
+                                repairPDA();
+                            } else {
+                                // Wrong resistor effect (optional)
+                                if(powerBtn) {
+                                    powerBtn.textContent = "Voltage Error";
+                                    powerBtn.style.backgroundColor = "#a00";
+                                }
+                            }
+                            return; // Stop here, don't return to drawer
+                        }
+                    }
+
+                    // 3. DRAWER RETURN LOGIC
                     const drawerRect = drawerPanel.getBoundingClientRect();
                     const isOverDrawer = (
                         upEvent.clientX >= drawerRect.left &&
@@ -1183,15 +1280,18 @@ function playRingtone() {
                     );
 
                     if (isOverDrawer && drawerPanel.classList.contains('open')) {
-                        // DOCK IT BACK IN
                         item.classList.remove('floating');
                         item.style.left = '';
                         item.style.top = '';
                         item.style.width = '';
                         item.style.height = '';
-                        drawerZone.appendChild(item);
-                    } else {
-                        // LEAVE IT FLOATING (so user can move to next screw easily)
+                        
+                        // Return to specific container if it's a resistor
+                        if(item.classList.contains('resistor-prop')){
+                             document.querySelector('.resistor-kit').appendChild(item);
+                        } else {
+                             drawerZone.appendChild(item);
+                        }
                     }
                 };
 
