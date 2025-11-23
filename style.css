@@ -275,6 +275,7 @@ body{
     transition: opacity 0.5s ease; /* Smooth fade in */
     pointer-events: none; /* CRITICAL: Allows clicks to pass through to the slot/screws */
     z-index: 1; /* Sit above the base board background */
+    transition: opacity 0.3s ease-in-out;
 }
 
 .overlay-battery {
@@ -288,6 +289,10 @@ body{
 .pcb-overlay.active {
     opacity: 1; /* Visible when active class is added */
 }
+.overlay-communication { background-image: url('Images/board-communication.svg'); }
+.overlay-notekeeper    { background-image: url('Images/board-notekeeper.svg'); }
+.overlay-speakers      { background-image: url('Images/board-speakers.svg'); }
+.overlay-terminal      { background-image: url('Images/board-terminal.svg'); }
 
 .coin-cell {
     width: 24px;
