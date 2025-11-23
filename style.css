@@ -348,23 +348,29 @@ body{
 .resistor-body {
     width: 24px;
     height: 8px;
-    background: #f5deb3; /* Beige */
     border-radius: 2px;
     position: relative;
     z-index: 1;
     box-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    
+    /* Define the 4-band pattern using a linear gradient */
+    /* Beige > Band1 > Beige > Band2 > Beige > Band3 > Beige > Band4 > Beige */
+    background: linear-gradient(to right,
+        #f5deb3 0%,   #f5deb3 15%, 
+        var(--b1) 15%, var(--b1) 25%,
+        #f5deb3 25%,  #f5deb3 35%,
+        var(--b2) 35%, var(--b2) 45%,
+        #f5deb3 45%,  #f5deb3 55%,
+        var(--b3) 55%, var(--b3) 65%,
+        #f5deb3 65%,  #f5deb3 80%,
+        var(--b4) 80%, var(--b4) 90%,
+        #f5deb3 90%,  #f5deb3 100%
+    );
 }
 
 /* The colored band (variable via CSS var) */
 .resistor-body::after {
-    content: '';
-    position: absolute;
-    left: 50%;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: var(--band-color);
-    transform: translateX(-50%);
+    display: none;
 }
 /* --- NEW: Resistor Rotation when placed in slot --- */
 .resistor-prop.placed {
