@@ -195,13 +195,13 @@ body{
 /* --- Back Panel Details --- */
 
 .pda-back-panel {
+    position: absolute;
     width: 50%;
     height: 50%;
-    top: 30%;
+    top: 48%;
     background: #767687;
     border: 2px solid #333;
     border-radius: 8px;
-    position: relative;
     box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
     transition: transform 0.6s cubic-bezier(0.6, -0.28, 0.735, 0.045), opacity 0.6s;
     z-index: 5;
@@ -223,6 +223,24 @@ body{
     opacity: 1; /* Keep visible so we see it "on the table" */
     pointer-events: none;
 }
+
+.panel-screw-hole {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #080808; /* Very dark grey/black */
+    
+    /* Inset shadow makes it look like a hole */
+    box-shadow: inset 1px 1px 2px rgba(0,0,0,1), 0 0 0 1px rgba(255,255,255,0.05);
+    z-index: 2;
+}
+
+.panel-screw-hole.tl { top: 10px; left: 10px; }
+.panel-screw-hole.tr { top: 10px; right: 10px; }
+.panel-screw-hole.bl { bottom: 10px; left: 10px; }
+.panel-screw-hole.br { bottom: 10px; right: 10px; }
+
 .pda-circuit-board {
     position: absolute;
     width: 48%;
@@ -402,40 +420,191 @@ body{
     opacity: 0.8;
 }
 
-/* The 4 Screws */
+/* 1. Animation for the Parent .screw (Only handles the final drop and fade) */
+@keyframes unscrew-anim {
+    0% {
+        opacity: 1;
+    }
+    20% {
+        opacity: 1;
+    }
+    40% {
+    }
+    100% {
+        /* Move slightly off-screen UPWARD (negative Y) and fade */
+        transform: translateY(-50px); 
+        opacity: 0;
+    }
+}
+
+/* 2. Keyframe for Head Rotation AND Lift (Applied to .screw-head) */
+@keyframes head-spin-anim {
+    0% {
+        transform: translateZ(0) scale(1) rotate(var(--start-rot)); 
+    }
+    20% {
+        transform: rotate(var(--start-rot)); 
+    }
+    40% {
+        /* Start spinning from the current angle */
+        transform: rotate(calc(var(--start-rot) + 180deg)); 
+    }
+    100% {
+        /* Spin 2 full rotations + original angle */
+        transform: rotate(calc(var(--start-rot) + 720deg)); 
+    }
+}
+
+/* 3. Keyframe for Thread movement and fade (No change needed) */
+@keyframes unscrew-thread-lift {
+    0% { 
+        opacity: 0; 
+        /* Added translateZ(-1px) */
+        transform: translateX(-50%) translateY(0) translateZ(-1px); 
+    }
+    10% { 
+        opacity: 1; 
+    }
+    50% {
+        opacity: 1; 
+        /* Added translateZ(-1px) */
+        transform: translateX(-50%) translateY(-5px) translateZ(-1px); 
+    }
+    100% { 
+        opacity: 0; 
+        /* Added translateZ(-1px) */
+        transform: translateX(-50%) translateY(-10px) translateZ(-1px); 
+    }
+}
+/* ----------------------------------------------------------------- */
+
+/* 3. Base Screw (Parent) - Handles position and overall animation */
 .screw {
     position: absolute;
     width: 12px;
     height: 12px;
+    /* REMOVED background, border-radius, box-shadow from here */
+    z-index: 10;
+    transform-style: preserve-3d;
+    perspective: 50px; 
+}
+
+/* Apply base rotation for positioning on the board (e.g., tl, tr, etc.) */
+.screw.tl { top: 10px; left: 10px; --start-rot: 45deg; }
+.screw.tr { top: 10px; right: 10px; --start-rot: 15deg; }
+.screw.bl { bottom: 10px; left: 10px; --start-rot: 90deg; }
+.screw.br { bottom: 10px; right: 10px; --start-rot: 30deg; }
+
+/* 4. Removed State - Targets the parent to start the final drop */
+.screw.removed {
+    animation: unscrew-anim 0.6s ease-in forwards;
+    pointer-events: none;
+}
+/* ----------------------------------------------------------------- */
+
+/* 5. NEW: Screw Head Class */
+.screw-head {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    /* MOVED Visuals Here: */
     background: radial-gradient(circle, #bdc3c7 0%, #7f8c8d 100%);
     border-radius: 50%;
     box-shadow: 0 1px 1px rgba(0,0,0,0.5);
-    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    
+    z-index: 2; 
+    transform: rotate(var(--start-rot));
+    /* Important: Ensures the background covers the thread */
+    transform-style: preserve-3d; 
 }
 
-/* Screw Head (The Cross/Phillips pattern) */
-.screw::after, .screw::before {
+/* 7. Screw Head Cross Pattern (Using ::before & ::after on the new class) */
+.screw-head::after, .screw-head::before {
     content: '';
     position: absolute;
     top: 50%;
     left: 50%;
     background: #555;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) rotate(45deg);
 }
-.screw::after { width: 8px; height: 2px; }
-.screw::before { width: 2px; height: 8px; }
-
-/* Screw Positions */
-.screw.tl { top: 10px; left: 10px; transform: rotate(45deg); }
-.screw.tr { top: 10px; right: 10px; transform: rotate(15deg); }
-.screw.bl { bottom: 10px; left: 10px; transform: rotate(90deg); }
-.screw.br { bottom: 10px; right: 10px; transform: rotate(30deg); }
-
-.screw.removed {
-    transform: scale(0.5) rotate(-360deg); /* Spin out */
-    opacity: 0;
-    pointer-events: none; /* Prevent further interaction */
+/* Cross Line 1 */
+.screw-head::after { 
+    width: 8px;   /* Changed from 8px */
+    height: 2px;  /* Changed from 2px */
 }
+/* Cross Line 2 */
+.screw-head::before { 
+    width: 2px;   /* Changed from 2px */
+    height: 8px;  /* Changed from 8px */
+}
+
+/* 8. NEW: Apply Head Rotation AND LIFT when parent is removed */
+.screw.removed .screw-head {
+    animation: head-spin-anim 0.6s ease-out forwards;
+}
+
+/* 9. Screw Thread Class */
+.screw-thread {
+    position: absolute;
+    top: 100%; 
+    left: 50%;
+    width: 5px; 
+    height: 15px;
+    background: repeating-linear-gradient(
+        180deg,
+        #7f8c8d, 
+        #7f8c8d 1px,
+        #555 1px, 
+        #555 2px
+    );
+    opacity: 0; 
+    z-index: 1; 
+    
+    /* Center it AND push it back 1 pixel in 3D space */
+    transform: translateX(-50%) translateZ(-1px);
+}
+
+/* 10. Threads Animation Targeting */
+.screw.removed .screw-thread {
+    animation: unscrew-thread-lift 0.6s ease-out forwards;
+}
+
+.screw-hole {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #080808; /* Very dark grey/black */
+    
+    /* Inset shadow makes it look like a hole */
+    box-shadow: inset 1px 1px 2px rgba(0,0,0,1), 0 0 0 1px rgba(255,255,255,0.05);
+    z-index: 2;
+}
+
+/* Position holes (Relative to the Chassis Outline) */
+.screw-hole.tl { top: 10px; left: 10px; }
+.screw-hole.tr { top: 10px; right: 10px; }
+.screw-hole.bl { bottom: 10px; left: 10px; }
+.screw-hole.br { bottom: 10px; right: 10px; }
+
+.pda-chassis-outline {
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    top: 48%;
+    left: 50%;
+    transform: translateX(-50%);
+    
+    /* Visuals for the recessed area */
+    border: 2px solid #1a0514; 
+    background: rgba(0, 0, 0, 0.3); /* Darkens the circuit board behind it */
+    border-radius: 8px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+    
+    z-index: 1; /* Sits above circuit board, below panel */
+    pointer-events: none; /* Allows clicking resistors on the board through the frame */
+}
+
 /* Flip Button (Invisible clickable area or specific button) */
 /* We'll reuse the existing UI buttons, but this class is for the back-to-front button */
 .flip-back-btn {
