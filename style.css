@@ -188,8 +188,24 @@ body{
     border-radius: 8px;
     position: relative;
     box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+    transition: transform 0.6s cubic-bezier(0.6, -0.28, 0.735, 0.045), opacity 0.6s;
+}
+.pda-back-panel.unlocked {
+    cursor: pointer; /* Let user know it's clickable */
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1), inset 0 0 20px rgba(0,0,0,0.8);
+    border-color: #555;
 }
 
+.pda-back-panel.unlocked:hover {
+    border-color: var(--accent);
+}
+
+/* 3. Panel Detached State */
+.pda-back-panel.detached {
+    transform: translateY(150%) rotate(15deg); /* Drop down and rotate */
+    opacity: 0;
+    pointer-events: none;
+}
 /* Manufacturer Label on back */
 .pda-label {
     position: absolute;
@@ -215,6 +231,7 @@ body{
     background: radial-gradient(circle, #bdc3c7 0%, #7f8c8d 100%);
     border-radius: 50%;
     box-shadow: 0 1px 1px rgba(0,0,0,0.5);
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
 }
 
 /* Screw Head (The Cross/Phillips pattern) */
@@ -235,6 +252,11 @@ body{
 .screw.bl { bottom: 10px; left: 10px; transform: rotate(90deg); }
 .screw.br { bottom: 10px; right: 10px; transform: rotate(30deg); }
 
+.screw.removed {
+    transform: scale(0.5) rotate(-360deg); /* Spin out */
+    opacity: 0;
+    pointer-events: none; /* Prevent further interaction */
+}
 /* Flip Button (Invisible clickable area or specific button) */
 /* We'll reuse the existing UI buttons, but this class is for the back-to-front button */
 .flip-back-btn {

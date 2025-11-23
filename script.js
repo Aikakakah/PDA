@@ -1097,78 +1097,107 @@ function playRingtone() {
         const items = document.querySelectorAll('.drawer-item');
         const drawerZone = document.getElementById('drawerDropZone');
         const drawerPanel = document.querySelector('.top-right-drawer-panel');
-    
+
+        // Reference to PDA parts
+        const screws = document.querySelectorAll('.screw');
+        const backPanel = document.querySelector('.pda-back-panel');
+
+        // Helper: Simple rectangle collision detection
+        const isOverlapping = (el1, el2) => {
+            const rect1 = el1.getBoundingClientRect();
+            const rect2 = el2.getBoundingClientRect();
+            return !(
+                rect1.right < rect2.left ||
+                rect1.left > rect2.right ||
+                rect1.bottom < rect2.top ||
+                rect1.top > rect2.bottom
+            );
+        };
+
+        // Helper: Check if back panel should open
+        const checkPanelStatus = () => {
+            const remaining = document.querySelectorAll('.screw:not(.removed)').length;
+            if (remaining === 0) {
+                backPanel.classList.add('unlocked');
+                // Add one-time click listener to remove panel
+                backPanel.addEventListener('click', function removePanel() {
+                    if (this.classList.contains('unlocked')) {
+                        this.classList.add('detached');
+                        // Optional: Remove listener after action
+                        this.removeEventListener('click', removePanel);
+                    }
+                });
+            }
+        };
+
         items.forEach(item => {
             item.addEventListener('mousedown', (e) => {
-                if (e.button !== 0) return; // Left click only
-    
-                e.preventDefault(); // Prevent text selection
-    
-                // 1. Calculate initial offset
+                if (e.button !== 0) return; 
+                e.preventDefault(); 
+
                 const rect = item.getBoundingClientRect();
                 const offsetX = e.clientX - rect.left;
                 const offsetY = e.clientY - rect.top;
-    
-                // 2. State tracking
+
                 const wasFloating = item.classList.contains('floating');
                 
-                // 3. If it was inside the drawer, we need to "pop" it out to body
-                // so it can move freely over everything without being clipped or moved by drawer transforms
                 if (!wasFloating) {
-                    // Match the position exactly where it sits currently
                     item.style.left = rect.left + 'px';
                     item.style.top = rect.top + 'px';
-                    item.style.width = rect.width + 'px'; // Maintain size
+                    item.style.width = rect.width + 'px'; 
                     item.style.height = rect.height + 'px';
                     
                     item.classList.add('floating');
-                    document.body.appendChild(item); // Move to body
+                    document.body.appendChild(item); 
                 }
-    
-                // 4. Drag Handler
+
                 const onMouseMove = (moveEvent) => {
                     item.style.left = (moveEvent.clientX - offsetX) + 'px';
                     item.style.top = (moveEvent.clientY - offsetY) + 'px';
                 };
-    
-                // 5. Drop Handler
+
                 const onMouseUp = (upEvent) => {
                     document.removeEventListener('mousemove', onMouseMove);
                     document.removeEventListener('mouseup', onMouseUp);
-    
-                    // Check if we dropped it inside the OPEN drawer
+
+                    // --- LOGIC: CHECK SCREW INTERACTION ---
+                    // Only valid if we are holding the screwdriver
+                    if (item.classList.contains('screwdriver-prop')) {
+                        screws.forEach(screw => {
+                            // If we dropped the screwdriver over a screw that isn't removed yet
+                            if (!screw.classList.contains('removed') && isOverlapping(item, screw)) {
+                                screw.classList.add('removed');
+                                checkPanelStatus();
+                            }
+                        });
+                    }
+                    // --------------------------------------
+
+                    // Logic: Check if dropped back in drawer
                     const drawerRect = drawerPanel.getBoundingClientRect();
-                    
-                    // Logic: Is the mouse within the drawer bounds?
-                    // And is the drawer actually open? (Optimization: check class)
                     const isOverDrawer = (
                         upEvent.clientX >= drawerRect.left &&
                         upEvent.clientX <= drawerRect.right &&
                         upEvent.clientY >= drawerRect.top &&
                         upEvent.clientY <= drawerRect.bottom
                     );
-    
+
                     if (isOverDrawer && drawerPanel.classList.contains('open')) {
                         // DOCK IT BACK IN
                         item.classList.remove('floating');
-                        // Remove manual positioning so Flexbox takes over
                         item.style.left = '';
                         item.style.top = '';
                         item.style.width = '';
                         item.style.height = '';
-                        
-                        // Move DOM element back into drawer container
                         drawerZone.appendChild(item);
                     } else {
-                        // LEAVE IT FLOATING
-                        // It stays appended to body with absolute positioning
+                        // LEAVE IT FLOATING (so user can move to next screw easily)
                     }
                 };
-    
+
                 document.addEventListener('mousemove', onMouseMove);
                 document.addEventListener('mouseup', onMouseUp);
             });
         });
     }
-
 })();
