@@ -1167,6 +1167,12 @@ function playRingtone() {
             const slot = document.getElementById('resistorSlot');
             slot.style.boxShadow = "0 0 15px #0f0, inset 0 0 10px #0f0"; 
             
+            // --- NEW CODE START ---
+            // Activate the SVG overlays
+            document.querySelector('.overlay-battery').classList.add('active');
+            document.querySelector('.overlay-traces').classList.add('active');
+            // --- NEW CODE END ---
+
             // 2. Animate Panel Back On
             setTimeout(() => {
                 backPanel.classList.remove('detached');
@@ -1214,6 +1220,13 @@ function playRingtone() {
                         powerBtn.textContent = "System Error";
                         powerBtn.style.backgroundColor = "#555";
                     }
+
+                    // --- NEW CODE START ---
+                    // If we remove the resistor, hide the overlays and remove the green glow
+                    if (resistorSlot) resistorSlot.style.boxShadow = "";
+                    document.querySelector('.overlay-battery').classList.remove('active');
+                    document.querySelector('.overlay-traces').classList.remove('active');
+                    // --- NEW CODE END ---
                 }
 
                 const rect = item.getBoundingClientRect();

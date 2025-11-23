@@ -262,6 +262,33 @@ body{
     justify-content: center;
     box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
 }
+
+.pcb-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0; /* Hidden by default */
+    transition: opacity 0.5s ease; /* Smooth fade in */
+    pointer-events: none; /* CRITICAL: Allows clicks to pass through to the slot/screws */
+    z-index: 1; /* Sit above the base board background */
+}
+
+.overlay-battery {
+    background-image: url('Images/board-battery.svg');
+}
+
+.overlay-traces {
+    background-image: url('Images/board-traces.svg');
+}
+
+.pcb-overlay.active {
+    opacity: 1; /* Visible when active class is added */
+}
+
 .coin-cell {
     width: 24px;
     height: 24px;
