@@ -339,6 +339,10 @@ body{
     top: -5%;
 }
 
+.resistor-slot.r1 { top: 18%; left: 42%; }
+.resistor-slot.r1 { bottom: 30%; right: 12%; }
+.resistor-slot.r1 { top: 60%; left: 15%; }
+
 .pcb-label {
     /* ... keep existing ... */
     font-size: 6px;

@@ -15,6 +15,13 @@
             flashlight: false,
             stylus: false,
             poweredOn: true,
+            unlockedFeatures: {
+                notekeeper: false,
+                nanochat: false,
+                news: false,
+                ringtone: false,
+                power: false // We track power here too now for consistency
+            },
             programs: [
                 { uid: 1, name: "Crew manifest", icon: "CM", type: "manifest" },
                 { uid: 2, name: "Notekeeper", icon: "NK", type: "notekeeper" },
@@ -96,6 +103,7 @@
         let pageNumberDisplay = null;
         let nanochatModal = null;
         let closeNanochatModal = null;
+        let backPanel = null; // Made global for easier access
     
         let newsModule = null;
         let secretHandler = null;
@@ -792,7 +800,8 @@
             bookPrev = el('bookPrev');
             bookNext = el('bookNext');
             pageNumberDisplay = el('pageNumber');
-            
+            backPanel = document.querySelector('.pda-back-panel'); // Assign global backPanel
+    
             newsModule = createNewsModule(state, el, showView, ringtoneModal);
     
             secretHandler = createSecretHandler(el, showView, ringtoneModal);
@@ -809,7 +818,17 @@
         
             if (flipTriggerBtn && pdaContainer) {
                 flipTriggerBtn.addEventListener('click', () => {
-                    pdaContainer.classList.add('flipped');
+                    // Toggle logic to handle flip AND reattach panel if necessary
+                    if (pdaContainer.classList.contains('flipped')) {
+                        // We are flipping back to front
+                        if (backPanel && backPanel.classList.contains('detached')) {
+                            backPanel.classList.remove('detached');
+                        }
+                        pdaContainer.classList.remove('flipped');
+                    } else {
+                        // We are flipping to the back
+                        pdaContainer.classList.add('flipped');
+                    }
                 });
             }
         
@@ -989,15 +1008,20 @@
             const drawerPanel = document.querySelector('.top-right-drawer-panel');
     
             const screws = document.querySelectorAll('.screw');
-            const backPanel = document.querySelector('.pda-back-panel');
+            // backPanel is now global, assigned in DOMContentLoaded
+            // const backPanel = document.querySelector('.pda-back-panel'); 
             const resistorSlot = document.getElementById('resistorSlot');
             const powerBtn = document.getElementById('powerOn');
             
-            backPanel.addEventListener('click', () => {
-                if (backPanel.classList.contains('unlocked') && !backPanel.classList.contains('detached')) {
-                    backPanel.classList.add('detached');
-                }
-            });
+            // --- UPDATED CLICK LOGIC FOR PANEL ---
+            // Use toggle so it can be put back on if clicked while detached
+            if (backPanel) {
+                backPanel.addEventListener('click', () => {
+                    if (backPanel.classList.contains('unlocked')) {
+                        backPanel.classList.toggle('detached');
+                    }
+                });
+            }
             
             state.poweredOn = false; 
             if(pda) pda.classList.add('powered-off');
@@ -1022,9 +1046,9 @@
     
             const checkPanelStatus = () => {
                 const remaining = document.querySelectorAll('.screw:not(.removed)').length;
-                if (remaining === 0) {
+                if (remaining === 0 && backPanel) {
                     backPanel.classList.add('unlocked');
-                     backPanel.classList.add('detached'); 
+                    backPanel.classList.add('detached'); 
                 }
             };
     
@@ -1033,9 +1057,7 @@
                 slot.style.boxShadow = "0 0 15px #0f0, inset 0 0 10px #0f0"; 
                 
                 setTimeout(() => {
-                    backPanel.classList.remove('detached');
-                    // IMPORTANT: REMOVED THE LINE THAT WAS REMOVING 'UNLOCKED'
-                    // backPanel.classList.remove('unlocked'); 
+                    if (backPanel) backPanel.classList.remove('detached');
                 }, 600);
     
                 setTimeout(() => {
@@ -1128,7 +1150,7 @@
     
                         // 2. RESISTOR LOGIC
                         if (item.classList.contains('resistor-prop')) {
-                            if (backPanel.classList.contains('detached') && isOverlapping(item, resistorSlot)) {
+                            if (backPanel && backPanel.classList.contains('detached') && isOverlapping(item, resistorSlot)) {
                                 const ohms = item.dataset.ohms;
                                 
                                 item.style.position = 'absolute';
