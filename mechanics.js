@@ -34,6 +34,32 @@ export function validateResistorDrop(draggedItem, dropTarget) {
     const itemOhms = draggedItem.dataset.ohms;
     
     if (itemOhms === slotConfig.requiredOhms) {
+        
+        // 1. Identify the main circuit container to place the overlays inside.
+        // We assume the slot (dropTarget) is inside a container that holds the circuit board graphic.
+        // '.pda-circuit-board' is a common class, or fall back to a higher parent.
+        const circuitBoardContainer = dropTarget.closest('.pda-circuit-board') || dropTarget.parentElement.parentElement; 
+
+        // 2. Create and activate the overlays for all defined effects in the config.
+        slotConfig.effects.forEach(effectId => {
+            let overlayElement = document.getElementById(effectId);
+            
+            // If the element doesn't exist, create it dynamically
+            if (!overlayElement) {
+                // Create the new <div> element
+                overlayElement = document.createElement('div');
+                overlayElement.id = effectId; 
+                // Assign the base class (which holds positioning and opacity settings)
+                overlayElement.classList.add('circuit-overlay'); 
+                // Insert the new element into the main circuit container
+                circuitBoardContainer.appendChild(overlayElement);
+            }
+
+            // Apply the 'active' class, which causes the element (and its linked SVG from style.css) to be visible.
+            overlayElement.classList.add('active'); 
+        });
+
+        // The drop is successful, return the result for script.js to handle.
         return { 
             success: true, 
             effects: slotConfig.effects,
