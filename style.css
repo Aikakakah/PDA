@@ -639,6 +639,33 @@ body{
     border-radius: 4px;
 }
 .flip-back-btn:hover { background: rgba(255,255,255,0.05); color: #ccc; }
+
+.admin-controls {
+    position: absolute;
+    top: 70px; /* Positions it below the flip button (which is at top: 20px) */
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 2000;
+}
+
+.pan-button.admin-btn {
+    position: relative; /* Reset absolute positioning from base class */
+    top: auto;
+    left: auto;
+    transform: none;
+    background: rgba(200, 50, 50, 0.8); /* Red to indicate Admin/Debug */
+    border-color: #e74c3c;
+    width: 30px; /* Slightly smaller than main nav */
+    height: 30px;
+    font-size: 14px;
+}
+
+.pan-button.admin-btn:hover {
+    background: rgba(200, 50, 50, 1);
+    transform: scale(1.1);
+}
 /* --- STPAGEFLIP BOOK WIDGET STYLES --- */
 .book-widget {
    display: flex;
@@ -784,7 +811,7 @@ body{
 /* PDA Screen */
 .PDA-screen {
   display: inline-block;   /* shrink-wrap to content */
-  background: rgb(18, 18, 18);
+  /* background: rgb(18, 18, 18); */
   border-radius: 8px;
   padding: 4px;
   margin: 0 auto;
@@ -802,6 +829,7 @@ body{
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     will-change: transform;
+    text-shadow: 0 0 1px rgba(228, 255, 228, 0.4);
 }
 
 .PDA-screen::before {
@@ -828,6 +856,31 @@ body{
 }
 .PDA-screen::before {
   animation: none;
+}
+
+/* CRT Scanline Overlay */
+.PDA-screen.crt::after {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    
+    /* THE FIX: Use RGBA for transparency */
+    /* 50% of the line is faint black (0.25 opacity), 50% is fully transparent */
+    background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0) 50%, 
+        rgba(0, 0, 0, 0.25) 50%
+    );
+    
+    /* Requirement: 5px scanlines */
+    background-size: 100% 5px;
+    
+    z-index: 20;
+    pointer-events: none; /* Essential so you can still click buttons */
 }
 
 /* header left nav */

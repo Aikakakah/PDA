@@ -103,7 +103,7 @@ import { validateResistorDrop } from './mechanics.js';
     let pageNumberDisplay = null;
     let nanochatModal = null;
     let closeNanochatModal = null;
-    let backPanel = null; // Made global for easier access
+    let backPanel = null;
 
     let newsModule = null;
     let secretHandler = null;
@@ -867,7 +867,32 @@ import { validateResistorDrop } from './mechanics.js';
         }
 
         const pdaScreen = document.querySelector('.PDA-screen');
+const btnAdminPower = el('btn-admin-power');
 
+    if (btnAdminPower) {
+        btnAdminPower.addEventListener('click', () => {
+            console.log("ADMIN: Forcing Power On");
+
+            // 1. Visually fix the power button inside the overlay
+            if (powerOn) {
+                powerOn.disabled = false;
+                powerOn.textContent = "Power On";
+                powerOn.style.backgroundColor = ""; 
+                powerOn.style.cursor = "pointer";
+            }
+
+            // 2. Force the screen state to ON immediately
+            // (Reusing your existing turnOnScreen logic)
+            if(powerOverlay) powerOverlay.classList.add('hidden');
+            const pdaScreen = document.querySelector('.PDA-screen');
+            if(pdaScreen) pdaScreen.classList.remove('screen-off');
+            state.poweredOn = true;
+
+            // 3. Optional: Add a visual indicator that Admin Mode was used
+            btnAdminPower.style.boxShadow = "0 0 10px #fff";
+        });
+    }
+    
         const turnOffScreen = () => {
             if(powerOverlay) powerOverlay.classList.remove('hidden');
             if(pdaScreen) pdaScreen.classList.add('screen-off'); 
