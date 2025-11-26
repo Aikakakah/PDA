@@ -223,6 +223,299 @@ import { createNanoChatTriggers } from './nanochat_triggers.js';
         }
     };
 
+    // --- FLOATING NOTES SYSTEM ---
+    const floatingNotes = new Map(); // Store floating notes by ID
+    let draggedNoteId = null;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+
+    function initializeBookNotes() {
+        const bookNotes = document.querySelectorAll('.book-note');
+        
+        // Initialize the original notes inside the book
+        bookNotes.forEach(note => {
+            note.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return; // Left click only
+                e.preventDefault();
+                e.stopPropagation(); // Don't flip the page
+
+                // 1. Create the Floating Copy
+                createFloatingNoteFrom(note, e.clientX, e.clientY);
+            });
+        });
+    }
+    /**
+     * Spawns a floating copy of a note and starts dragging it immediately.
+     * @param {HTMLElement} originalNote - The note inside the book page.
+     * @param {number} startX - Mouse X position.
+     * @param {number} startY - Mouse Y position.
+     */
+    function createFloatingNoteFrom(originalNote, startX, startY) {
+        const rect = originalNote.getBoundingClientRect();
+        
+        // 1. Create Clone
+        const clone = document.createElement('div');
+        clone.classList.add('floating-note');
+        clone.textContent = originalNote.textContent;
+        clone.dataset.originalId = originalNote.dataset.noteId; // Link back to original
+        
+        // 2. Position exactly where the original is right now
+        clone.style.left = rect.left + 'px';
+        clone.style.top = rect.top + 'px';
+        
+        // 3. Add to Body (Fixed positioning)
+        document.body.appendChild(clone);
+
+        // 4. Hide Original (Use visibility so we don't break 3D page layout)
+        originalNote.style.visibility = 'hidden';
+        originalNote.style.opacity = '0';
+
+        // 5. Calculate offset so we drag from where we clicked
+        const offsetX = startX - rect.left;
+        const offsetY = startY - rect.top;
+
+        // 6. Start Dragging the Clone immediately
+        startDraggingFloatingNote(clone, originalNote, offsetX, offsetY);
+    }
+
+    /**
+     * Handles the logic for dragging an already-floating note.
+     */
+    function startDraggingFloatingNote(clone, originalNote, offsetX, offsetY) {
+        
+        // Mouse Move Handler
+        const onMouseMove = (e) => {
+            clone.style.left = (e.clientX - offsetX) + 'px';
+            clone.style.top = (e.clientY - offsetY) + 'px';
+        };
+
+        // Mouse Up Handler (Drop Logic)
+        const onMouseUp = (e) => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+
+            // 1. Temporarily hide clone to find element below
+            clone.style.display = 'none';
+            const elementBelow = document.elementFromPoint(e.clientX, e.clientY);
+            clone.style.display = 'flex'; // Bring it back
+
+            // 2. Find target page
+            const targetPage = elementBelow ? elementBelow.closest('.my-page') : null;
+
+            if (targetPage) {
+                // --- CALCULATE & CLAMP POSITION ---
+                
+                const pageRect = targetPage.getBoundingClientRect();
+                const cloneRect = clone.getBoundingClientRect();
+                
+                // Dimensions
+                const noteWidth = cloneRect.width;
+                const noteHeight = cloneRect.height;
+                const pageWidth = pageRect.width;
+                const pageHeight = pageRect.height;
+                
+                // Define a small padding so it doesn't touch the very edge
+                const padding = 5; 
+
+                // 1. Calculate raw relative position
+                let relativeLeft = cloneRect.left - pageRect.left;
+                let relativeTop = cloneRect.top - pageRect.top;
+
+                // 2. Clamp Horizontal (Left/Right & Spine)
+                // prevent Left < padding
+                // prevent Right > pageWidth - noteWidth - padding
+                relativeLeft = Math.max(padding, Math.min(relativeLeft, pageWidth - noteWidth - padding));
+
+                // 3. Clamp Vertical (Top/Bottom)
+                // prevent Top < padding
+                // prevent Bottom > pageHeight - noteHeight - padding
+                relativeTop = Math.max(padding, Math.min(relativeTop, pageHeight - noteHeight - padding));
+
+                // 4. Apply valid coordinates
+                originalNote.style.left = relativeLeft + 'px';
+                originalNote.style.top = relativeTop + 'px';
+                
+                // Ensure no transform is interfering
+                originalNote.style.transform = 'none';
+
+                // Move DOM element
+                targetPage.appendChild(originalNote);
+                
+                // Show it
+                originalNote.style.visibility = 'visible';
+                originalNote.style.opacity = '1';
+                
+                clone.remove();
+                
+            } else {
+                // --- DROP FAILED ---
+                clone.style.pointerEvents = 'auto';
+                clone.onmousedown = (evt) => {
+                    if (evt.button !== 0) return;
+                    evt.preventDefault();
+                    const newRect = clone.getBoundingClientRect();
+                    startDraggingFloatingNote(clone, originalNote, evt.clientX - newRect.left, evt.clientY - newRect.top);
+                };
+            }
+        };
+
+        // Attach global listeners
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    }
+
+    function handleNoteMouseDown(e) {
+        if (e.button !== 0) return; // Only left click
+        
+        const noteId = this.dataset.noteId;
+        const rect = this.getBoundingClientRect();
+        
+        dragOffsetX = e.clientX - rect.left;
+        dragOffsetY = e.clientY - rect.top;
+        
+        // Check if note is already floating
+        if (floatingNotes.has(noteId)) {
+            // Drag existing floating note
+            draggedNoteId = noteId;
+            const floatingNote = floatingNotes.get(noteId);
+            floatingNote.classList.add('dragging');
+            document.addEventListener('mousemove', handleNoteDrag);
+            document.addEventListener('mouseup', handleNoteMouseUp);
+        } else {
+            // Create floating note by dragging
+            draggedNoteId = noteId;
+            this.classList.add('dragging');
+            document.addEventListener('mousemove', handleNoteDrag);
+            document.addEventListener('mouseup', handleNoteMouseUp);
+        }
+        
+        e.preventDefault();
+    }
+
+    function handleNoteDrag(e) {
+        if (!draggedNoteId) return;
+        
+        const noteId = draggedNoteId;
+        let floatingNote = floatingNotes.get(noteId);
+        const bookWidget = document.querySelector('.book-widget');
+        
+        // Create floating note if it doesn't exist
+        if (!floatingNote) {
+            const bookNote = document.querySelector(`[data-note-id="${noteId}"]`);
+            if (!bookNote) return;
+            
+            floatingNote = document.createElement('div');
+            floatingNote.className = 'floating-note dragging';
+            floatingNote.textContent = bookNote.textContent;
+            floatingNote.dataset.noteId = noteId;
+            
+            // Add close button
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'floating-note-close';
+            closeBtn.innerHTML = '✕';
+            closeBtn.addEventListener('click', () => removeFloatingNote(noteId));
+            floatingNote.appendChild(closeBtn);
+            
+            const container = el('floatingNotesContainer');
+            if (container) container.appendChild(floatingNote);
+            
+            floatingNotes.set(noteId, floatingNote);
+            
+            // Hide the original book note
+            bookNote.style.display = 'none';
+            
+            // Attach drag handler to floating note
+            floatingNote.addEventListener('mousedown', handleFloatingNoteMouseDown);
+        }
+        
+        // Calculate position relative to book widget
+        if (bookWidget) {
+            const bookRect = bookWidget.getBoundingClientRect();
+            const relX = e.clientX - bookRect.left - dragOffsetX;
+            const relY = e.clientY - bookRect.top - dragOffsetY;
+            
+            floatingNote.style.left = relX + 'px';
+            floatingNote.style.top = relY + 'px';
+        } else {
+            floatingNote.style.left = (e.clientX - dragOffsetX) + 'px';
+            floatingNote.style.top = (e.clientY - dragOffsetY) + 'px';
+        }
+        
+        e.preventDefault();
+    }
+
+    function handleFloatingNoteMouseDown(e) {
+        if (e.button !== 0) return; // Only left click
+        if (e.target.classList.contains('floating-note-close')) return; // Don't drag if clicking close button
+        
+        const noteId = this.dataset.noteId;
+        const rect = this.getBoundingClientRect();
+        
+        dragOffsetX = e.clientX - rect.left;
+        dragOffsetY = e.clientY - rect.top;
+        
+        draggedNoteId = noteId;
+        this.classList.add('dragging');
+        document.addEventListener('mousemove', handleNoteDrag);
+        document.addEventListener('mouseup', handleNoteMouseUp);
+        
+        e.preventDefault();
+    }
+
+    function removeFloatingNote(noteId) {
+        const floatingNote = floatingNotes.get(noteId);
+        const bookNote = document.querySelector(`[data-note-id="${noteId}"]`);
+        
+        if (floatingNote) {
+            floatingNote.remove();
+            floatingNotes.delete(noteId);
+        }
+        
+        // Show the original book note again
+        if (bookNote) {
+            bookNote.style.display = '';
+        }
+    }
+
+    function handleNoteMouseUp(e) {
+        if (!draggedNoteId) return;
+        
+        const noteId = draggedNoteId;
+        
+        // --- NEW SNAPPING LOGIC START ---
+        const bookWidget = document.querySelector('.book-widget');
+        const bookRect = bookWidget.getBoundingClientRect();
+        
+        // Check if mouse was released within the boundaries of the book
+        const isOverBook = (
+            e.clientX >= bookRect.left &&
+            e.clientX <= bookRect.right &&
+            e.clientY >= bookRect.top &&
+            e.clientY <= bookRect.bottom
+        );
+
+        // If dropped on the book, "snap" it back in
+        if (isOverBook) {
+            removeFloatingNote(noteId);
+            // We return early because removeFloatingNote handles the cleanup
+            draggedNoteId = null; 
+            document.removeEventListener('mousemove', handleNoteDrag);
+            document.removeEventListener('mouseup', handleNoteMouseUp);
+            return; 
+        }
+        // --- NEW SNAPPING LOGIC END ---
+
+        const floatingNote = floatingNotes.get(noteId);
+        
+        // If we didn't drop it on the book, just stop dragging but keep it floating
+        if (floatingNote) floatingNote.classList.remove('dragging');
+        
+        document.removeEventListener('mousemove', handleNoteDrag);
+        document.removeEventListener('mouseup', handleNoteMouseUp);
+        
+        draggedNoteId = null;
+    }
+
     // HOME view update
     function updateHome() {
         if (el('owner')) el('owner').textContent = state.owner;
@@ -635,7 +928,22 @@ function playRingtone() {
         // Home updater
         setInterval(updateHome, 1000);
         updateHome();
-
+        // --- PDA Flip Logic ---
+        const pdaContainer = el('pda');
+        const flipTriggerBtn = el('btn-flip-trigger'); // The button we added to the header
+        const flipBackBtn = el('btn-flip-back');       // The button on the back
+    
+        if (flipTriggerBtn && pdaContainer) {
+            flipTriggerBtn.addEventListener('click', () => {
+                pdaContainer.classList.add('flipped');
+            });
+        }
+    
+        if (flipBackBtn && pdaContainer) {
+            flipBackBtn.addEventListener('click', () => {
+                pdaContainer.classList.remove('flipped');
+            });
+        }
         // Wire up tab clicks (guard tabs)
         if (tabs && tabs.length) {
             tabs.forEach(btn => {
@@ -669,21 +977,40 @@ function playRingtone() {
         }
 
         // Power / Eject
-        if (btnEject && powerOverlay && pda) {
-            btnEject.addEventListener('click', () => {
-                powerOverlay.classList.remove('hidden');
-                pda.classList.add('powered-off');
-                state.poweredOn = false;
-            });
+        const pdaScreen = document.querySelector('.PDA-screen');
+
+        // Helper to turn screen off
+        const turnOffScreen = () => {
+            if(powerOverlay) powerOverlay.classList.remove('hidden');
+            if(pdaScreen) pdaScreen.classList.add('screen-off'); // Target screen only
+            state.poweredOn = false;
+        };
+
+        // Helper to turn screen on
+        const turnOnScreen = () => {
+            if(powerOverlay) powerOverlay.classList.add('hidden');
+            if(pdaScreen) pdaScreen.classList.remove('screen-off');
+            state.poweredOn = true;
+        };
+
+        // 1. Initial State Check (Apply the off class on load)
+        if(!state.poweredOn) {
+            turnOffScreen();
         }
-        if (powerOn && powerOverlay && pda) {
-            powerOn.addEventListener('click', () => {
-                powerOverlay.classList.add('hidden');
-                pda.classList.remove('powered-off');
-                state.poweredOn = true;
+
+        // 2. Eject Button Listener
+        if (btnEject) {
+            btnEject.addEventListener('click', () => {
+                turnOffScreen();
             });
         }
 
+        // 3. Power On Button Listener
+        if (powerOn) {
+            powerOn.addEventListener('click', () => {
+                turnOnScreen();
+            });
+        }
         // Ringtone modal
         const selectAllText = (event) => {
             event.target.select();
@@ -729,6 +1056,309 @@ function playRingtone() {
 
         // Shine effect
         initializeShineEffect();
+
+        // Initialize book notes dragging
+        initializeBookNotes();
+
+        initializeDraggableItems();
+
+    // Pan button functionality
+    // Keep the primary control accessible by id, but wire all pan-down buttons by class
+    const panDownBtn = el('panDownBtn');
+    const panDownButtons = document.querySelectorAll('.pan-down');
+    const panUpBtn = el('panUpBtn');
+    const secondPageContainer = el('secondPageContainer');
+
+    // Attach the same behavior to every element with the .pan-down class (includes the id'd original)
+    if (panDownButtons && panDownButtons.length) {
+        panDownButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (secondPageContainer) {
+                    secondPageContainer.classList.remove('hidden');
+                    secondPageContainer.classList.add('active');
+                }
+            });
+        });
+    }
+
+    // --- Top-right drawer behavior for .pan-button.top-right-drawer ---
+    (function() {
+        const drawerButtons = document.querySelectorAll('.pan-button.top-right-drawer');
+        if (!drawerButtons || drawerButtons.length === 0) return;
+
+        // Use the drawer panel already in the HTML
+        let drawerPanel = document.querySelector('.top-right-drawer-panel');
+        if (!drawerPanel) return;
+
+        let activeButton = null;
+
+        drawerButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // If same button toggles panel, just close it
+                if (activeButton === btn && drawerPanel.classList.contains('open')) {
+                    drawerPanel.classList.remove('open');
+                    activeButton = null;
+                    return;
+                }
+
+                // Open for this button
+                activeButton = btn;
+                // Slight timeout to allow rendering before transition
+                requestAnimationFrame(() => drawerPanel.classList.add('open'));
+            });
+        });
+
+        // Close on outside click
+        document.addEventListener('click', (ev) => {
+            if (!drawerPanel.classList.contains('open')) return;
+            if (drawerPanel.contains(ev.target)) return;
+            if (Array.from(drawerButtons).some(b => b.contains(ev.target))) return;
+            drawerPanel.classList.remove('open');
+            activeButton = null;
+        });
+
+        // Close on Escape
+        document.addEventListener('keydown', (ev) => {
+            if (ev.key === 'Escape' && drawerPanel.classList.contains('open')) {
+                drawerPanel.classList.remove('open');
+                activeButton = null;
+            }
+        });
+    })();
+
+    if (panUpBtn) {
+        panUpBtn.addEventListener('click', () => {
+            if (secondPageContainer) {
+                // Remove active class to slide it back down
+                secondPageContainer.classList.remove('active');
+            }
+        });
+    }
     });
 
+    function initializeDraggableItems() {
+        const items = document.querySelectorAll('.drawer-item');
+        const drawerZone = document.getElementById('drawerDropZone');
+        const drawerPanel = document.querySelector('.top-right-drawer-panel');
+
+        // PDA References
+        const screws = document.querySelectorAll('.screw');
+        const backPanel = document.querySelector('.pda-back-panel');
+        const resistorSlot = document.getElementById('resistorSlot');
+        const powerBtn = document.getElementById('powerOn');
+        
+        // 1. Break the PDA initially
+        state.poweredOn = false; 
+        if(pda) pda.classList.add('powered-off');
+        if(powerOverlay) powerOverlay.classList.remove('hidden');
+        if(powerBtn) {
+            powerBtn.disabled = true;
+            powerBtn.textContent = "System Error";
+            powerBtn.style.backgroundColor = "#555";
+            powerBtn.style.cursor = "not-allowed";
+        }
+
+        // Helper: Collision Detection
+        const isOverlapping = (el1, el2) => {
+            const rect1 = el1.getBoundingClientRect();
+            const rect2 = el2.getBoundingClientRect();
+            return !(
+                rect1.right < rect2.left ||
+                rect1.left > rect2.right ||
+                rect1.bottom < rect2.top ||
+                rect1.top > rect2.bottom
+            );
+        };
+
+        // Helper: Check if panel can be opened
+        const checkPanelStatus = () => {
+            const remaining = document.querySelectorAll('.screw:not(.removed)').length;
+            if (remaining === 0) {
+                backPanel.classList.add('unlocked');
+                backPanel.addEventListener('click', function removePanel() {
+                    if (this.classList.contains('unlocked')) {
+                        this.classList.add('detached');
+                        this.removeEventListener('click', removePanel);
+                    }
+                });
+            }
+        };
+
+        // Helper: Repair Success
+        // Helper: Repair Success
+        const repairPDA = () => {
+            // 1. Visual cue (Green glow on slot)
+            const slot = document.getElementById('resistorSlot');
+            slot.style.boxShadow = "0 0 15px #0f0, inset 0 0 10px #0f0"; 
+            
+            // 2. Animate Panel Back On
+            setTimeout(() => {
+                backPanel.classList.remove('detached');
+                backPanel.classList.remove('unlocked');
+                // Optional: Sound effect
+                // new Audio('/Audio/click_fast.ogg').play().catch(()=>{});
+            }, 600);
+
+            // 3. Auto Flip Back to Front
+            setTimeout(() => {
+                // Remove the 'flipped' class to return to front view
+                if(pda) pda.classList.remove('flipped');
+            }, 1200); // Wait for panel to settle, then flip
+
+            // 4. Fix the Power Button Logic & Auto Boot
+            if(powerBtn) {
+                powerBtn.disabled = false;
+                powerBtn.textContent = "Power On";
+                powerBtn.style.backgroundColor = ""; 
+                powerBtn.style.cursor = "pointer";
+                
+                // Boot up AFTER flipping back to front
+                setTimeout(() => {
+                    if(!state.poweredOn) {
+                        powerBtn.click();
+                    }
+                }, 1800); // Wait until flip animation is mostly done
+            }
+        };
+
+        // Drag Logic
+        items.forEach(item => {
+            item.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return;
+                e.preventDefault();
+
+                // 1. CHECK IF WE ARE REMOVING FROM SLOT
+                let isUnplacing = false;
+                if (item.classList.contains('placed')) {
+                    isUnplacing = true;
+                    item.classList.remove('placed');
+                    
+                    // Reset the Power Button if it showed an error
+                    if (powerBtn && powerBtn.textContent === "Voltage Error") {
+                        powerBtn.textContent = "System Error";
+                        powerBtn.style.backgroundColor = "#555";
+                    }
+                }
+
+                const rect = item.getBoundingClientRect();
+                const offsetX = e.clientX - rect.left;
+                const offsetY = e.clientY - rect.top;
+                const wasFloating = item.classList.contains('floating');
+
+                // Pop out of drawer OR slot if needed
+                if (!wasFloating) {
+                    item.style.left = rect.left + 'px';
+                    item.style.top = rect.top + 'px';
+                    
+                    // CRITICAL FIX: If we just pulled it from the slot, 
+                    // force dimensions back to normal (horizontal)
+                    if (isUnplacing) {
+                        item.style.width = '40px'; 
+                        item.style.height = '10px';
+                    } else {
+                        // Otherwise (from drawer), keep current visual size
+                        item.style.width = rect.width + 'px';
+                        item.style.height = rect.height + 'px';
+                    }
+
+                    item.classList.add('floating');
+                    document.body.appendChild(item);
+                }
+
+                const onMouseMove = (moveEvent) => {
+                    item.style.left = (moveEvent.clientX - offsetX) + 'px';
+                    item.style.top = (moveEvent.clientY - offsetY) + 'px';
+                };
+
+                const onMouseUp = (upEvent) => {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+
+                    // 1. SCREWDRIVER LOGIC
+                    if (item.classList.contains('screwdriver-prop')) {
+                        screws.forEach(screw => {
+                            if (!screw.classList.contains('removed') && isOverlapping(item, screw)) {
+                                screw.classList.add('removed');
+                                const a = new Audio('/Audio/click_fast.ogg'); 
+                                // a.play().catch(()=>{});
+                                checkPanelStatus();
+                            }
+                        });
+                    }
+
+                    // 2. RESISTOR LOGIC
+                    if (item.classList.contains('resistor-prop')) {
+                        // Only works if panel is gone
+                        if (backPanel.classList.contains('detached') && isOverlapping(item, resistorSlot)) {
+                            const ohms = item.dataset.ohms;
+                            
+                            // --- PLACEMENT LOGIC ---
+                            item.style.position = 'absolute';
+                            item.classList.remove('floating');
+                            
+                            // CLEAR inline styles so CSS .placed class handles centering/rotation
+                            item.style.left = '';
+                            item.style.top = '';
+                            item.style.width = ''; 
+                            item.style.height = '';
+                            
+                            // Clear drag transforms
+                            item.style.transform = ''; 
+
+                            // Apply rotation/centering class
+                            item.classList.add('placed'); 
+                            
+                            // Append to slot
+                            resistorSlot.innerHTML = ''; 
+                            resistorSlot.appendChild(item);
+                            // -----------------------------------------------------
+
+                            if (ohms === '220') {
+                                repairPDA();
+                            } else {
+                                // Wrong resistor effect
+                                if(powerBtn) {
+                                    powerBtn.textContent = "Voltage Error";
+                                    powerBtn.style.backgroundColor = "#a00";
+                                }
+                            }
+                            return; // Stop here, don't return to drawer
+                        }
+                    }
+                    
+                    const drawerRect = drawerPanel.getBoundingClientRect();
+                    const isOverDrawer = (
+                        upEvent.clientX >= drawerRect.left &&
+                        upEvent.clientX <= drawerRect.right &&
+                        upEvent.clientY >= drawerRect.top &&
+                        upEvent.clientY <= drawerRect.bottom
+                    );
+
+                    if (isOverDrawer && drawerPanel.classList.contains('open')) {
+                        item.classList.remove('floating');
+                        
+                        // FIX: Clear position so it rejoins the flex/flow layout
+                        item.style.position = ''; 
+                        
+                        item.style.left = '';
+                        item.style.top = '';
+                        item.style.width = '';
+                        item.style.height = '';
+                        item.style.transform = ''; // Ensure no rotation/scale remains
+                        
+                        // Return to specific container if it's a resistor
+                        if(item.classList.contains('resistor-prop')){
+                             document.querySelector('.resistor-kit').appendChild(item);
+                        } else {
+                             drawerZone.appendChild(item);
+                        }
+                    }
+                };
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+        });
+    }
 })();

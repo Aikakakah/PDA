@@ -25,6 +25,8 @@
   /* **Full Book Height (1 page):** 1452px * scale-factor */
   --book-height: calc(1452px * var(--scale-factor)); 
    font-family: 'Share Tech Mono', ui-monospace, monospace;
+   --pda-depth: 26px; /* The thickness of the device */
+   --half-depth: calc(var(--pda-depth) / 2);
 }
 
 html,body{
@@ -46,12 +48,24 @@ body{
   overflow-x: hidden; }
 
 /* PDA window shell */
-/* CHANGE: Remove absolute positioning from PDA */
-.pda{
-   /* position:absolute; <--- REMOVED */
+.wrap {
+    perspective: 800px;
+    perspective-origin: 50% 100px;
+}
+.cube {
+    position: relative;
+    width: 200px;
+    transform-style: preserve-3d;
+}
+.cube div {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+}
+.pda {
    display: flex;
-   justify-content: center; /* Centers horizontally */
-   align-items: center; /* Centers vertically */
+   justify-content: center;
+   align-items: center;
    width:var(--width);
    height:var(--height);
    border-radius:calc(var(--radius) + 6px);
@@ -61,12 +75,548 @@ body{
    box-sizing:border-box;
    user-select:none;
    transition: filter 0.3s;
-   /* REMOVE absolute positioning rules */
    left: initial !important;
    top: initial !important;
+   perspective: 1500px;
+   background: transparent;
+   box-shadow: none;
+   padding: 0;
+   margin: auto;
 }
-.pda.powered-off{filter:brightness(0.3);} /* Dim when powered off */
 
+.PDA-screen.screen-off .content,
+.PDA-screen.screen-off .header,
+.PDA-screen.screen-off .footer {
+    filter: brightness(0.1) grayscale(1);
+    opacity: 0.2; /* Make it look like a dead LCD */
+    pointer-events: none; /* Prevent clicking buttons when screen is off */
+}
+
+/* Ensure the power overlay (the "System Error" screen) remains visible and bright */
+.power-overlay {
+    z-index: 100;
+    /* Ensure the overlay isn't affected by the screen dimming if it sits inside .content */
+    filter: none !important; 
+    opacity: 1 !important;
+}
+
+.pda-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 5s;
+    transform-style: preserve-3d; /* Critical for 3D effect */
+    transform-origin: 50% 50% calc(var(--pda-depth) / -2);
+}
+
+/* Class added by JS to trigger flip */
+.pda.flipped .pda-inner {
+    transform: rotateY(180deg);
+}
+
+/* 3. Common styles for Front and Back faces */
+.pda-front, .pda-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border-radius: calc(var(--radius) + 6px);
+    box-shadow: 0 8px 28px rgba(0,0,0,.7), 0 0 10px rgba(0,0,0,.4);
+    background: linear-gradient(180deg, rgb(70, 22, 57) 0%, #250b1e 100%);
+    will-change: transform;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 8px;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* 4. Specific Front Face Styles */
+.pda-front {
+    z-index: 2;
+    transform: rotateY(0deg); /* REMOVED translateZ */
+    background: linear-gradient(180deg, rgb(70, 22, 57) 0%, #250b1e 100%);
+    border: 1px solid #2a0d21;
+    /* Hint to browser to keep high-res */
+    will-change: transform;
+}
+
+/* 5. Specific Back Face Styles */
+.pda-back {
+    transform: rotateY(180deg) translateZ(var(--pda-depth));
+    background: linear-gradient(180deg, rgb(70, 22, 57) 0%, #250b1e 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #1a0514;
+}
+.pda-wall {
+    position: absolute;
+    background: #180512;
+    border: 1px solid rgba(0,0,0,0.3);
+    backface-visibility: hidden;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+}
+
+.pda-wall.right, .pda-wall.left {
+    width: var(--pda-depth);
+    height: calc(100% - 10px); /* Restored your flush height */
+    top: 5px;                 /* Restored your flush top */
+}
+.pda-wall.top, .pda-wall.bottom {
+    width: calc(100% - 10px); /* Restored your flush width */
+    height: var(--pda-depth);
+    left: 5px;                /* Centered (10px gap total = 5px left) */
+}
+
+/* RIGHT SIDE */
+.pda-wall.right {
+    right: calc(var(--pda-depth) / -2);
+    transform: translateZ(calc(var(--pda-depth) / -2)) rotateY(90deg);
+}
+
+.pda-wall.left {
+    left: calc(var(--pda-depth) / -2);
+    transform: translateZ(calc(var(--pda-depth) / -2)) rotateY(-90deg);
+}
+
+.pda-wall.top {
+    top: calc(var(--pda-depth) / -2);
+    transform: translateZ(calc(var(--pda-depth) / -2)) rotateX(90deg);
+}
+
+.pda-wall.bottom {
+    bottom: calc(var(--pda-depth) / -2);
+    transform: translateZ(calc(var(--pda-depth) / -2)) rotateX(-90deg);
+}
+/* --- Back Panel Details --- */
+
+.pda-back-panel {
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    top: 48%;
+    background: #767687;
+    border: 2px solid #333;
+    border-radius: 8px;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+    transition: transform 0.6s cubic-bezier(0.6, -0.28, 0.735, 0.045), opacity 0.6s;
+    z-index: 5;
+}
+.pda-back-panel.unlocked {
+    cursor: pointer; /* Let user know it's clickable */
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1), inset 0 0 20px rgba(0,0,0,0.8);
+    border-color: #555;
+}
+
+.pda-back-panel.unlocked:hover {
+    border-color: var(--accent);
+}
+
+/* 3. Panel Detached State */
+.pda-back-panel.detached {
+    /* Move down 300px and rotate */
+    transform: translateY(300px) rotate(15deg); 
+    opacity: 1; /* Keep visible so we see it "on the table" */
+    pointer-events: none;
+}
+
+.panel-screw-hole {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #080808; /* Very dark grey/black */
+    
+    /* Inset shadow makes it look like a hole */
+    box-shadow: inset 1px 1px 2px rgba(0,0,0,1), 0 0 0 1px rgba(255,255,255,0.05);
+    z-index: 2;
+}
+
+.panel-screw-hole.tl { top: 10px; left: 10px; }
+.panel-screw-hole.tr { top: 10px; right: 10px; }
+.panel-screw-hole.bl { bottom: 10px; left: 10px; }
+.panel-screw-hole.br { bottom: 10px; right: 10px; }
+
+.pda-circuit-board {
+    position: absolute;
+    width: 48%;
+    height: 46%;
+    top: 50%;
+    /* Change the background color to match the SVG base */
+    background-color: #0e3c0e; 
+    
+    /* Load your new image */
+    background-image: url('Images/board.svg'); 
+    background-size: cover; /* Or 'contain' depending on preference */
+    
+    border: 2px solid #0a2a0a;
+    border-radius: 4px;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+}
+.coin-cell {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #e6e6e6, #bdc3c7);
+    border: 3px solid #95a5a6;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    right: 38%;
+    top: -3%;
+}
+.coin-text { font-size: 6px; color: #7f8c8d; font-family: sans-serif; }
+/* 
+/* 5. Vias (Little drill holes) */
+.via {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #0a2a0a; /* Dark hole */
+    border: 1px solid #b87333; /* Copper ring */
+}
+.via.v1 { top: 18%; left: 42%; }
+.via.v2 { bottom: 30%; right: 12%; }
+.via.v3 { top: 60%; left: 15%; }
+
+/* --- Existing Functional Styles (Keep these) --- */
+.coin-cell {
+    /* ... keep your existing coin-cell styles ... */
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #e6e6e6, #bdc3c7);
+    border: 3px solid #95a5a6;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+    margin-bottom: 5px; /* Adjust margin */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 2; /* Sit above traces */
+}
+
+.resistor-slot {
+    width: 10px;
+    height: 40px;
+    border: 1px dashed rgba(255,255,255,0.3);
+    background: rgba(0,0,0,0.2);
+    position: relative; /* Essential for absolute child positioning */
+    margin-top: 15px;
+    z-index: 2;
+    right: 34%;
+    top: -5%;
+}
+
+.pcb-label {
+    /* ... keep existing ... */
+    font-size: 6px;
+    color: #bdc3c7;
+    margin-top: 2px;
+    font-family: monospace;
+    z-index: 2;
+}
+.pcb-label {
+    font-size: 6px;
+    color: #bdc3c7;
+    margin-bottom: 2px;
+    font-family: monospace;
+}
+
+/* --- Resistor Visuals --- */
+.resistor-kit {
+    display: flex;
+    gap: 10px;
+}
+
+.resistor-prop {
+    width: 40px;
+    height: 10px;
+    position: relative;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* The wire line running through */
+.resistor-prop::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: #bdc3c7; /* Silver wire */
+    z-index: 0;
+}
+
+/* The main beige body */
+.resistor-body {
+    width: 24px;
+    height: 8px;
+    border-radius: 2px;
+    position: relative;
+    z-index: 1;
+    box-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    
+    /* Define the 4-band pattern using a linear gradient */
+    /* Beige > Band1 > Beige > Band2 > Beige > Band3 > Beige > Band4 > Beige */
+    background: linear-gradient(to right,
+        #f5deb3 0%,   #f5deb3 15%, 
+        var(--b1) 15%, var(--b1) 25%,
+        #f5deb3 25%,  #f5deb3 35%,
+        var(--b2) 35%, var(--b2) 45%,
+        #f5deb3 45%,  #f5deb3 55%,
+        var(--b3) 55%, var(--b3) 65%,
+        #f5deb3 65%,  #f5deb3 80%,
+        var(--b4) 80%, var(--b4) 90%,
+        #f5deb3 90%,  #f5deb3 100%
+    );
+}
+
+/* The colored band (variable via CSS var) */
+.resistor-body::after {
+    display: none;
+}
+/* --- NEW: Resistor Rotation when placed in slot --- */
+.resistor-prop.placed {
+    position: absolute;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) rotate(90deg) !important;
+    
+    /* CHANGE: Allow pointer events so it can be removed */
+    pointer-events: auto; 
+    
+    transition: transform 0.3s ease-out;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+/* Manufacturer Label on back */
+.pda-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #ccc;
+    color: #111;
+    padding: 10px 20px;
+    border-radius: 2px;
+    font-family: monospace;
+    font-size: 10px;
+    text-align: left;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    opacity: 0.8;
+}
+
+/* 1. Animation for the Parent .screw (Only handles the final drop and fade) */
+@keyframes unscrew-anim {
+    0% {
+        opacity: 1;
+    }
+    20% {
+        opacity: 1;
+    }
+    40% {
+    }
+    100% {
+        /* Move slightly off-screen UPWARD (negative Y) and fade */
+        transform: translateY(-50px); 
+        opacity: 0;
+    }
+}
+
+/* 2. Keyframe for Head Rotation AND Lift (Applied to .screw-head) */
+@keyframes head-spin-anim {
+    0% {
+        transform: translateZ(0) scale(1) rotate(var(--start-rot)); 
+    }
+    20% {
+        transform: rotate(var(--start-rot)); 
+    }
+    40% {
+        /* Start spinning from the current angle */
+        transform: rotate(calc(var(--start-rot) + 180deg)); 
+    }
+    100% {
+        /* Spin 2 full rotations + original angle */
+        transform: rotate(calc(var(--start-rot) + 720deg)); 
+    }
+}
+
+/* 3. Keyframe for Thread movement and fade (No change needed) */
+@keyframes unscrew-thread-lift {
+    0% { 
+        opacity: 0; 
+        /* Added translateZ(-1px) */
+        transform: translateX(-50%) translateY(0) translateZ(-1px); 
+    }
+    10% { 
+        opacity: 1; 
+    }
+    50% {
+        opacity: 1; 
+        /* Added translateZ(-1px) */
+        transform: translateX(-50%) translateY(-5px) translateZ(-1px); 
+    }
+    100% { 
+        opacity: 0; 
+        /* Added translateZ(-1px) */
+        transform: translateX(-50%) translateY(-10px) translateZ(-1px); 
+    }
+}
+/* ----------------------------------------------------------------- */
+
+/* 3. Base Screw (Parent) - Handles position and overall animation */
+.screw {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    /* REMOVED background, border-radius, box-shadow from here */
+    z-index: 10;
+    transform-style: preserve-3d;
+    perspective: 50px; 
+}
+
+/* Apply base rotation for positioning on the board (e.g., tl, tr, etc.) */
+.screw.tl { top: 10px; left: 10px; --start-rot: 45deg; }
+.screw.tr { top: 10px; right: 10px; --start-rot: 15deg; }
+.screw.bl { bottom: 10px; left: 10px; --start-rot: 90deg; }
+.screw.br { bottom: 10px; right: 10px; --start-rot: 30deg; }
+
+/* 4. Removed State - Targets the parent to start the final drop */
+.screw.removed {
+    animation: unscrew-anim 0.6s ease-in forwards;
+    pointer-events: none;
+}
+/* ----------------------------------------------------------------- */
+
+/* 5. NEW: Screw Head Class */
+.screw-head {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    /* MOVED Visuals Here: */
+    background: radial-gradient(circle, #bdc3c7 0%, #7f8c8d 100%);
+    border-radius: 50%;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.5);
+    
+    z-index: 2; 
+    transform: rotate(var(--start-rot));
+    /* Important: Ensures the background covers the thread */
+    transform-style: preserve-3d; 
+}
+
+/* 7. Screw Head Cross Pattern (Using ::before & ::after on the new class) */
+.screw-head::after, .screw-head::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    background: #555;
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+/* Cross Line 1 */
+.screw-head::after { 
+    width: 8px;   /* Changed from 8px */
+    height: 2px;  /* Changed from 2px */
+}
+/* Cross Line 2 */
+.screw-head::before { 
+    width: 2px;   /* Changed from 2px */
+    height: 8px;  /* Changed from 8px */
+}
+
+/* 8. NEW: Apply Head Rotation AND LIFT when parent is removed */
+.screw.removed .screw-head {
+    animation: head-spin-anim 0.6s ease-out forwards;
+}
+
+/* 9. Screw Thread Class */
+.screw-thread {
+    position: absolute;
+    top: 100%; 
+    left: 50%;
+    width: 5px; 
+    height: 15px;
+    background: repeating-linear-gradient(
+        180deg,
+        #7f8c8d, 
+        #7f8c8d 1px,
+        #555 1px, 
+        #555 2px
+    );
+    opacity: 0; 
+    z-index: 1; 
+    
+    /* Center it AND push it back 1 pixel in 3D space */
+    transform: translateX(-50%) translateZ(-1px);
+}
+
+/* 10. Threads Animation Targeting */
+.screw.removed .screw-thread {
+    animation: unscrew-thread-lift 0.6s ease-out forwards;
+}
+
+.screw-hole {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #080808; /* Very dark grey/black */
+    
+    /* Inset shadow makes it look like a hole */
+    box-shadow: inset 1px 1px 2px rgba(0,0,0,1), 0 0 0 1px rgba(255,255,255,0.05);
+    z-index: 2;
+}
+
+/* Position holes (Relative to the Chassis Outline) */
+.screw-hole.tl { top: 10px; left: 10px; }
+.screw-hole.tr { top: 10px; right: 10px; }
+.screw-hole.bl { bottom: 10px; left: 10px; }
+.screw-hole.br { bottom: 10px; right: 10px; }
+
+.pda-chassis-outline {
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    top: 48%;
+    left: 50%;
+    transform: translateX(-50%);
+    
+    /* Visuals for the recessed area */
+    border: 2px solid #1a0514; 
+    background: rgba(0, 0, 0, 0.3); /* Darkens the circuit board behind it */
+    border-radius: 8px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+    
+    z-index: 1; /* Sits above circuit board, below panel */
+    pointer-events: none; /* Allows clicking resistors on the board through the frame */
+}
+
+/* Flip Button (Invisible clickable area or specific button) */
+/* We'll reuse the existing UI buttons, but this class is for the back-to-front button */
+.flip-back-btn {
+    margin-top: 20px;
+    background: transparent;
+    border: 1px solid #555;
+    color: #888;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+.flip-back-btn:hover { background: rgba(255,255,255,0.05); color: #ccc; }
 /* --- STPAGEFLIP BOOK WIDGET STYLES --- */
 .book-widget {
    display: flex;
@@ -222,6 +772,14 @@ body{
   box-shadow: inset 0 -6px 12px rgba(0,0,0,0.35);
   width: 535px;
   height: 380px;
+  transform: translateZ(0); 
+    backface-visibility: hidden; /* Helps Webkit/Chrome sharpen text */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    will-change: transform;
 }
 
 .PDA-screen::before {
@@ -911,4 +1469,369 @@ body{
     90% { clip: rect(26px, 9999px, 55px, 0); }
     95% { clip: rect(42px, 9999px, 97px, 0); }
     100% { clip: rect(38px, 9999px, 49px, 0); }
+}
+
+/* --- Book Notes Styling --- */
+
+/* Sticky notes on book pages */
+.book-note {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    left: 20px; 
+    top: 20px;
+    transform: none;
+    background: linear-gradient(135deg, #fffacd 0%, #ffffe0 100%);
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    padding: 8px;
+    font-size: 12px;
+    color: #333;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    cursor: grab;
+    user-select: none;
+    transition: opacity 0.2s; 
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: pre-wrap;
+    word-break: break-word;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-family: 'Comic Sans MS', cursive;
+    font-weight: bold;
+    z-index: 10;
+}
+
+.book-note:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.book-note.dragging {
+    cursor: grabbing;
+    opacity: 0.7;
+}
+
+/* Floating notes container - holds notes dragged out of the book */
+.floating-notes-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 500;
+}
+
+/* Floating notes that have been dragged out */
+.floating-note {
+    position: fixed; /* Changed from absolute to fixed for easier coordinate math */
+    z-index: 9999;   /* Above everything */
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #fffacd 0%, #ffffe0 100%);
+    border: 2px solid #f0c674;
+    border-radius: 4px;
+    padding: 10px;
+    font-size: 13px;
+    color: #333;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.4); /* Bigger shadow when floating */
+    cursor: grab;
+    transform: scale(1.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-family: 'Comic Sans MS', cursive;
+    font-weight: bold;
+    user-select: none;
+    box-sizing: border-box;
+    transform: scale(1.1); /* Pop effect */
+}
+
+.floating-note:active {
+    cursor: grabbing;
+}
+
+.floating-note:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.floating-note.dragging {
+    cursor: grabbing;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Close button for floating notes */
+.floating-note-close {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: transparent;
+    border: none;
+    color: #333;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.floating-note-close:hover {
+    opacity: 1;
+    color: #d9534f;
+}
+
+/* --- Pan Button Styling --- */
+.pan-button {
+    position: absolute;
+    background: rgba(94, 43, 99, 0.8);
+    border: 2px solid var(--accent);
+    color: var(--text);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.2s ease;
+    z-index: 100;
+}
+
+.pan-button:hover {
+  background: rgba(94, 43, 99, 1);
+  box-shadow: 0 4px 12px rgba(94, 43, 99, 0.6);
+  transform: translateX(-50%) scale(1.1);
+}
+
+.pan-button.pan-down {
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+.pan-button.flip-external {
+    top: 20px;
+    left: 20px;
+    /* Ensure it sits above the book and PDA */
+    z-index: 2000; 
+}
+
+.top-right-drawer-panel {
+    position: fixed;
+    top: 0;
+    right: 4%;
+    background: var(--panel);
+    border: 15px solid var(--accent);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 
+        0 8px 24px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.1),
+        inset 0 -8px 12px rgba(0,0,0,0.4),
+        inset -8px 0 12px rgba(0,0,0,0.4),
+        inset 8px 0 12px rgba(0,0,0,0.4);
+    overflow: visible;
+    width: 540px;
+    height: 20vh; /* about 25% of viewport */
+    transform: translateY(-100%); /* Start above viewport */
+    transition: transform 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+    z-index: 10;
+    margin: -2px 8px 0 0;
+    perspective: 1000px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.pan-button.top-right-drawer {
+    position: absolute;
+    /* Hangs well below the drawer panel */
+    bottom: -60px; 
+    left: 50%;
+    transform: translateX(-50%);
+    
+    /* Size: Wider and taller to accommodate the curve */
+    width: 340px;
+    height: 45px;
+    
+    /* SHAPE: Use borders to create the "Rod" look */
+    background: transparent; /* Hollow center */
+    
+    /* The "Metal" - Thick borders for the handle thickness */
+    border: 10px solid #8a7856; /* Base Bronze Color */
+    border-top: none; /* Open at the top where it enters the drawer */
+    
+    /* CURVE: Deep radius on bottom corners to create the arch */
+    border-radius: 0 0 40px 40px; 
+    
+    /* TEXTURE & LIGHTING */
+    box-shadow: 
+        /* 1. Bottom Drop Shadow (downwards) */
+        0 8px 15px rgba(0, 0, 0, 0.3),
+        
+        /* 2. NEW: Top Drop Shadow (casting upwards onto the drawer) */
+        0 -8px 10px rgba(0, 0, 0, 0.3),
+
+        /* 3. Inner Shadow (Bottom depth) */
+        inset 0 -10px 10px rgba(0, 0, 0, 0.2),
+        
+        /* 4. NEW: Inner Top Shadow (Darkens the top legs slightly) */
+        inset 0 15px 20px -10px rgba(0, 0, 0, 0.4),
+
+        /* 5. Specular Highlight (The shine on the bottom curve) */
+        /* inset 0 5px 5px rgba(255, 255, 255, 0.25), */
+        
+        /* 6. Outer rim definition */
+        0 1px 0 rgba(0,0,0,0.8);
+
+    /* Layout for the icon */
+    display: flex;
+    align-items: flex-start; /* Align icon to top (empty space) */
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s;
+    z-index: 20;
+}
+
+/* When drawer is open, button moves with it (inherits transform from parent) */
+.top-right-drawer-panel.open{
+    transform: translateY(0); /* Slide all the way up, extending past top of screen */
+}
+
+.pan-button.pan-up {
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* --- Second Page Container --- */
+.second-page-container {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg); /* Matches body background */
+    z-index: 1500;
+    
+    /* FLUID SLIDING LOGIC */
+    /* 1. Start completely pushed down off-screen */
+    transform: translateY(100%); 
+    
+    /* 2. Smooth transition for the slide effect */
+    transition: transform 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+    
+    /* 3. Layout for content */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    
+    /* Visual polish */
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5); /* Shadow on top edge */
+}
+
+/* The active state - Slide it up to cover the screen */
+.second-page-container.active {
+    transform: translateY(0%);
+}
+
+/* Ensure the hidden class is removed or overridden if it still exists in HTML */
+.second-page-container.hidden {
+    /* We don't strictly need this anymore if we use .active, 
+       but keeping it just in case legacy JS adds it. */
+    display: flex; 
+    transform: translateY(100%); 
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Adjust the Close/Up button to sit at the top of the drawer */
+.pan-button.pan-up {
+    position: absolute;
+    top: 20px; /* Give it some space from the top edge */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1501;
+}
+
+.placeholder-square {
+    width: 400px;
+    height: 400px;
+    background: linear-gradient(135deg, var(--panel) 0%, var(--inner) 100%);
+    border: 3px solid var(--accent);
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.drawer-inner {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+/* Generic Draggable Item in Drawer */
+.drawer-item {
+    cursor: grab;
+    user-select: none;
+    position: relative; /* For positioning inside drawer if needed, but usually flex handles it */
+    transition: transform 0.1s;
+    z-index: 25; /* Higher than drawer background */
+}
+
+.drawer-item:active {
+    cursor: grabbing;
+}
+
+/* The Screwdriver Object (Visual Placeholder) */
+.screwdriver-prop {
+    width: 30px;
+    height: 120px;
+    /* Visual construction of a screwdriver using gradients */
+    background: linear-gradient(to bottom, 
+        #e74c3c 0%, #e74c3c 40%, /* Handle */
+        #95a5a6 40%, #95a5a6 100% /* Metal Shaft */
+    ); 
+    border: 2px solid #2c3e50;
+    border-radius: 4px;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+/* Tip of the screwdriver */
+.screwdriver-prop::after {
+    content: '';
+    width: 100%;
+    height: 10px;
+    background: #2c3e50; /* Dark tip */
+}
+
+/* --- Floating State (When dragged out) --- */
+.drawer-item.floating {
+    position: fixed; /* Fixed to viewport so it stays put while scrolling/moving */
+    z-index: 9999; /* Above EVERYTHING (PDA, Book, Drawer) */
+    pointer-events: auto;
+    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.6));
+    transform: scale(1.1); /* Make it slightly larger when picked up */
 }
