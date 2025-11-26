@@ -136,9 +136,6 @@ async function loadBookMarkup(containerId, filePath) {
         }
     }
 
-    // Removed: updatePageControls (moved to Book/book.js)
-    // Removed: initializePageFlip (moved to Book/book.js)
-
     // SHINE EFFECT
     const initializeShineEffect = () => {
         const pdaScreen = document.querySelector('.PDA-screen');
@@ -156,12 +153,6 @@ async function loadBookMarkup(containerId, filePath) {
             });
         }
     };
-
-    // Removed: All Floating Notes System functions:
-    // floatingNotes, draggedNoteId, dragOffsetX, dragOffsetY
-    // initializeBookNotes, createFloatingNoteFrom, handleNoteMouseDown, handleNoteDrag, 
-    // handleFloatingNoteMouseDown, removeFloatingNote, handleNoteMouseUp
-    // (All moved to Book/book.js)
 
     function updateHome() {
         if (el('owner')) el('owner').textContent = state.owner;
