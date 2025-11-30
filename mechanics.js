@@ -5,20 +5,38 @@
 export const RESISTOR_CONFIG = [
     {
         slotId: 'slot-r1',      // You will update HTML to match this
-        requiredOhms: '100',     // The value defined on the resistor div
-        effects: ['overlay-communication', 'overlay-terminal'],
-        action: 'standard'       // Just shows overlays
+        requiredOhms: '220',     // The value defined on the resistor div
+        effects: ['overlay-battery','overlay-traces'],
+        action: 'repair'         // Triggers the system repair (Power On)
     },
     {
         slotId: 'slot-r2',
-        requiredOhms: '220',
-        effects: ['overlay-battery', 'overlay-traces'],
-        action: 'repair'         // Triggers the system repair (Power On)
+        requiredOhms: '100',
+        effects: ['overlay-communication'],
+        action: 'standard'       // Just shows overlays
     },
     {
         slotId: 'slot-r3',
         requiredOhms: '10k',
-        effects: ['overlay-notekeeper', 'overlay-speakers'],
+        effects: ['overlay-notekeeper'],
+        action: 'standard'
+    },
+    {
+        slotId: 'slot-r4',
+        requiredOhms: '30',
+        effects: ['overlay-terminal'],
+        action: 'standard'
+    },
+    {
+        slotId: 'slot-r5',
+        requiredOhms: '20',
+        effects: ['overlay-terminal'],
+        action: 'standard'
+    },
+    {
+        slotId: 'slot-r6',
+        requiredOhms: '10',
+        effects: ['overlay-speakers'],
         action: 'standard'
     }
 ];

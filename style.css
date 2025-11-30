@@ -257,7 +257,7 @@ body{
     border: 2px solid #0a2a0a;
     border-radius: 4px;
     z-index: 1;
-    display: flex;
+    display: block;
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -307,8 +307,8 @@ body{
     align-items: center;
     justify-content: center;
     position: relative;
-    right: 38.1%;
-    top: 10%;
+    left: 6.7%;
+    top: 34.3%;
 }
 .coin-text { font-size: 6px; color: #7f8c8d; font-family: sans-serif; }
 /* 
@@ -329,20 +329,20 @@ body{
 
 
 .resistor-slot {
-    width: 10px;
-    height: 40px;
+    width: 3px;
+    height: 10px;
     border: 1px dashed rgba(255,255,255,0.3);
     background: rgba(0,0,0,0.2);
     position: relative; /* Essential for absolute child positioning */
-    margin-top: 15px;
     z-index: 2;
-    right: 34%;
-    top: -5%;
 }
 
-.resistor-slot.r1 { top: 18%; left: 42%; }
-.resistor-slot.r1 { bottom: 30%; right: 12%; }
-.resistor-slot.r1 { top: 60%; left: 15%; }
+.resistor-slot.r1 { top: 58%; right: -3%; } /* power */
+.resistor-slot.r2 { top: -4.5%; left: 84.4%; transform: rotate(90deg);} /* communication */
+.resistor-slot.r3 { top: -3.2%; left: 19.3%; } /* notekeeper */
+.resistor-slot.r4 { top: 24%; left: 19.3%; } /* terminal 1*/
+.resistor-slot.r5 { top: 11%; left: 36.7%; transform: rotate(90deg); } /* terminal 2*/
+.resistor-slot.r6 { top: 46.4%; left: 60.3%; } /* speakers */
 
 .pcb-label {
     /* ... keep existing ... */

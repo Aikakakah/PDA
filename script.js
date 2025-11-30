@@ -2,6 +2,7 @@ import { createNewsModule } from './news.js';
 import { createSecretHandler } from './secret_handler.js';
 import { validateResistorDrop } from './mechanics.js';
 import { initializeBookSystem } from './Book/book.js'; // New Import
+import { createNanoChatTriggers } from './nanochat_triggers.js';
 
 // Helper to inject HTML from file (must be inside the IIFE or the IIFE must be converted to a module)
 async function loadBookMarkup(containerId, filePath) {
@@ -122,6 +123,7 @@ async function loadBookMarkup(containerId, filePath) {
 
     let newsModule = null;
     let secretHandler = null;
+    let nanoChatTriggers = null; // Variable to hold the instantiated nanochat triggers
 
     const el = id => document.getElementById(id);
 
@@ -346,6 +348,23 @@ async function loadBookMarkup(containerId, filePath) {
         
         if (name && number) {
             console.log(`Attempting to create new chat with: ${name} (${number})`);
+            // Create a unique contact ID from the name (lowercase, no spaces)
+            const contactId = name.toLowerCase().replace(/\s+/g, '');
+            
+            // Add the new contact to state.nanochat.channels
+            state.nanochat.channels[contactId] = {
+                name: name,
+                messages: []
+            };
+            
+            // Switch to the new contact
+            state.nanochat.currentContact = contactId;
+            
+            // Re-render sidebar and messages
+            renderSidebar();
+            renderMessages();
+            
+            // Close modal and clear inputs
             newChatModal.classList.add('hidden');
             contactNameInput.value = '';
             contactNumberInput.value = '';
@@ -400,6 +419,12 @@ async function loadBookMarkup(containerId, filePath) {
                 });
                 input.value = '';
                 renderMessages();
+                
+                // Check for special NanoChat triggers
+                const currentContactName = state.nanochat.channels[state.nanochat.currentContact].name;
+                if (nanoChatTriggers) {
+                    nanoChatTriggers.checkAndTrigger(currentContactName, text);
+                }
             }
         }
 
@@ -501,6 +526,11 @@ async function loadBookMarkup(containerId, filePath) {
         newsModule = createNewsModule(state, el, showView, ringtoneModal);
 
         secretHandler = createSecretHandler(el, showView, ringtoneModal);
+        
+        // Initialize NanoChat Triggers
+        nanoChatTriggers = createNanoChatTriggers();
+        
+        // Render programs (safe)
         renderPrograms();
 
         showView('home');
@@ -588,6 +618,34 @@ const btnAdminPower = el('btn-admin-power');
             btnAdminPower.style.boxShadow = "0 0 10px #fff";
         });
     }
+    const btnAdminUnscrew = el('btn-admin-unscrew');
+if (btnAdminUnscrew) {
+    btnAdminUnscrew.addEventListener('click', () => {
+        console.log("ADMIN: Removing Back Panel");
+
+        // 1. Force Flip to Back so user sees it
+        if (pda && !pda.classList.contains('flipped')) {
+            pda.classList.add('flipped');
+        }
+
+        // 2. Animate Screws out
+        const screws = document.querySelectorAll('.screw');
+        screws.forEach((screw, index) => {
+            // Stagger them slightly for visual flair
+            setTimeout(() => {
+                screw.classList.add('removed');
+            }, index * 100);
+        });
+
+        // 3. Detach the panel after screws are "out" (approx 600ms animation)
+        setTimeout(() => {
+            if (backPanel) {
+                backPanel.classList.add('unlocked');
+                backPanel.classList.add('detached');
+            }
+        }, 800);
+    });
+}
     
         const turnOffScreen = () => {
             if(powerOverlay) powerOverlay.classList.remove('hidden');
