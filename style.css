@@ -852,7 +852,7 @@ body{
   padding:5px;
   color:var(--text);overflow:auto
 }
-.program-area .cartridge-header{font-weight:700;margin-bottom:8px;font-size:1.2em;color:var(--accent)}
+.program-area .cartridge-header{font-weight:700;margin-bottom:8px;font-size:1.2em;color:var(--accent);text-shadow: 0 0 1px rgb(93 50 97);}
 
 /* Notekeeper UI specific */
 .notekeeper{display:flex;flex-direction:column;height:100%}
@@ -1244,8 +1244,8 @@ body{
 }
 
 /* Hide scrollbar in Firefox for a cleaner look, but keep scrolling functional */
+scrollbar-width: thin; /* "auto" or "thin" */
 .view, .notes-wrap, .chat-messages, .manifest-list {
-   scrollbar-width: thin; /* "auto" or "thin" */
    scrollbar-color: #444448 var(--inner); /* thumb color track color */
 }
 
@@ -1720,7 +1720,7 @@ body{
     border: 1px solid #ddd;
     border-radius: 2px;
     padding: 8px;
-    font-size: 12px;
+    font-size: 18px;
     color: #333;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     cursor: grab;
@@ -1734,8 +1734,8 @@ body{
     align-items: center;
     justify-content: center;
     text-align: center;
-    font-family: 'Comic Sans MS', cursive;
-    font-weight: bold;
+    font-family: 'Caveat';
+    font-weight: 700;
     z-index: 10;
 }
 
@@ -1763,13 +1763,12 @@ body{
 .floating-note {
     position: fixed; /* Changed from absolute to fixed for easier coordinate math */
     z-index: 9999;   /* Above everything */
-    width: 80px;
-    height: 80px;
+    width: 90px;
+    height: 90px;
     background: linear-gradient(135deg, #fffacd 0%, #ffffe0 100%);
-    border: 2px solid #f0c674;
-    border-radius: 4px;
-    padding: 10px;
-    font-size: 13px;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    padding: 8px;
     color: #333;
     box-shadow: 0 15px 30px rgba(0,0,0,0.4); /* Bigger shadow when floating */
     cursor: grab;
@@ -1778,8 +1777,9 @@ body{
     align-items: center;
     justify-content: center;
     text-align: center;
-    font-family: 'Comic Sans MS', cursive;
-    font-weight: bold;
+    font-family: 'Caveat';
+    font-size: 18px;
+    font-weight: 700;
     user-select: none;
     box-sizing: border-box;
     transform: scale(1.1); /* Pop effect */
