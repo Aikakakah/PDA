@@ -955,6 +955,7 @@ if (btnAdminUnscrew) {
                     item.style.top = (e.clientY - centerOffsetY) + 'px';
                     
                     if (isUnplacing) {
+                        // FORCE SIZE RESTORATION
                         item.style.width = '40px'; 
                         item.style.height = '10px';
                     } else {
@@ -1004,6 +1005,7 @@ if (btnAdminUnscrew) {
                                 item.classList.remove('floating');
                                 item.style.left = ''; 
                                 item.style.top = '';
+                                // Remove inline sizing so CSS .placed class takes over shrinking
                                 item.style.width = ''; 
                                 item.style.height = '';
                                 item.style.transform = ''; 
