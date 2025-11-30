@@ -6,7 +6,7 @@ export const RESISTOR_CONFIG = [
     {
         slotId: 'slot-r1',      // You will update HTML to match this
         requiredOhms: '220',     // The value defined on the resistor div
-        effects: ['overlay-battery','overlay-traces'],
+        effects: ['overlay-battery'], //,'overlay-traces'
         action: 'repair'         // Triggers the system repair (Power On)
     },
     {

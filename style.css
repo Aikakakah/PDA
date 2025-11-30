@@ -153,6 +153,7 @@ body{
     justify-content: center;
     align-items: center;
     border: 1px solid #1a0514;
+    text-align:center;
 }
 .pda-wall {
     position: absolute;
@@ -241,123 +242,6 @@ body{
 .panel-screw-hole.tr { top: 10px; right: 10px; }
 .panel-screw-hole.bl { bottom: 10px; left: 10px; }
 .panel-screw-hole.br { bottom: 10px; right: 10px; }
-
-.pda-circuit-board {
-    position: absolute;
-    width: 48%;
-    height: 46%;
-    top: 50%;
-    /* Change the background color to match the SVG base */
-    background-color: #0e3c0e; 
-    
-    /* Load your new image */
-    background-image: url('Images/board.svg'); 
-    background-size: cover; /* Or 'contain' depending on preference */
-    
-    border: 2px solid #0a2a0a;
-    border-radius: 4px;
-    z-index: 1;
-    display: block;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
-}
-
-.pcb-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-position: center;
-    opacity: 0; /* Hidden by default */
-    transition: opacity 0.5s ease; /* Smooth fade in */
-    pointer-events: none; /* CRITICAL: Allows clicks to pass through to the slot/screws */
-    z-index: 1; /* Sit above the base board background */
-    transition: opacity 0.3s ease-in-out;
-}
-
-.overlay-battery {
-    background-image: url('Images/board-battery.svg');
-}
-
-.overlay-traces {
-    background-image: url('Images/board-traces.svg');
-}
-
-.pcb-overlay.active {
-    opacity: 1; /* Visible when active class is added */
-}
-.overlay-communication { background-image: url('Images/board-communication.svg'); }
-.overlay-notekeeper    { background-image: url('Images/board-notekeeper.svg'); }
-.overlay-speakers      { background-image: url('Images/board-speakers.svg'); }
-.overlay-terminal      { background-image: url('Images/board-terminal.svg'); }
-
-.coin-cell {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #e6e6e6, #bdc3c7);
-    border: 3px solid #95a5a6;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    left: 6.7%;
-    top: 34.3%;
-}
-.coin-text { font-size: 6px; color: #7f8c8d; font-family: sans-serif; }
-/* 
-/* 5. Vias (Little drill holes) */
-.via {
-    position: absolute;
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: #0a2a0a; /* Dark hole */
-    border: 1px solid #b87333; /* Copper ring */
-}
-.via.v1 { top: 18%; left: 42%; }
-.via.v2 { bottom: 30%; right: 12%; }
-.via.v3 { top: 60%; left: 15%; }
-
-/* --- Existing Functional Styles (Keep these) --- */
-
-
-.resistor-slot {
-    width: 3px;
-    height: 10px;
-    border: 1px dashed rgba(255,255,255,0.3);
-    background: rgba(0,0,0,0.2);
-    position: relative; /* Essential for absolute child positioning */
-    z-index: 2;
-}
-
-.resistor-slot.r1 { top: 58%; right: -3%; } /* power */
-.resistor-slot.r2 { top: -4.5%; left: 84.4%; transform: rotate(90deg);} /* communication */
-.resistor-slot.r3 { top: -3.2%; left: 19.3%; } /* notekeeper */
-.resistor-slot.r4 { top: 24%; left: 19.3%; } /* terminal 1*/
-.resistor-slot.r5 { top: 11%; left: 36.7%; transform: rotate(90deg); } /* terminal 2*/
-.resistor-slot.r6 { top: 46.4%; left: 60.3%; } /* speakers */
-
-.pcb-label {
-    /* ... keep existing ... */
-    font-size: 6px;
-    color: #bdc3c7;
-    margin-top: 2px;
-    font-family: monospace;
-    z-index: 2;
-}
-.pcb-label {
-    font-size: 6px;
-    color: #bdc3c7;
-    margin-bottom: 2px;
-    font-family: monospace;
-}
 
 /* --- Resistor Visuals --- */
 .resistor-kit {

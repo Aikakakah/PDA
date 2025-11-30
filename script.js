@@ -1,6 +1,6 @@
 import { createNewsModule } from './news.js';
 import { createSecretHandler } from './secret_handler.js';
-import { validateResistorDrop } from './mechanics.js';
+import { validateResistorDrop } from './Circuit/circuit.js';
 import { initializeBookSystem } from './Book/book.js'; // New Import
 import { createNanoChatTriggers } from './nanochat_triggers.js';
 
@@ -16,6 +16,21 @@ async function loadBookMarkup(containerId, filePath) {
         }
     } catch (e) {
         console.error("Could not load book markup:", e);
+    }
+    return false;
+}
+
+async function loadCircuitMarkup(containerId, filePath) {
+    try {
+        const response = await fetch(filePath);
+        const html = await response.text();
+        const container = document.getElementById(containerId);
+        if (container) {
+            container.innerHTML = html;
+            return true;
+        }
+    } catch (e) {
+        console.error("Could not load circuit markup:", e);
     }
     return false;
 }
@@ -494,6 +509,7 @@ async function loadBookMarkup(containerId, filePath) {
     document.addEventListener('DOMContentLoaded', async () => {
         // 1. Load External Book Markup
         await loadBookMarkup('book-injection-point', './Book/book.html');
+        await loadCircuitMarkup('circuit-injection-point', './Circuit/circuit.html');
         
         pda = el('pda');
         views = {
