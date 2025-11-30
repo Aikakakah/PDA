@@ -4,10 +4,10 @@
 // We map the HTML ID of the slot -> The Ohm value required -> The visual effects to trigger
 export const RESISTOR_CONFIG = [
     {
-        slotId: 'slot-r1',      // You will update HTML to match this
-        requiredOhms: '220',     // The value defined on the resistor div
-        effects: ['overlay-battery'], //,'overlay-traces'
-        action: 'repair'         // Triggers the system repair (Power On)
+        slotId: 'slot-r1',
+        requiredOhms: '220',
+        effects: ['overlay-battery'],
+        action: 'repair'
     },
     {
         slotId: 'slot-r2',
@@ -20,25 +20,29 @@ export const RESISTOR_CONFIG = [
         slotId: 'slot-r3',
         requiredOhms: '10k',
         effects: ['overlay-notekeeper'],
-        action: 'standard'
+        action: 'standard',
+        feature: 'notekeeper' // Linked to Notekeeper
     },
     {
         slotId: 'slot-r4',
         requiredOhms: '220',
         effects: ['overlay-terminal'],
-        action: 'standard'
+        action: 'standard',
+        feature: 'terminal'   // Linked to Terminal (Part 1)
     },
     {
         slotId: 'slot-r5',
         requiredOhms: '10k',
         effects: ['overlay-terminal'],
-        action: 'standard'
+        action: 'standard',
+        feature: 'terminal'   // Linked to Terminal (Part 2)
     },
     {
         slotId: 'slot-r6',
         requiredOhms: '10',
         effects: ['overlay-speakers'],
-        action: 'standard'
+        action: 'standard',
+        feature: 'news'       // Linked to Station News
     }
 ];
 

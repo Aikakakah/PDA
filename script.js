@@ -52,9 +52,11 @@ async function loadCircuitMarkup(containerId, filePath) {
             notekeeper: false,
             nanochat: false,
             news: false,
+            terminal: false, // New terminal lock
             ringtone: false,
             power: false 
         },
+        adminOverride: false,
         programs: [
             { uid: 1, name: "Crew manifest", icon: "CM", type: "manifest" },
             { uid: 2, name: "Notekeeper", icon: "NK", type: "notekeeper" },
@@ -200,32 +202,40 @@ async function loadCircuitMarkup(containerId, filePath) {
 
     // --- PROGRAM LOGIC ---
     function renderPrograms() {
-        const programGrid = el('programGrid'); 
-        if (!programGrid) return;
-        programGrid.innerHTML = '';
-        for (const p of state.programs) {
-            const tile = document.createElement('div');
-            tile.className = 'tile';
-            tile.dataset.uid = p.uid;
-            
-            // CHECK IF LOCKED
-            // If the program type is 'nanochat' AND state.unlockedFeatures.nanochat is false
-            const isLocked = (p.type === 'nanochat' && !state.unlockedFeatures.nanochat);
-
-            if (isLocked) {
-                tile.classList.add('disabled');
+    const programGrid = el('programGrid'); 
+    if (!programGrid) return;
+    programGrid.innerHTML = '';
+    
+    for (const p of state.programs) {
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        tile.dataset.uid = p.uid;
+        
+        // Determine if this specific program type is locked
+        // We look for a key in unlockedFeatures that matches the program type
+        let isLocked = false;
+        
+        // Map program types to feature keys if they differ, or use direct match
+        // manifest and settings are usually always available, others are locked
+        if (['nanochat', 'notekeeper', 'news', 'terminal'].includes(p.type)) {
+            if (!state.unlockedFeatures[p.type]) {
+                isLocked = true;
             }
-
-            tile.innerHTML = `<div class="glyph">${p.icon}</div><div class="label">${p.name}</div>`;
-            
-            // Only add click listener if NOT locked
-            if (!isLocked) {
-                tile.addEventListener('click', () => openProgram(p));
-            }
-            
-            programGrid.appendChild(tile);
         }
+
+        if (isLocked) {
+            tile.classList.add('disabled');
+        }
+
+        tile.innerHTML = `<div class="glyph">${p.icon}</div><div class="label">${p.name}</div>`;
+        
+        if (!isLocked) {
+            tile.addEventListener('click', () => openProgram(p));
+        }
+        
+        programGrid.appendChild(tile);
     }
+}
 
     function openProgram(p) {
         const programArea = el('programArea'); 
@@ -621,6 +631,39 @@ async function loadCircuitMarkup(containerId, filePath) {
         playNext();
     }
 
+    // *** START FIX: MOVED checkCircuitState TO GLOBAL SCOPE ***
+    function checkCircuitState() {
+        // If Admin Override is on, ignore the resistors and keep everything unlocked
+        if (state.adminOverride) {
+            Object.keys(state.unlockedFeatures).forEach(k => state.unlockedFeatures[k] = true);
+            renderPrograms();
+            return;
+        }
+
+        // Helper to check if a slot has the correct ohm value
+        const isRepaired = (slotId, correctOhms) => {
+            const slot = document.getElementById(slotId);
+            if (slot && slot.children.length > 0) {
+                return slot.children[0].dataset.ohms === correctOhms;
+            }
+            return false;
+        };
+
+        // Update state based on physical board
+        state.unlockedFeatures.nanochat = isRepaired('slot-r2', '100');
+        state.unlockedFeatures.notekeeper = isRepaired('slot-r3', '10k');
+        state.unlockedFeatures.news = isRepaired('slot-r6', '10');
+
+        // Terminal requires BOTH R4 (220) and R5 (10k)
+        const r4Ok = isRepaired('slot-r4', '220');
+        const r5Ok = isRepaired('slot-r5', '10k');
+        state.unlockedFeatures.terminal = r4Ok && r5Ok;
+
+        renderPrograms();
+    }
+    // *** END FIX ***
+
+
     document.addEventListener('DOMContentLoaded', async () => {
         await loadBookMarkup('book-injection-point', './Book/book.html');
         await loadCircuitMarkup('circuit-injection-point', './Circuit/circuit.html');
@@ -717,7 +760,8 @@ async function loadCircuitMarkup(containerId, filePath) {
         }
 
         const pdaScreen = document.querySelector('.PDA-screen');
-const btnAdminPower = el('btn-admin-power');
+        const btnAdminPower = el('btn-admin-power');
+        const btnAdminUnlockAll = el('btn-admin-unlock-all');
 
     if (btnAdminPower) {
         btnAdminPower.addEventListener('click', () => {
@@ -738,30 +782,58 @@ const btnAdminPower = el('btn-admin-power');
             btnAdminPower.style.boxShadow = "0 0 10px #fff";
         });
     }
-    const btnAdminUnscrew = el('btn-admin-unscrew');
-if (btnAdminUnscrew) {
-    btnAdminUnscrew.addEventListener('click', () => {
-        console.log("ADMIN: Removing Back Panel");
+    
+    // 1. checkCircuitState DEFINITION WAS MOVED OUTSIDE OF DOMContentLoaded.
+    // This is where the old function definition was.
+    
 
-        if (pda && !pda.classList.contains('flipped')) {
-            pda.classList.add('flipped');
-        }
+    // 2. SETUP ADMIN UNLOCK LISTENER INDEPENDENTLY
+    const adminUnlockBtn = el('btn-admin-unlock-all'); // Use a new const for clarity
+    if (adminUnlockBtn) {
+        adminUnlockBtn.addEventListener('click', () => {
+            console.log("ADMIN: Toggling Unlock All");
+            state.adminOverride = !state.adminOverride; // Toggle functionality
 
-        const screws = document.querySelectorAll('.screw');
-        screws.forEach((screw, index) => {
-            setTimeout(() => {
-                screw.classList.add('removed');
-            }, index * 100);
-        });
-
-        setTimeout(() => {
-            if (backPanel) {
-                backPanel.classList.add('unlocked');
-                backPanel.classList.add('detached');
+            // Visual feedback for the button
+            if (state.adminOverride) {
+                adminUnlockBtn.style.color = "#0f0";
+                adminUnlockBtn.style.borderColor = "#0f0";
+                adminUnlockBtn.style.boxShadow = "0 0 10px #0f0"; // Added glow for visibility
+            } else {
+                adminUnlockBtn.style.color = "";
+                adminUnlockBtn.style.borderColor = "";
+                adminUnlockBtn.style.boxShadow = "";
             }
-        }, 800);
-    });
-}
+
+            checkCircuitState(); // Now works because it's in the global scope!
+        });
+    }
+
+    // 3. SETUP UNSCREW LISTENER INDEPENDENTLY
+    const btnAdminUnscrew = el('btn-admin-unscrew');
+    if (btnAdminUnscrew) {
+        btnAdminUnscrew.addEventListener('click', () => {
+            console.log("ADMIN: Removing Back Panel");
+
+            if (pda && !pda.classList.contains('flipped')) {
+                pda.classList.add('flipped');
+            }
+
+            const screws = document.querySelectorAll('.screw');
+            screws.forEach((screw, index) => {
+                setTimeout(() => {
+                    screw.classList.add('removed');
+                }, index * 100);
+            });
+
+            setTimeout(() => {
+                if (backPanel) {
+                    backPanel.classList.add('unlocked');
+                    backPanel.classList.add('detached');
+                }
+            }, 800);
+        });
+    }
     
         const turnOffScreen = () => {
             if(powerOverlay) powerOverlay.classList.remove('hidden');
@@ -986,22 +1058,14 @@ if (btnAdminUnscrew) {
                 if (item.classList.contains('placed')) {
                     isUnplacing = true;
                     item.classList.remove('placed');
-                    // --- START NEW CODE ---
-    // Check if the slot we are removing from has a linked feature
-    if (item.parentElement && item.parentElement.id) {
-        // We have to import RESISTOR_CONFIG at the top of script.js if not already, 
-        // or access it via the module import logic used in your project.
-        // Assuming RESISTOR_CONFIG is available or we look it up via the ID:
-        
-        // Quick lookup based on ID (since we might not have the config object scope here easily without import)
-        // Ideally, import RESISTOR_CONFIG from './Circuit/circuit.js'; at the top of script.js
-        
-        // If you cannot import RESISTOR_CONFIG easily, you can hardcode the check:
-        if (item.parentElement.id === 'slot-r2') {
-             state.unlockedFeatures.nanochat = false;
-             renderPrograms(); // Re-render to grey it out
-        }
-    }
+                
+    
+                    if (item.parentElement && item.parentElement.id) {
+                        if (item.parentElement.id === 'slot-r2') {
+                            state.unlockedFeatures.nanochat = false;
+                            renderPrograms(); // Re-render to grey it out
+                        }
+                    }
                     if (item.parentElement && item.parentElement.classList.contains('resistor-slot')) {
                         item.parentElement.style.boxShadow = "";
                     }
@@ -1047,6 +1111,9 @@ if (btnAdminUnscrew) {
                             }
                         }
                     });
+                    setTimeout(() => {
+                        checkCircuitState(); // NOW THIS WORKS!
+                    }, 50);
                 }
                 
                 const rect = item.getBoundingClientRect();
@@ -1125,10 +1192,10 @@ if (btnAdminUnscrew) {
 
                                 if (result.success) {
                                     slot.style.boxShadow = "0 0 15px #0f0, inset 0 0 10px #0f0";
-if (result.feature) {
-            state.unlockedFeatures[result.feature] = true;
-            renderPrograms(); // Re-render to enable the button
-        }
+                                if (result.feature) {
+                                        state.unlockedFeatures[result.feature] = true;
+                                        renderPrograms(); // Re-render to enable the button
+                                    }
                                     if (result.effects) {
                                         result.effects.forEach(cls => {
                                             // SPECIAL CHECK FOR TERMINAL OVERLAY
@@ -1142,6 +1209,7 @@ if (result.feature) {
                                     if (result.action === 'repair') {
                                         repairPDA();
                                     }
+                                    checkCircuitState(); // NOW THIS WORKS!
                                 }
                             }
                         });
