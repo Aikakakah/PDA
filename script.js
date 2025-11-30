@@ -879,29 +879,80 @@ if (btnAdminUnscrew) {
                     isUnplacing = true;
                     item.classList.remove('placed');
                     
-                    // --- NEW: Remove active class from the parent slot when picking up ---
+                    // Remove active class from the parent slot when picking up
                     if (item.parentElement && item.parentElement.classList.contains('resistor-slot')) {
                         item.parentElement.style.boxShadow = "";
                     }
 
-                    // Reset all effects (or specific ones if we were tracking strict matching)
-                    // For simplicity, we clear all active overlays when a resistor is removed
+                    // 1. Reset Board State: Clear all visuals and reset Power Button to default "Error"
                     document.querySelectorAll('.pcb-overlay').forEach(ov => ov.classList.remove('active'));
                     
                     if (powerBtn) {
                         powerBtn.textContent = "System Error";
                         powerBtn.style.backgroundColor = "#555";
+                        powerBtn.disabled = true;
+                        powerBtn.style.cursor = "not-allowed";
                     }
+
+                    // 2. Re-Scan Remaining Slots: Check every slot to see if valid resistors are STILL there
+                    const allSlots = document.querySelectorAll('.resistor-slot');
+                    allSlots.forEach(slot => {
+                        // Check if slot has a resistor
+                        if (slot.children.length > 0) {
+                            const resistor = slot.children[0];
+
+                            // CRITICAL: Ignore the resistor we are currently holding/picking up!
+                            if (resistor === item) return; 
+
+                            // Validate the existing resistor
+                            const result = validateResistorDrop(resistor, slot);
+                            
+                            if (result.success) {
+                                // Turn the trace for THIS resistor back on
+                                if (result.effects) {
+                                    result.effects.forEach(cls => {
+                                        const el = document.querySelector('.' + cls);
+                                        if (el) el.classList.add('active');
+                                    });
+                                }
+
+                                // If the "Repair" resistor (R1) is still present, re-enable the Power Button
+                                if (result.action === 'repair') {
+                                     if(powerBtn) {
+                                        powerBtn.disabled = false;
+                                        powerBtn.textContent = "Power On";
+                                        powerBtn.style.backgroundColor = ""; 
+                                        powerBtn.style.cursor = "pointer";
+                                    }
+                                }
+                            }
+                        }
+                    });
                 }
                 
+                // --- 2. CENTER ON CURSOR LOGIC ---
                 const rect = item.getBoundingClientRect();
-                const offsetX = e.clientX - rect.left;
-                const offsetY = e.clientY - rect.top;
+                
+                // Determine target dimensions to calculate center
+                // If unplacing, we know it shrinks to 40x10. If picking from drawer, use current rect.
+                let targetWidth = rect.width;
+                let targetHeight = rect.height;
+
+                if (isUnplacing) {
+                    targetWidth = 40; 
+                    targetHeight = 10;
+                }
+
+                // Calculate center offsets
+                const centerOffsetX = targetWidth / 2;
+                const centerOffsetY = targetHeight / 2;
+
                 const wasFloating = item.classList.contains('floating');
 
                 if (!wasFloating) {
-                    item.style.left = rect.left + 'px';
-                    item.style.top = rect.top + 'px';
+                    // Apply position immediately centered on mouse
+                    item.style.left = (e.clientX - centerOffsetX) + 'px';
+                    item.style.top = (e.clientY - centerOffsetY) + 'px';
                     
                     if (isUnplacing) {
                         item.style.width = '40px'; 
@@ -916,8 +967,9 @@ if (btnAdminUnscrew) {
                 }
 
                 const onMouseMove = (moveEvent) => {
-                    item.style.left = (moveEvent.clientX - offsetX) + 'px';
-                    item.style.top = (moveEvent.clientY - offsetY) + 'px';
+                    // Move based on center offset
+                    item.style.left = (moveEvent.clientX - centerOffsetX) + 'px';
+                    item.style.top = (moveEvent.clientY - centerOffsetY) + 'px';
                 };
 
                 const onMouseUp = (upEvent) => {
