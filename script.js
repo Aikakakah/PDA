@@ -1,10 +1,10 @@
 import { createNewsModule } from './news.js';
 import { createSecretHandler } from './secret_handler.js';
 import { validateResistorDrop } from './Circuit/circuit.js';
-import { initializeBookSystem } from './Book/book.js'; // New Import
+import { initializeBookSystem } from './Book/book.js'; 
 import { createNanoChatTriggers } from './nanochat_triggers.js';
 
-// Helper to inject HTML from file (must be inside the IIFE or the IIFE must be converted to a module)
+// Helper to inject HTML from file
 async function loadBookMarkup(containerId, filePath) {
     try {
         const response = await fetch(filePath);
@@ -131,14 +131,13 @@ async function loadCircuitMarkup(containerId, filePath) {
     let ringtoneDisplay = null;
     let testRingtoneBtn = null;
     let setRingtoneBtn = null;
-    // Removed: bookPrev, bookNext, pageNumberDisplay (now local to initializeBookSystem)
     let nanochatModal = null;
     let closeNanochatModal = null;
     let backPanel = null;
 
     let newsModule = null;
     let secretHandler = null;
-    let nanoChatTriggers = null; // Variable to hold the instantiated nanochat triggers
+    let nanoChatTriggers = null; 
 
     const el = id => document.getElementById(id);
 
@@ -363,23 +362,17 @@ async function loadCircuitMarkup(containerId, filePath) {
         
         if (name && number) {
             console.log(`Attempting to create new chat with: ${name} (${number})`);
-            // Create a unique contact ID from the name (lowercase, no spaces)
             const contactId = name.toLowerCase().replace(/\s+/g, '');
             
-            // Add the new contact to state.nanochat.channels
             state.nanochat.channels[contactId] = {
                 name: name,
                 messages: []
             };
             
-            // Switch to the new contact
             state.nanochat.currentContact = contactId;
-            
-            // Re-render sidebar and messages
             renderSidebar();
             renderMessages();
             
-            // Close modal and clear inputs
             newChatModal.classList.add('hidden');
             contactNameInput.value = '';
             contactNumberInput.value = '';
@@ -435,7 +428,6 @@ async function loadCircuitMarkup(containerId, filePath) {
                 input.value = '';
                 renderMessages();
                 
-                // Check for special NanoChat triggers
                 const currentContactName = state.nanochat.channels[state.nanochat.currentContact].name;
                 if (nanoChatTriggers) {
                     nanoChatTriggers.checkAndTrigger(currentContactName, text);
@@ -507,7 +499,6 @@ async function loadCircuitMarkup(containerId, filePath) {
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
-        // 1. Load External Book Markup
         await loadBookMarkup('book-injection-point', './Book/book.html');
         await loadCircuitMarkup('circuit-injection-point', './Circuit/circuit.html');
         
@@ -536,17 +527,14 @@ async function loadCircuitMarkup(containerId, filePath) {
         ringtoneDisplay = el('ringtoneDisplay');
         testRingtoneBtn = el('testRingtoneBtn');
         setRingtoneBtn = el('setRingtoneBtn');
-        // Removed: bookPrev, bookNext, pageNumberDisplay (now local to initializeBookSystem)
-        backPanel = document.querySelector('.pda-back-panel'); // Assign global backPanel
+        backPanel = document.querySelector('.pda-back-panel'); 
 
         newsModule = createNewsModule(state, el, showView, ringtoneModal);
 
         secretHandler = createSecretHandler(el, showView, ringtoneModal);
         
-        // Initialize NanoChat Triggers
         nanoChatTriggers = createNanoChatTriggers();
         
-        // Render programs (safe)
         renderPrograms();
 
         showView('home');
@@ -560,15 +548,12 @@ async function loadCircuitMarkup(containerId, filePath) {
     
         if (flipTriggerBtn && pdaContainer) {
             flipTriggerBtn.addEventListener('click', () => {
-                // Toggle logic to handle flip AND reattach panel if necessary
                 if (pdaContainer.classList.contains('flipped')) {
-                    // We are flipping back to front
                     if (backPanel && backPanel.classList.contains('detached')) {
                         backPanel.classList.remove('detached');
                     }
                     pdaContainer.classList.remove('flipped');
                 } else {
-                    // We are flipping to the back
                     pdaContainer.classList.add('flipped');
                 }
             });
@@ -615,7 +600,6 @@ const btnAdminPower = el('btn-admin-power');
         btnAdminPower.addEventListener('click', () => {
             console.log("ADMIN: Forcing Power On");
 
-            // 1. Visually fix the power button inside the overlay
             if (powerOn) {
                 powerOn.disabled = false;
                 powerOn.textContent = "Power On";
@@ -623,14 +607,11 @@ const btnAdminPower = el('btn-admin-power');
                 powerOn.style.cursor = "pointer";
             }
 
-            // 2. Force the screen state to ON immediately
-            // (Reusing your existing turnOnScreen logic)
             if(powerOverlay) powerOverlay.classList.add('hidden');
             const pdaScreen = document.querySelector('.PDA-screen');
             if(pdaScreen) pdaScreen.classList.remove('screen-off');
             state.poweredOn = true;
 
-            // 3. Optional: Add a visual indicator that Admin Mode was used
             btnAdminPower.style.boxShadow = "0 0 10px #fff";
         });
     }
@@ -639,21 +620,17 @@ if (btnAdminUnscrew) {
     btnAdminUnscrew.addEventListener('click', () => {
         console.log("ADMIN: Removing Back Panel");
 
-        // 1. Force Flip to Back so user sees it
         if (pda && !pda.classList.contains('flipped')) {
             pda.classList.add('flipped');
         }
 
-        // 2. Animate Screws out
         const screws = document.querySelectorAll('.screw');
         screws.forEach((screw, index) => {
-            // Stagger them slightly for visual flair
             setTimeout(() => {
                 screw.classList.add('removed');
             }, index * 100);
         });
 
-        // 3. Detach the panel after screws are "out" (approx 600ms animation)
         setTimeout(() => {
             if (backPanel) {
                 backPanel.classList.add('unlocked');
@@ -718,7 +695,6 @@ if (btnAdminUnscrew) {
             playRingtone();
         });
 
-        // Initialize Book System (Handles PageFlip and Notes now)
         initializeBookSystem(el);
 
         initializeShineEffect();
@@ -796,16 +772,9 @@ if (btnAdminUnscrew) {
         const drawerPanel = document.querySelector('.top-right-drawer-panel');
 
         const screws = document.querySelectorAll('.screw');
-        // backPanel is now global, assigned in DOMContentLoaded
-        // const backPanel = document.querySelector('.pda-back-panel'); 
-        
-        // --- NEW: Select all slots, not just one ID ---
         const resistorSlots = document.querySelectorAll('.resistor-slot');
-        
         const powerBtn = document.getElementById('powerOn');
         
-        // --- UPDATED CLICK LOGIC FOR PANEL ---
-        // Use toggle so it can be put back on if clicked while detached
         if (backPanel) {
             backPanel.addEventListener('click', () => {
                 if (backPanel.classList.contains('unlocked')) {
@@ -823,6 +792,25 @@ if (btnAdminUnscrew) {
             powerBtn.style.backgroundColor = "#555";
             powerBtn.style.cursor = "not-allowed";
         }
+
+        // --- NEW HELPER: CHECK BOTH TERMINAL SLOTS ---
+        const checkTerminalReady = (ignoredItem = null) => {
+            const slot4 = document.getElementById('slot-r4');
+            const slot5 = document.getElementById('slot-r5');
+            
+            // Helper to see if a valid resistor is inside
+            const isValid = (slot) => {
+                if (!slot || slot.children.length === 0) return false;
+                const r = slot.children[0];
+                if (r === ignoredItem) return false; // Ignore if currently being dragged/picked up
+                
+                // Re-validate just to be sure
+                const res = validateResistorDrop(r, slot);
+                return res.success;
+            };
+
+            return isValid(slot4) && isValid(slot5);
+        };
 
         const isOverlapping = (el1, el2) => {
             const rect1 = el1.getBoundingClientRect();
@@ -844,9 +832,6 @@ if (btnAdminUnscrew) {
         };
 
         const repairPDA = () => {
-            // Find the 220 slot specifically if we want to glow it, but for now just glow them all or specific one
-            // Simple visual feedback for repair
-            
             setTimeout(() => {
                 if (backPanel) backPanel.classList.remove('detached');
             }, 600);
@@ -879,12 +864,11 @@ if (btnAdminUnscrew) {
                     isUnplacing = true;
                     item.classList.remove('placed');
                     
-                    // Remove active class from the parent slot when picking up
                     if (item.parentElement && item.parentElement.classList.contains('resistor-slot')) {
                         item.parentElement.style.boxShadow = "";
                     }
 
-                    // 1. Reset Board State: Clear all visuals and reset Power Button to default "Error"
+                    // 1. Reset Board State
                     document.querySelectorAll('.pcb-overlay').forEach(ov => ov.classList.remove('active'));
                     
                     if (powerBtn) {
@@ -894,29 +878,26 @@ if (btnAdminUnscrew) {
                         powerBtn.style.cursor = "not-allowed";
                     }
 
-                    // 2. Re-Scan Remaining Slots: Check every slot to see if valid resistors are STILL there
+                    // 2. Re-Scan Remaining Slots
                     const allSlots = document.querySelectorAll('.resistor-slot');
                     allSlots.forEach(slot => {
-                        // Check if slot has a resistor
                         if (slot.children.length > 0) {
                             const resistor = slot.children[0];
-
-                            // CRITICAL: Ignore the resistor we are currently holding/picking up!
                             if (resistor === item) return; 
 
-                            // Validate the existing resistor
                             const result = validateResistorDrop(resistor, slot);
                             
                             if (result.success) {
-                                // Turn the trace for THIS resistor back on
                                 if (result.effects) {
                                     result.effects.forEach(cls => {
+                                        // SPECIAL CHECK FOR TERMINAL OVERLAY
+                                        if (cls === 'overlay-terminal' && !checkTerminalReady(item)) return;
+
                                         const el = document.querySelector('.' + cls);
                                         if (el) el.classList.add('active');
                                     });
                                 }
 
-                                // If the "Repair" resistor (R1) is still present, re-enable the Power Button
                                 if (result.action === 'repair') {
                                      if(powerBtn) {
                                         powerBtn.disabled = false;
@@ -930,11 +911,8 @@ if (btnAdminUnscrew) {
                     });
                 }
                 
-                // --- 2. CENTER ON CURSOR LOGIC ---
                 const rect = item.getBoundingClientRect();
                 
-                // Determine target dimensions to calculate center
-                // If unplacing, we know it shrinks to 40x10. If picking from drawer, use current rect.
                 let targetWidth = rect.width;
                 let targetHeight = rect.height;
 
@@ -943,19 +921,16 @@ if (btnAdminUnscrew) {
                     targetHeight = 10;
                 }
 
-                // Calculate center offsets
                 const centerOffsetX = targetWidth / 2;
                 const centerOffsetY = targetHeight / 2;
 
                 const wasFloating = item.classList.contains('floating');
 
                 if (!wasFloating) {
-                    // Apply position immediately centered on mouse
                     item.style.left = (e.clientX - centerOffsetX) + 'px';
                     item.style.top = (e.clientY - centerOffsetY) + 'px';
                     
                     if (isUnplacing) {
-                        // FORCE SIZE RESTORATION
                         item.style.width = '40px'; 
                         item.style.height = '10px';
                     } else {
@@ -968,7 +943,6 @@ if (btnAdminUnscrew) {
                 }
 
                 const onMouseMove = (moveEvent) => {
-                    // Move based on center offset
                     item.style.left = (moveEvent.clientX - centerOffsetX) + 'px';
                     item.style.top = (moveEvent.clientY - centerOffsetY) + 'px';
                 };
@@ -977,35 +951,29 @@ if (btnAdminUnscrew) {
                     document.removeEventListener('mousemove', onMouseMove);
                     document.removeEventListener('mouseup', onMouseUp);
 
-                    // 1. SCREWDRIVER LOGIC
                     if (item.classList.contains('screwdriver-prop')) {
                         screws.forEach(screw => {
                             if (!screw.classList.contains('removed') && isOverlapping(item, screw)) {
                                 screw.classList.add('removed');
                                 const a = new Audio('/Audio/click_fast.ogg'); 
-                                // a.play().catch(()=>{});
                                 checkPanelStatus();
                             }
                         });
                     }
 
-                    // 2. RESISTOR LOGIC
                     if (item.classList.contains('resistor-prop')) {
                         const allSlots = document.querySelectorAll('.resistor-slot');
                         let placedSuccessfully = false;
 
                         allSlots.forEach(slot => {
-                            // Skip if occupied
                             if (slot.children.length > 0) return;
 
                             if (backPanel && backPanel.classList.contains('detached') && isOverlapping(item, slot)) {
                                 
-                                // 1. SNAP TO SLOT (Always happens if overlapping)
                                 item.style.position = 'absolute';
                                 item.classList.remove('floating');
                                 item.style.left = ''; 
                                 item.style.top = '';
-                                // Remove inline sizing so CSS .placed class takes over shrinking
                                 item.style.width = ''; 
                                 item.style.height = '';
                                 item.style.transform = ''; 
@@ -1015,22 +983,21 @@ if (btnAdminUnscrew) {
                                 slot.appendChild(item);
                                 placedSuccessfully = true;
 
-                                // 2. VALIDATE FOR GAMEPLAY EFFECTS (Only happens if correct)
                                 const result = validateResistorDrop(item, slot);
 
                                 if (result.success) {
-                                    // Apply Visual Feedback (Success Glow)
                                     slot.style.boxShadow = "0 0 15px #0f0, inset 0 0 10px #0f0";
 
-                                    // Trigger Board Effects (from Config)
                                     if (result.effects) {
                                         result.effects.forEach(cls => {
+                                            // SPECIAL CHECK FOR TERMINAL OVERLAY
+                                            if (cls === 'overlay-terminal' && !checkTerminalReady()) return;
+
                                             const el = document.querySelector('.' + cls);
                                             if (el) el.classList.add('active');
                                         });
                                     }
 
-                                    // Trigger Actions (from Config)
                                     if (result.action === 'repair') {
                                         repairPDA();
                                     }
@@ -1038,13 +1005,9 @@ if (btnAdminUnscrew) {
                             }
                         });
 
-                        // If placed, stop here
                         if (placedSuccessfully) return;
-                        
-                        // Fallthrough to return to drawer if not placed
                     }
 
-                    // 3. RETURN TO DRAWER LOGIC (Common for all items)
                     const drawerRect = drawerPanel.getBoundingClientRect();
                     const isOverDrawer = (
                         upEvent.clientX >= drawerRect.left &&

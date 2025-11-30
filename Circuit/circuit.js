@@ -23,13 +23,13 @@ export const RESISTOR_CONFIG = [
     },
     {
         slotId: 'slot-r4',
-        requiredOhms: '30',
+        requiredOhms: '220',
         effects: ['overlay-terminal'],
         action: 'standard'
     },
     {
         slotId: 'slot-r5',
-        requiredOhms: '20',
+        requiredOhms: '10k',
         effects: ['overlay-terminal'],
         action: 'standard'
     },
