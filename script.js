@@ -202,8 +202,22 @@ async function loadCircuitMarkup(containerId, filePath) {
             const tile = document.createElement('div');
             tile.className = 'tile';
             tile.dataset.uid = p.uid;
+            
+            // CHECK IF LOCKED
+            // If the program type is 'nanochat' AND state.unlockedFeatures.nanochat is false
+            const isLocked = (p.type === 'nanochat' && !state.unlockedFeatures.nanochat);
+
+            if (isLocked) {
+                tile.classList.add('disabled');
+            }
+
             tile.innerHTML = `<div class="glyph">${p.icon}</div><div class="label">${p.name}</div>`;
-            tile.addEventListener('click', () => openProgram(p));
+            
+            // Only add click listener if NOT locked
+            if (!isLocked) {
+                tile.addEventListener('click', () => openProgram(p));
+            }
+            
             programGrid.appendChild(tile);
         }
     }
@@ -863,7 +877,22 @@ if (btnAdminUnscrew) {
                 if (item.classList.contains('placed')) {
                     isUnplacing = true;
                     item.classList.remove('placed');
-                    
+                    // --- START NEW CODE ---
+    // Check if the slot we are removing from has a linked feature
+    if (item.parentElement && item.parentElement.id) {
+        // We have to import RESISTOR_CONFIG at the top of script.js if not already, 
+        // or access it via the module import logic used in your project.
+        // Assuming RESISTOR_CONFIG is available or we look it up via the ID:
+        
+        // Quick lookup based on ID (since we might not have the config object scope here easily without import)
+        // Ideally, import RESISTOR_CONFIG from './Circuit/circuit.js'; at the top of script.js
+        
+        // If you cannot import RESISTOR_CONFIG easily, you can hardcode the check:
+        if (item.parentElement.id === 'slot-r2') {
+             state.unlockedFeatures.nanochat = false;
+             renderPrograms(); // Re-render to grey it out
+        }
+    }
                     if (item.parentElement && item.parentElement.classList.contains('resistor-slot')) {
                         item.parentElement.style.boxShadow = "";
                     }
@@ -987,7 +1016,10 @@ if (btnAdminUnscrew) {
 
                                 if (result.success) {
                                     slot.style.boxShadow = "0 0 15px #0f0, inset 0 0 10px #0f0";
-
+if (result.feature) {
+            state.unlockedFeatures[result.feature] = true;
+            renderPrograms(); // Re-render to enable the button
+        }
                                     if (result.effects) {
                                         result.effects.forEach(cls => {
                                             // SPECIAL CHECK FOR TERMINAL OVERLAY

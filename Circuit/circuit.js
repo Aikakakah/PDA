@@ -13,7 +13,8 @@ export const RESISTOR_CONFIG = [
         slotId: 'slot-r2',
         requiredOhms: '100',
         effects: ['overlay-communication'],
-        action: 'standard'       // Just shows overlays
+        action: 'standard',
+        feature: 'nanochat'
     },
     {
         slotId: 'slot-r3',
@@ -55,7 +56,8 @@ export function validateResistorDrop(draggedItem, dropTarget) {
         return { 
             success: true, 
             effects: slotConfig.effects,
-            action: slotConfig.action
+            action: slotConfig.action,
+            feature: slotConfig.feature
         };
     }
 
