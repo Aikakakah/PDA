@@ -60,7 +60,8 @@ async function loadCircuitMarkup(containerId, filePath) {
             { uid: 2, name: "Notekeeper", icon: "NK", type: "notekeeper" },
             { uid: 3, name: "Station news", icon: "News", type: "news" },
             { uid: 4, name: "NanoChat", icon: "NC", type: "nanochat" },
-            { uid: 5, name: "Settings", icon: "⛭", type: "settings" }
+            { uid: 5, name: "Settings", icon: "⛭", type: "settings" },
+            { uid: 6, name: "Terminal", icon: ">_", type: "terminal" }
         ],
         notes: ["Check filter", "Bring gloves"],
         crew: [
@@ -98,6 +99,10 @@ async function loadCircuitMarkup(containerId, filePath) {
             currentPage: 1,
             maxPages: 6
         },
+        terminalHistory: [
+        { text: "Robust#OS Kernel v4.2.0 initialized...", type: "system" },
+        { text: "Welcome, user.", type: "standard" }
+    ],
         unlockedNews: null 
     };
 
@@ -229,13 +234,14 @@ async function loadCircuitMarkup(containerId, filePath) {
         programArea.innerHTML = '';
 
         switch (p.type) {
-            case 'notekeeper': renderNotekeeper(); break;
-            case 'manifest': renderManifest(); break;
-            case 'nanochat': renderNanoChat(); break;
-            case 'news': 
-                if (newsModule) newsModule.renderNewsProgram(); 
-                break;
-            case 'settings':
+        case 'notekeeper': renderNotekeeper(); break;
+        case 'manifest': renderManifest(); break;
+        case 'nanochat': renderNanoChat(); break;
+        case 'news': 
+            if (newsModule) newsModule.renderNewsProgram(); 
+            break;
+        case 'terminal': renderTerminal(); break; // <--- ADD THIS LINE
+        case 'settings':
                 showView('settings');
                 document.querySelectorAll('.nav-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
                 const ts = el('tab-settings'); if (ts) ts.setAttribute('aria-pressed', 'true');
@@ -455,7 +461,110 @@ async function loadCircuitMarkup(containerId, filePath) {
         renderSidebar();
         renderMessages();
     }
+    function renderTerminal() {
+    const programArea = el('programArea');
     
+    // 1. Build the HTML Structure
+    programArea.innerHTML = `
+        <div class="terminal-console">
+            <div class="terminal-output" id="termOutput"></div>
+            <div class="terminal-input-area">
+                <span class="terminal-prompt">user@pda:~#</span>
+                <input type="text" class="terminal-input" id="termInput" autocomplete="off" spellcheck="false" autofocus>
+            </div>
+        </div>
+    `;
+
+    const outputDiv = el('termOutput');
+    const inputField = el('termInput');
+
+    // 2. Render History Buffer
+    function renderHistory() {
+        outputDiv.innerHTML = '';
+        state.terminalHistory.forEach(line => {
+            const div = document.createElement('div');
+            div.className = `terminal-line ${line.type || ''}`;
+            div.textContent = line.text;
+            outputDiv.appendChild(div);
+        });
+        // Auto-scroll to bottom
+        outputDiv.scrollTop = outputDiv.scrollHeight;
+    }
+
+    // 3. Command Processor
+    function executeCommand(cmdRaw) {
+        const cmd = cmdRaw.trim();
+        if (!cmd) return;
+
+        // Add the user's command to history
+        state.terminalHistory.push({ text: `user@pda:~# ${cmd}`, type: "muted" });
+
+        const parts = cmd.split(' ');
+        const command = parts[0].toLowerCase();
+        const args = parts.slice(1);
+
+        // Simple Command Switch
+        switch (command) {
+            case 'help':
+                state.terminalHistory.push({ text: "Available commands: help, clear, whoami, date, ls, reboot, status", type: "system" });
+                break;
+            
+            case 'clear':
+                state.terminalHistory = []; // Wipe history
+                break;
+            
+            case 'whoami':
+                state.terminalHistory.push({ text: `User: ${state.owner}`, type: "standard" });
+                state.terminalHistory.push({ text: `Role: ${state.job}`, type: "standard" });
+                state.terminalHistory.push({ text: `ID: ${state.id}`, type: "standard" });
+                break;
+
+            case 'date':
+                state.terminalHistory.push({ text: state.currentDate.toString(), type: "standard" });
+                break;
+
+            case 'ls':
+                state.terminalHistory.push({ text: "config.sys   manifest.db   notes.txt   run_diagnostics.sh", type: "standard" });
+                break;
+
+            case 'status':
+                const voltage = state.poweredOn ? "100%" : "0%";
+                state.terminalHistory.push({ text: `System Power: ${state.poweredOn ? 'ONLINE' : 'OFFLINE'}`, type: "system" });
+                state.terminalHistory.push({ text: `Battery Integrity: ${voltage}`, type: "standard" });
+                state.terminalHistory.push({ text: `Resistor Slots: ${document.querySelectorAll('.resistor-prop.placed').length}/6 filled`, type: "standard" });
+                break;
+
+            case 'reboot':
+                state.terminalHistory.push({ text: "Rebooting system...", type: "error" });
+                renderHistory();
+                setTimeout(() => {
+                   // Quick visual fake reboot
+                   location.reload(); 
+                }, 1000);
+                return; // Stop execution here
+
+            default:
+                state.terminalHistory.push({ text: `Command not found: ${command}`, type: "error" });
+        }
+
+        renderHistory();
+    }
+
+    // 4. Input Event Listener
+    inputField.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(inputField.value);
+            inputField.value = '';
+        }
+    });
+
+    // 5. Initial Render and Focus
+    renderHistory();
+    // Keep focus on input if user clicks anywhere in the terminal
+    document.querySelector('.terminal-console').addEventListener('click', () => {
+        inputField.focus();
+    });
+}
     function playRingtone() {
         const currentRingtone = Array.from(document.querySelectorAll('.ringtone-note-input')).map(input => input.value.toUpperCase());
         
