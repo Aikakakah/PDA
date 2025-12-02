@@ -1,8 +1,26 @@
 import { createNewsModule } from './news.js';
 import { createSecretHandler } from './secret_handler.js';
 import { validateResistorDrop } from './mechanics.js';
+import { initializeBookSystem } from './Book/book.js'; // New Import
+import { createNanoChatTriggers } from './nanochat_triggers.js';
 
-(() => {
+// Helper to inject HTML from file (must be inside the IIFE or the IIFE must be converted to a module)
+async function loadBookMarkup(containerId, filePath) {
+    try {
+        const response = await fetch(filePath);
+        const html = await response.text();
+        const container = document.getElementById(containerId);
+        if (container) {
+            container.innerHTML = html;
+            return true;
+        }
+    } catch (e) {
+        console.error("Could not load book markup:", e);
+    }
+    return false;
+}
+
+(async () => {
     const state = {
         owner: "Ramona Orthall",
         id: "Ramona Orthall",
@@ -98,15 +116,14 @@ import { validateResistorDrop } from './mechanics.js';
     let ringtoneDisplay = null;
     let testRingtoneBtn = null;
     let setRingtoneBtn = null;
-    let bookPrev = null;
-    let bookNext = null;
-    let pageNumberDisplay = null;
+    // Removed: bookPrev, bookNext, pageNumberDisplay (now local to initializeBookSystem)
     let nanochatModal = null;
     let closeNanochatModal = null;
-    let backPanel = null; // Made global for easier access
+    let backPanel = null;
 
     let newsModule = null;
     let secretHandler = null;
+    let nanoChatTriggers = null; // Variable to hold the instantiated nanochat triggers
 
     const el = id => document.getElementById(id);
 
@@ -120,92 +137,6 @@ import { validateResistorDrop } from './mechanics.js';
             progHeader.style.display = (v === 'program' ? 'flex' : 'none');
         }
     }
-
-    // --- PageFlip instance ---
-    let pageFlipInstance = null;
-
-    const updatePageControls = (pageFlip) => {
-        if (!pageFlip) return;
-        const bounds = pageFlip.getBounds && pageFlip.getBounds();
-        if (!bounds) return;
-
-        try {
-            if (bookPrev) bookPrev.disabled = !pageFlip.hasPrevPage();
-            if (bookNext) bookNext.disabled = !pageFlip.hasNextPage();
-        } catch {
-            if (bookPrev) bookPrev.disabled = true;
-            if (bookNext) bookNext.disabled = true;
-        }
-
-        const currentPageIndex = pageFlip.getCurrentPageIndex ? pageFlip.getCurrentPageIndex() : 0;
-        const pageCount = pageFlip.getPageCount ? pageFlip.getPageCount() : 0;
-
-        if (pageNumberDisplay) {
-            if (currentPageIndex === 0) {
-                pageNumberDisplay.textContent = 'Cover';
-            } else if (currentPageIndex === pageCount - 1) {
-                pageNumberDisplay.textContent = 'Back Cover';
-            } else {
-                pageNumberDisplay.textContent = `Page ${currentPageIndex + 1} / ${pageCount}`;
-            }
-        }
-    };
-
-    const initializePageFlip = () => {
-        const bookEl = el('book');
-        if (!bookEl) return;
-
-        const rootStyle = getComputedStyle(document.documentElement);
-        const bookWidth = parseFloat(rootStyle.getPropertyValue('--book-width'));
-        const bookHeight = parseFloat(rootStyle.getPropertyValue('--book-height'));
-        const singlePageW = bookWidth / 2;
-        const singlePageH = bookHeight;
-
-        let pageFlip = null;
-        if (isNaN(singlePageW) || isNaN(singlePageH) || singlePageW < 100) {
-            const scaleFactor = parseFloat(rootStyle.getPropertyValue('--scale-factor')) || 1;
-            const fallbackW = 1104 * scaleFactor;
-            const fallbackH = 1452 * scaleFactor;
-
-            pageFlip = new St.PageFlip(bookEl, {
-                width: fallbackW,
-                height: fallbackH,
-                startPage: 0,
-                size: 'fixed',
-                drawShadow: true,
-                maxShadowOpacity: 0.5,
-                showCover: true,
-                flippingTime: 700
-            });
-        } else {
-            pageFlip = new St.PageFlip(bookEl, {
-                width: singlePageW,
-                height: singlePageH,
-                startPage: 0,
-                size: 'fixed',
-                drawShadow: true,
-                maxShadowOpacity: 0.35,
-                showCover: true,
-                flippingTime: 700
-            });
-        }
-
-        const pages = document.querySelectorAll('.my-page');
-        if (pages.length) pageFlip.loadFromHTML(pages);
-
-        pageFlipInstance = pageFlip;
-
-        if (bookPrev) bookPrev.addEventListener('click', () => pageFlipInstance?.flipPrev());
-        if (bookNext) bookNext.addEventListener('click', () => pageFlipInstance?.flipNext());
-
-        if (pageFlipInstance && typeof pageFlipInstance.on === 'function') {
-            pageFlipInstance.on('flip', (e) => updatePageControls(e.object));
-            pageFlipInstance.on('init', (e) => updatePageControls(e.object));
-            pageFlipInstance.on('load', (e) => updatePageControls(e.object));
-        } else {
-            updatePageControls(pageFlipInstance);
-        }
-    };
 
     // SHINE EFFECT
     const initializeShineEffect = () => {
@@ -224,240 +155,6 @@ import { validateResistorDrop } from './mechanics.js';
             });
         }
     };
-
-    // --- FLOATING NOTES SYSTEM ---
-    const floatingNotes = new Map(); 
-    let draggedNoteId = null;
-    let dragOffsetX = 0;
-    let dragOffsetY = 0;
-
-    function initializeBookNotes() {
-        const bookNotes = document.querySelectorAll('.book-note');
-        
-        bookNotes.forEach(note => {
-            note.addEventListener('mousedown', (e) => {
-                if (e.button !== 0) return; 
-                e.preventDefault();
-                e.stopPropagation(); 
-                createFloatingNoteFrom(note, e.clientX, e.clientY);
-            });
-        });
-    }
-
-    function createFloatingNoteFrom(originalNote, startX, startY) {
-        const rect = originalNote.getBoundingClientRect();
-        
-        const clone = document.createElement('div');
-        clone.classList.add('floating-note');
-        clone.textContent = originalNote.textContent;
-        clone.dataset.originalId = originalNote.dataset.noteId; 
-        
-        clone.style.left = rect.left + 'px';
-        clone.style.top = rect.top + 'px';
-        
-        document.body.appendChild(clone);
-
-        originalNote.style.visibility = 'hidden';
-        originalNote.style.opacity = '0';
-
-        const offsetX = startX - rect.left;
-        const offsetY = startY - rect.top;
-
-        startDraggingFloatingNote(clone, originalNote, offsetX, offsetY);
-    }
-
-    function startDraggingFloatingNote(clone, originalNote, offsetX, offsetY) {
-        
-        const onMouseMove = (e) => {
-            clone.style.left = (e.clientX - offsetX) + 'px';
-            clone.style.top = (e.clientY - offsetY) + 'px';
-        };
-
-        const onMouseUp = (e) => {
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', onMouseUp);
-
-            clone.style.display = 'none';
-            const elementBelow = document.elementFromPoint(e.clientX, e.clientY);
-            clone.style.display = 'flex'; 
-
-            const targetPage = elementBelow ? elementBelow.closest('.my-page') : null;
-
-            if (targetPage) {
-                const pageRect = targetPage.getBoundingClientRect();
-                const cloneRect = clone.getBoundingClientRect();
-                
-                const noteWidth = cloneRect.width;
-                const noteHeight = cloneRect.height;
-                const pageWidth = pageRect.width;
-                const pageHeight = pageRect.height;
-                const padding = 5; 
-
-                let relativeLeft = cloneRect.left - pageRect.left;
-                let relativeTop = cloneRect.top - pageRect.top;
-
-                relativeLeft = Math.max(padding, Math.min(relativeLeft, pageWidth - noteWidth - padding));
-                relativeTop = Math.max(padding, Math.min(relativeTop, pageHeight - noteHeight - padding));
-
-                originalNote.style.left = relativeLeft + 'px';
-                originalNote.style.top = relativeTop + 'px';
-                
-                originalNote.style.transform = 'none';
-
-                targetPage.appendChild(originalNote);
-                
-                originalNote.style.visibility = 'visible';
-                originalNote.style.opacity = '1';
-                
-                clone.remove();
-                
-            } else {
-                clone.style.pointerEvents = 'auto';
-                clone.onmousedown = (evt) => {
-                    if (evt.button !== 0) return;
-                    evt.preventDefault();
-                    const newRect = clone.getBoundingClientRect();
-                    startDraggingFloatingNote(clone, originalNote, evt.clientX - newRect.left, evt.clientY - newRect.top);
-                };
-            }
-        };
-
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-    }
-
-    function handleNoteMouseDown(e) {
-        if (e.button !== 0) return; 
-        
-        const noteId = this.dataset.noteId;
-        const rect = this.getBoundingClientRect();
-        
-        dragOffsetX = e.clientX - rect.left;
-        dragOffsetY = e.clientY - rect.top;
-        
-        if (floatingNotes.has(noteId)) {
-            draggedNoteId = noteId;
-            const floatingNote = floatingNotes.get(noteId);
-            floatingNote.classList.add('dragging');
-            document.addEventListener('mousemove', handleNoteDrag);
-            document.addEventListener('mouseup', handleNoteMouseUp);
-        } else {
-            draggedNoteId = noteId;
-            this.classList.add('dragging');
-            document.addEventListener('mousemove', handleNoteDrag);
-            document.addEventListener('mouseup', handleNoteMouseUp);
-        }
-        e.preventDefault();
-    }
-
-    function handleNoteDrag(e) {
-        if (!draggedNoteId) return;
-        
-        const noteId = draggedNoteId;
-        let floatingNote = floatingNotes.get(noteId);
-        const bookWidget = document.querySelector('.book-widget');
-        
-        if (!floatingNote) {
-            const bookNote = document.querySelector(`[data-note-id="${noteId}"]`);
-            if (!bookNote) return;
-            
-            floatingNote = document.createElement('div');
-            floatingNote.className = 'floating-note dragging';
-            floatingNote.textContent = bookNote.textContent;
-            floatingNote.dataset.noteId = noteId;
-            
-            const closeBtn = document.createElement('button');
-            closeBtn.className = 'floating-note-close';
-            closeBtn.innerHTML = '✕';
-            closeBtn.addEventListener('click', () => removeFloatingNote(noteId));
-            floatingNote.appendChild(closeBtn);
-            
-            const container = el('floatingNotesContainer');
-            if (container) container.appendChild(floatingNote);
-            
-            floatingNotes.set(noteId, floatingNote);
-            
-            bookNote.style.display = 'none';
-            
-            floatingNote.addEventListener('mousedown', handleFloatingNoteMouseDown);
-        }
-        
-        if (bookWidget) {
-            const bookRect = bookWidget.getBoundingClientRect();
-            const relX = e.clientX - bookRect.left - dragOffsetX;
-            const relY = e.clientY - bookRect.top - dragOffsetY;
-            
-            floatingNote.style.left = relX + 'px';
-            floatingNote.style.top = relY + 'px';
-        } else {
-            floatingNote.style.left = (e.clientX - dragOffsetX) + 'px';
-            floatingNote.style.top = (e.clientY - dragOffsetY) + 'px';
-        }
-        e.preventDefault();
-    }
-
-    function handleFloatingNoteMouseDown(e) {
-        if (e.button !== 0) return; 
-        if (e.target.classList.contains('floating-note-close')) return; 
-        
-        const noteId = this.dataset.noteId;
-        const rect = this.getBoundingClientRect();
-        
-        dragOffsetX = e.clientX - rect.left;
-        dragOffsetY = e.clientY - rect.top;
-        
-        draggedNoteId = noteId;
-        this.classList.add('dragging');
-        document.addEventListener('mousemove', handleNoteDrag);
-        document.addEventListener('mouseup', handleNoteMouseUp);
-        
-        e.preventDefault();
-    }
-
-    function removeFloatingNote(noteId) {
-        const floatingNote = floatingNotes.get(noteId);
-        const bookNote = document.querySelector(`[data-note-id="${noteId}"]`);
-        
-        if (floatingNote) {
-            floatingNote.remove();
-            floatingNotes.delete(noteId);
-        }
-        
-        if (bookNote) {
-            bookNote.style.display = '';
-        }
-    }
-
-    function handleNoteMouseUp(e) {
-        if (!draggedNoteId) return;
-        
-        const noteId = draggedNoteId;
-        const bookWidget = document.querySelector('.book-widget');
-        const bookRect = bookWidget.getBoundingClientRect();
-        
-        const isOverBook = (
-            e.clientX >= bookRect.left &&
-            e.clientX <= bookRect.right &&
-            e.clientY >= bookRect.top &&
-            e.clientY <= bookRect.bottom
-        );
-
-        if (isOverBook) {
-            removeFloatingNote(noteId);
-            draggedNoteId = null; 
-            document.removeEventListener('mousemove', handleNoteDrag);
-            document.removeEventListener('mouseup', handleNoteMouseUp);
-            return; 
-        }
-
-        const floatingNote = floatingNotes.get(noteId);
-        if (floatingNote) floatingNote.classList.remove('dragging');
-        
-        document.removeEventListener('mousemove', handleNoteDrag);
-        document.removeEventListener('mouseup', handleNoteMouseUp);
-        
-        draggedNoteId = null;
-    }
 
     function updateHome() {
         if (el('owner')) el('owner').textContent = state.owner;
@@ -650,7 +347,27 @@ import { validateResistorDrop } from './mechanics.js';
         const number = contactNumberInput.value.trim();
         
         if (name && number) {
+<<<<<<< circuit
             console.log(`Attempting to create new chat with: ${name} (${number})`);
+=======
+            // Create a unique contact ID from the name (lowercase, no spaces)
+            const contactId = name.toLowerCase().replace(/\s+/g, '');
+            
+            // Add the new contact to state.nanochat.channels
+            state.nanochat.channels[contactId] = {
+                name: name,
+                messages: []
+            };
+            
+            // Switch to the new contact
+            state.nanochat.currentContact = contactId;
+            
+            // Re-render sidebar and messages
+            renderSidebar();
+            renderMessages();
+            
+            // Close modal and clear inputs
+>>>>>>> main
             newChatModal.classList.add('hidden');
             contactNameInput.value = '';
             contactNumberInput.value = '';
@@ -705,6 +422,12 @@ import { validateResistorDrop } from './mechanics.js';
                 });
                 input.value = '';
                 renderMessages();
+                
+                // Check for special NanoChat triggers
+                const currentContactName = state.nanochat.channels[state.nanochat.currentContact].name;
+                if (nanoChatTriggers) {
+                    nanoChatTriggers.checkAndTrigger(currentContactName, text);
+                }
             }
         }
 
@@ -771,7 +494,10 @@ import { validateResistorDrop } from './mechanics.js';
         playNext();
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+        // 1. Load External Book Markup
+        await loadBookMarkup('book-injection-point', './Book/book.html');
+        
         pda = el('pda');
         views = {
             home: el('view-home'),
@@ -797,14 +523,20 @@ import { validateResistorDrop } from './mechanics.js';
         ringtoneDisplay = el('ringtoneDisplay');
         testRingtoneBtn = el('testRingtoneBtn');
         setRingtoneBtn = el('setRingtoneBtn');
-        bookPrev = el('bookPrev');
-        bookNext = el('bookNext');
-        pageNumberDisplay = el('pageNumber');
+        // Removed: bookPrev, bookNext, pageNumberDisplay (now local to initializeBookSystem)
         backPanel = document.querySelector('.pda-back-panel'); // Assign global backPanel
 
         newsModule = createNewsModule(state, el, showView, ringtoneModal);
 
         secretHandler = createSecretHandler(el, showView, ringtoneModal);
+<<<<<<< circuit
+=======
+        
+        // Initialize NanoChat Triggers
+        nanoChatTriggers = createNanoChatTriggers();
+        
+        // Render programs (safe)
+>>>>>>> main
         renderPrograms();
 
         showView('home');
@@ -867,7 +599,32 @@ import { validateResistorDrop } from './mechanics.js';
         }
 
         const pdaScreen = document.querySelector('.PDA-screen');
+const btnAdminPower = el('btn-admin-power');
 
+    if (btnAdminPower) {
+        btnAdminPower.addEventListener('click', () => {
+            console.log("ADMIN: Forcing Power On");
+
+            // 1. Visually fix the power button inside the overlay
+            if (powerOn) {
+                powerOn.disabled = false;
+                powerOn.textContent = "Power On";
+                powerOn.style.backgroundColor = ""; 
+                powerOn.style.cursor = "pointer";
+            }
+
+            // 2. Force the screen state to ON immediately
+            // (Reusing your existing turnOnScreen logic)
+            if(powerOverlay) powerOverlay.classList.add('hidden');
+            const pdaScreen = document.querySelector('.PDA-screen');
+            if(pdaScreen) pdaScreen.classList.remove('screen-off');
+            state.poweredOn = true;
+
+            // 3. Optional: Add a visual indicator that Admin Mode was used
+            btnAdminPower.style.boxShadow = "0 0 10px #fff";
+        });
+    }
+    
         const turnOffScreen = () => {
             if(powerOverlay) powerOverlay.classList.remove('hidden');
             if(pdaScreen) pdaScreen.classList.add('screen-off'); 
@@ -923,11 +680,10 @@ import { validateResistorDrop } from './mechanics.js';
             playRingtone();
         });
 
-        initializePageFlip();
+        // Initialize Book System (Handles PageFlip and Notes now)
+        initializeBookSystem(el);
 
         initializeShineEffect();
-
-        initializeBookNotes();
 
         initializeDraggableItems();
 

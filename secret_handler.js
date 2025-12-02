@@ -5,8 +5,6 @@
  */
 
 export function createSecretHandler(el, showView, ringtoneModal) {
-    
-    // Paths to the images (Correctly pointing to /images/)
     const IMAGE_PATH = '/images/';
     const IMAGE_INITIAL = IMAGE_PATH + 'SandyStars.png';
     const IMAGE_MANIC = IMAGE_PATH + 'SandyStarsManic.png';
@@ -18,7 +16,18 @@ export function createSecretHandler(el, showView, ringtoneModal) {
     let glitchInterval = null;
     let clickCount = 0; // Tracks clicks: 0 (Initial) -> 1 (Manic) -> 2 (Stay Manic) -> 3 (Hide)
 
-    // *** STATE ARRAY FOR GLITCHED ELEMENTS ***
+    // NEW HELPER FUNCTION: HTML structure for the persistent CRT effects
+    function getCrtOverlayHtml() {
+        return `
+            <div class="crt-scanlines"></div>
+            <p>This is my secret place.</p>
+            <div class="crt-noise-wrapper">
+                <div class="crt-noise"></div>
+                <div class="crt-noise crt-noise-moving"></div>
+            </div>
+        `;
+    }
+
     let originalGlitchStates = [];
     
     // Define all elements to be glitched and their replacement text (if any)
@@ -40,8 +49,7 @@ export function createSecretHandler(el, showView, ringtoneModal) {
         if (!screen) {
             screen = document.createElement('div');
             screen.id = 'secretScreen';
-            screen.className = 'secret-screen hidden'; 
-            
+            screen.className = 'secret-screen hidden crt';
             // Target the inner screen container: <div class="content">
             const innerScreenContainer = document.querySelector('.content'); 
             
@@ -137,47 +145,62 @@ export function createSecretHandler(el, showView, ringtoneModal) {
         const screen = getSecretScreenEl();
         if (!screen) return;
         
+        screen.classList.add('crt');
         isSecretScreenActive = true;
         clickCount = 0; 
         
         // Display the INITIAL image (SandyStars.png) as background
         screen.classList.remove('hidden');
-        screen.style.display = 'block';
-        screen.style.backgroundImage = `url(${IMAGE_INITIAL})`;
+screen.style.display = 'block';
+
+// Add CRT turn-on animation
+screen.classList.add('turn-on');
+
+screen.style.backgroundImage = `url(${IMAGE_INITIAL})`;
+
         
         // IMPORTANT: Insert a transparent element to ensure the full area is clickable
-        screen.innerHTML = '<div class="click-catcher"></div>'; 
+        screen.innerHTML = `
+        ${getCrtOverlayHtml()}
+
+        <div class="initial-screen-content" style="z-index: 30; position: relative;">
+            <p>This is my secret place.</p>
+            <p>Don't click again.</p>
+        </div>
+        
+        <div class="click-catcher" style="z-index: 100;"></div>
+    `;
         
         if (glitchInterval) {
             clearInterval(glitchInterval);
             glitchInterval = null;
         }
+        screen.addEventListener('animationend', () => {
+    screen.classList.remove('turn-on');
+}, { once: true });
+
     }
 
     /**
      * State 2: Transitions to the manic state, changing the background and starting the glitch overlay.
      */
-    function showManicState() {
-        const screen = getSecretScreenEl();
-        if (!screen) return;
+function showManicState() {
+    const screen = getSecretScreenEl();
+    if (!screen) return;
 
-        // 1. Set the fixed background image (SandyStarsManic.png)
-        screen.style.backgroundImage = `url(${IMAGE_MANIC})`; 
-        
-        // 2. Insert the glitch elements and the click catcher
-        screen.innerHTML = `
-            <div id="manicGlitchContainer" class="manic-glitch-container">
-                <img id="glitchImage" class="glitch-image" src="${GLITCH_1}" alt="Glitch Overlay">
-            </div>
-            <div class="click-catcher"></div>
-        `;
-        
-        // 3. Start the image glitch effect
-        startGlitchFlicker(screen); 
-        
-        // START: Start the unified text glitch for title and footer elements
-        startGlitchEffect(); 
-    }
+    // 1. Set the fixed background image (SandyStarsManic.png)
+    screen.style.backgroundImage = `url(${IMAGE_MANIC})`; 
+    
+    // 2. Insert the glitch elements and the click catcher
+    screen.innerHTML = `
+    ${getCrtOverlayHtml()}
+        <img id="glitchImage" src="${GLITCH_1}" class="glitch-image" alt="Glitch"/>
+        <div class="click-catcher"></div>
+    `;
+    
+    startGlitchFlicker(screen); 
+    startGlitchEffect();
+}
 
     /**
      * Starts the rapid image source switching for the glitch overlay.
