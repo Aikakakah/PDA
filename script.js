@@ -3,6 +3,7 @@ import { createSecretHandler } from './secret_handler.js';
 import { validateResistorDrop } from './Circuit/circuit.js';
 import { initializeBookSystem } from './Book/book.js'; 
 import { createNanoChatTriggers } from './nanochat_triggers.js';
+import { createTerminalBridge } from './terminal_bridge.js'; // NEW IMPORT
 
 // Helper to inject HTML from file
 async function loadBookMarkup(containerId, filePath) {
@@ -102,9 +103,10 @@ async function loadCircuitMarkup(containerId, filePath) {
             maxPages: 6
         },
         terminalHistory: [
-        { text: "Robust#OS Kernel v4.2.0 initialized...", type: "system" },
-        { text: "Welcome, user.", type: "standard" }
-    ],
+            { text: "Robust#OS Kernel v4.2.0 initialized...", type: "system" },
+            { text: "Welcome, user.", type: "standard" }
+        ],
+        terminalMode: 'SHELL', // 'SHELL' or 'CHAT'
         unlockedNews: null 
     };
 
@@ -145,6 +147,31 @@ async function loadCircuitMarkup(containerId, filePath) {
     let newsModule = null;
     let secretHandler = null;
     let nanoChatTriggers = null; 
+
+    // --- Discord Bridge Initialization ---
+    // We pass a callback that handles incoming messages
+    const discordBridge = createTerminalBridge('http://localhost:3000', (msg) => {
+        // 1. Add to history
+        const logEntry = { 
+            text: `[UPLINK] ${msg.author}: ${msg.content}`, 
+            type: "system" // Using 'system' style (blue/cyan) for incoming msgs
+        };
+        state.terminalHistory.push(logEntry);
+
+        // 2. If the terminal is currently visible, append the new line directly
+        const outputDiv = document.getElementById('termOutput');
+        if (outputDiv) {
+            const div = document.createElement('div');
+            div.className = `terminal-line ${logEntry.type}`;
+            div.textContent = logEntry.text;
+            outputDiv.appendChild(div);
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
+    });
+
+    // Start listening immediately
+    discordBridge.start();
+
 
     const el = id => document.getElementById(id);
 
@@ -212,11 +239,8 @@ async function loadCircuitMarkup(containerId, filePath) {
         tile.dataset.uid = p.uid;
         
         // Determine if this specific program type is locked
-        // We look for a key in unlockedFeatures that matches the program type
         let isLocked = false;
         
-        // Map program types to feature keys if they differ, or use direct match
-        // manifest and settings are usually always available, others are locked
         if (['nanochat', 'notekeeper', 'news', 'terminal'].includes(p.type)) {
             if (!state.unlockedFeatures[p.type]) {
                 isLocked = true;
@@ -250,7 +274,7 @@ async function loadCircuitMarkup(containerId, filePath) {
         case 'news': 
             if (newsModule) newsModule.renderNewsProgram(); 
             break;
-        case 'terminal': renderTerminal(); break; // <--- ADD THIS LINE
+        case 'terminal': renderTerminal(); break; 
         case 'settings':
                 showView('settings');
                 document.querySelectorAll('.nav-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
@@ -471,110 +495,142 @@ async function loadCircuitMarkup(containerId, filePath) {
         renderSidebar();
         renderMessages();
     }
-    function renderTerminal() {
-    const programArea = el('programArea');
     
-    // 1. Build the HTML Structure
-    programArea.innerHTML = `
-        <div class="terminal-console">
-            <div class="terminal-output" id="termOutput"></div>
-            <div class="terminal-input-area">
-                <span class="terminal-prompt">user@pda:~#</span>
-                <input type="text" class="terminal-input" id="termInput" autocomplete="off" spellcheck="false" autofocus>
+    // --- UPDATED TERMINAL RENDERER ---
+    function renderTerminal() {
+        const programArea = el('programArea');
+        
+        // 1. Determine Prompt based on Mode
+        const promptText = state.terminalMode === 'CHAT' ? '[NETLINK] user:' : 'user@pda:~#';
+        
+        // 2. Build the HTML Structure
+        programArea.innerHTML = `
+            <div class="terminal-console">
+                <div class="terminal-output" id="termOutput"></div>
+                <div class="terminal-input-area">
+                    <span class="terminal-prompt" id="termPrompt">${promptText}</span>
+                    <input type="text" class="terminal-input" id="termInput" autocomplete="off" spellcheck="false" autofocus>
+                </div>
             </div>
-        </div>
-    `;
+        `;
 
-    const outputDiv = el('termOutput');
-    const inputField = el('termInput');
+        const outputDiv = el('termOutput');
+        const inputField = el('termInput');
+        const promptSpan = el('termPrompt');
 
-    // 2. Render History Buffer
-    function renderHistory() {
-        outputDiv.innerHTML = '';
-        state.terminalHistory.forEach(line => {
-            const div = document.createElement('div');
-            div.className = `terminal-line ${line.type || ''}`;
-            div.textContent = line.text;
-            outputDiv.appendChild(div);
-        });
-        // Auto-scroll to bottom
-        outputDiv.scrollTop = outputDiv.scrollHeight;
-    }
+        // 3. Render History Buffer
+        function renderHistory() {
+            outputDiv.innerHTML = '';
+            state.terminalHistory.forEach(line => {
+                const div = document.createElement('div');
+                div.className = `terminal-line ${line.type || ''}`;
+                div.textContent = line.text;
+                outputDiv.appendChild(div);
+            });
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
 
-    // 3. Command Processor
-    function executeCommand(cmdRaw) {
-        const cmd = cmdRaw.trim();
-        if (!cmd) return;
+        // 4. Command Processor
+        function executeCommand(cmdRaw) {
+            const cmd = cmdRaw.trim();
+            if (!cmd) return;
 
-        // Add the user's command to history
-        state.terminalHistory.push({ text: `user@pda:~# ${cmd}`, type: "muted" });
-
-        const parts = cmd.split(' ');
-        const command = parts[0].toLowerCase();
-        const args = parts.slice(1);
-
-        // Simple Command Switch
-        switch (command) {
-            case 'help':
-                state.terminalHistory.push({ text: "Available commands: help, clear, whoami, date, ls, reboot, status", type: "system" });
-                break;
-            
-            case 'clear':
-                state.terminalHistory = []; // Wipe history
-                break;
-            
-            case 'whoami':
-                state.terminalHistory.push({ text: `User: ${state.owner}`, type: "standard" });
-                state.terminalHistory.push({ text: `Role: ${state.job}`, type: "standard" });
-                state.terminalHistory.push({ text: `ID: ${state.id}`, type: "standard" });
-                break;
-
-            case 'date':
-                state.terminalHistory.push({ text: state.currentDate.toString(), type: "standard" });
-                break;
-
-            case 'ls':
-                state.terminalHistory.push({ text: "config.sys   manifest.db   notes.txt   run_diagnostics.sh", type: "standard" });
-                break;
-
-            case 'status':
-                const voltage = state.poweredOn ? "100%" : "0%";
-                state.terminalHistory.push({ text: `System Power: ${state.poweredOn ? 'ONLINE' : 'OFFLINE'}`, type: "system" });
-                state.terminalHistory.push({ text: `Battery Integrity: ${voltage}`, type: "standard" });
-                state.terminalHistory.push({ text: `Resistor Slots: ${document.querySelectorAll('.resistor-prop.placed').length}/6 filled`, type: "standard" });
-                break;
-
-            case 'reboot':
-                state.terminalHistory.push({ text: "Rebooting system...", type: "error" });
+            // Handle CHAT MODE
+            if (state.terminalMode === 'CHAT') {
+                if (cmd.toLowerCase() === 'exit') {
+                    state.terminalMode = 'SHELL';
+                    state.terminalHistory.push({ text: "Terminating secure uplink...", type: "system" });
+                    promptSpan.textContent = 'user@pda:~#';
+                } else {
+                    // Send to Discord
+                    discordBridge.send(cmd, state.owner);
+                    state.terminalHistory.push({ text: `[SENT] ${cmd}`, type: "muted" });
+                }
                 renderHistory();
-                setTimeout(() => {
-                   // Quick visual fake reboot
-                   location.reload(); 
-                }, 1000);
-                return; // Stop execution here
+                return;
+            }
 
-            default:
-                state.terminalHistory.push({ text: `Command not found: ${command}`, type: "error" });
+            // Handle STANDARD SHELL MODE
+            state.terminalHistory.push({ text: `user@pda:~# ${cmd}`, type: "muted" });
+
+            const parts = cmd.split(' ');
+            const command = parts[0].toLowerCase();
+            const args = parts.slice(1);
+
+            switch (command) {
+                case 'help':
+                    state.terminalHistory.push({ text: "Available commands: help, clear, whoami, date, ls, status, chat, transmit <msg>", type: "system" });
+                    break;
+                
+                case 'clear':
+                    state.terminalHistory = []; 
+                    break;
+                
+                case 'whoami':
+                    state.terminalHistory.push({ text: `User: ${state.owner}`, type: "standard" });
+                    state.terminalHistory.push({ text: `Role: ${state.job}`, type: "standard" });
+                    break;
+
+                case 'date':
+                    state.terminalHistory.push({ text: state.currentDate.toString(), type: "standard" });
+                    break;
+
+                case 'ls':
+                    state.terminalHistory.push({ text: "config.sys   manifest.db   notes.txt   netlink.exe", type: "standard" });
+                    break;
+
+                case 'status':
+                    const voltage = state.poweredOn ? "100%" : "0%";
+                    state.terminalHistory.push({ text: `System Power: ${state.poweredOn ? 'ONLINE' : 'OFFLINE'}`, type: "system" });
+                    state.terminalHistory.push({ text: `Battery Integrity: ${voltage}`, type: "standard" });
+                    break;
+
+                // --- NEW COMMANDS ---
+                case 'chat':
+                    state.terminalMode = 'CHAT';
+                    state.terminalHistory.push({ text: "Initializing Secure Netlink...", type: "system" });
+                    state.terminalHistory.push({ text: "Connected to external relay. Type 'exit' to disconnect.", type: "system" });
+                    promptSpan.textContent = '[NETLINK] user:';
+                    break;
+
+                case 'transmit':
+                    if (args.length > 0) {
+                        const msg = args.join(' ');
+                        discordBridge.send(msg, state.owner);
+                        state.terminalHistory.push({ text: `Transmission sent: "${msg}"`, type: "standard" });
+                    } else {
+                        state.terminalHistory.push({ text: "Usage: transmit <message>", type: "error" });
+                    }
+                    break;
+
+                case 'reboot':
+                    state.terminalHistory.push({ text: "Rebooting system...", type: "error" });
+                    renderHistory();
+                    setTimeout(() => location.reload(), 1000);
+                    return;
+
+                default:
+                    state.terminalHistory.push({ text: `Command not found: ${command}`, type: "error" });
+            }
+
+            renderHistory();
         }
 
+        // 5. Input Event Listener
+        inputField.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                executeCommand(inputField.value);
+                inputField.value = '';
+            }
+        });
+
+        // 6. Initial Render and Focus
         renderHistory();
+        document.querySelector('.terminal-console').addEventListener('click', () => {
+            inputField.focus();
+        });
     }
 
-    // 4. Input Event Listener
-    inputField.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            executeCommand(inputField.value);
-            inputField.value = '';
-        }
-    });
-
-    // 5. Initial Render and Focus
-    renderHistory();
-    // Keep focus on input if user clicks anywhere in the terminal
-    document.querySelector('.terminal-console').addEventListener('click', () => {
-        inputField.focus();
-    });
-}
     function playRingtone() {
         const currentRingtone = Array.from(document.querySelectorAll('.ringtone-note-input')).map(input => input.value.toUpperCase());
         
@@ -631,7 +687,6 @@ async function loadCircuitMarkup(containerId, filePath) {
         playNext();
     }
 
-    // *** START FIX: MOVED checkCircuitState TO GLOBAL SCOPE ***
     function checkCircuitState() {
         // If Admin Override is on, ignore the resistors and keep everything unlocked
         if (state.adminOverride) {
@@ -661,8 +716,6 @@ async function loadCircuitMarkup(containerId, filePath) {
 
         renderPrograms();
     }
-    // *** END FIX ***
-
 
     document.addEventListener('DOMContentLoaded', async () => {
         await loadBookMarkup('book-injection-point', './Book/book.html');
@@ -783,10 +836,6 @@ async function loadCircuitMarkup(containerId, filePath) {
         });
     }
     
-    // 1. checkCircuitState DEFINITION WAS MOVED OUTSIDE OF DOMContentLoaded.
-    // This is where the old function definition was.
-    
-
     // 2. SETUP ADMIN UNLOCK LISTENER INDEPENDENTLY
     const adminUnlockBtn = el('btn-admin-unlock-all'); // Use a new const for clarity
     if (adminUnlockBtn) {
@@ -805,7 +854,7 @@ async function loadCircuitMarkup(containerId, filePath) {
                 adminUnlockBtn.style.boxShadow = "";
             }
 
-            checkCircuitState(); // Now works because it's in the global scope!
+            checkCircuitState(); 
         });
     }
 
