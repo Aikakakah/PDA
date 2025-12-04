@@ -165,23 +165,42 @@ function formatSolTimestamp() {
     let nanoChatTriggers = null; 
 
     // --- Discord Bridge Initialization ---
-    // We pass a callback that handles incoming messages
     const discordBridge = createTerminalBridge('http://localhost:3000', (msg) => {
-        // 1. Add to history
         const logEntry = { 
-            text: `${msg.content}`, 
-            type: "system" // Using 'system' style (blue/cyan) for incoming msgs
+            source: "EXTERNAL", 
+            author: msg.author, 
+            timestamp: msg.solTimestamp,
+            content: msg.content,
+            type: "system"
         };
+        
         state.terminalHistory.push(logEntry);
 
-        // 2. If the terminal is currently visible, append the new line directly
         const outputDiv = document.getElementById('termOutput');
         if (outputDiv) {
-            const div = document.createElement('div');
-            div.className = `terminal-line ${logEntry.type}`;
-            div.textContent = logEntry.text;
-            outputDiv.appendChild(div);
-            outputDiv.scrollTop = outputDiv.scrollHeight;
+            const inputField = document.getElementById('termInput');
+            if(inputField) {
+                 const terminalView = document.getElementById('view-program');
+
+                 if(terminalView && terminalView.innerHTML.includes('terminal-console')) {
+                     const history = state.terminalHistory;
+                     const prevMsg = history[history.length - 2];
+                     
+                     if (!prevMsg || prevMsg.source !== "EXTERNAL" || prevMsg.author !== msg.author) {
+                         const header = document.createElement('div');
+                         header.className = 'terminal-header system';
+                         header.textContent = `TRANSMITTING FROM: [NU-J5PR]`;
+                         outputDiv.appendChild(header);
+                     }
+
+                     const line = document.createElement('div');
+                     line.className = `terminal-line system`;
+                     line.textContent = `${msg.solTimestamp}: ${msg.content}`;
+                     outputDiv.appendChild(line);
+                     
+                     outputDiv.scrollTop = outputDiv.scrollHeight;
+                 }
+            }
         }
     });
 
@@ -515,6 +534,7 @@ function formatSolTimestamp() {
     // --- UPDATED TERMINAL RENDERER ---
     function renderTerminal() {
         const programArea = el('programArea');
+        const serialNum = el('serial') ? el('serial').textContent : "AE-239A";
         
         // 1. Determine Prompt based on Mode
         const promptText = state.terminalMode === 'CHAT' ? '[NETLINK] user:' : 'user@pda:~#';
@@ -534,14 +554,43 @@ function formatSolTimestamp() {
         const inputField = el('termInput');
         const promptSpan = el('termPrompt');
 
-        // 3. Render History Buffer
+        // 3. Render History Buffer (NEW GROUPING LOGIC)
         function renderHistory() {
             outputDiv.innerHTML = '';
+            
+            let lastSource = null;
+            let lastAuthor = null;
+
             state.terminalHistory.forEach(line => {
-                const div = document.createElement('div');
-                div.className = `terminal-line ${line.type || ''}`;
-                div.textContent = line.text;
-                outputDiv.appendChild(div);
+                // If this is a grouped message (has a source)
+                if (line.source) {
+                    // Check if we need to print a header (New source, or same source but different author)
+                    if (line.source !== lastSource || line.author !== lastAuthor) {
+                        const header = document.createElement('div');
+                        header.className = `terminal-header ${line.type || ''}`;
+                        header.textContent = `TRANSMITTING FROM: [${line.author}]`;
+                        outputDiv.appendChild(header);
+                        
+                        lastSource = line.source;
+                        lastAuthor = line.author;
+                    }
+                    
+                    // Print the message line with timestamp
+                    const div = document.createElement('div');
+                    div.className = `terminal-line ${line.type || ''}`;
+                    // Use solTimestamp if available, otherwise formatted content
+                    div.textContent = `${line.timestamp}: ${line.content}`;
+                    outputDiv.appendChild(div);
+
+                } else {
+                    // Standard system message (no grouping header)
+                    lastSource = null; 
+                    lastAuthor = null;
+                    const div = document.createElement('div');
+                    div.className = `terminal-line ${line.type || ''}`;
+                    div.textContent = line.text;
+                    outputDiv.appendChild(div);
+                }
             });
             outputDiv.scrollTop = outputDiv.scrollHeight;
         }
@@ -556,12 +605,20 @@ function formatSolTimestamp() {
                 if (cmd.toLowerCase() === 'exit') {
                     state.terminalMode = 'SHELL';
                     state.terminalHistory.push({ text: "Terminating secure uplink...", type: "system" });
-                    promptSpan.textContent = state.owner;
+                    promptSpan.textContent = 'user@pda:~#';
                 } else {
                     // Send to Discord
                     discordBridge.send(cmd, state.owner);
-                    const timestamp = formatSolTimestamp();
-                    state.terminalHistory.push({ text: `[${timestamp}] ${cmd}`, type: "muted" });
+                    
+                    // Push structured object for grouping
+                    // We use "LOCAL" source so it groups consecutive messages
+                    state.terminalHistory.push({
+                        source: "LOCAL",
+                        author: serialNum,
+                        timestamp: formatSolTimestamp(),
+                        content: cmd,
+                        type: "muted" 
+                    });
                 }
                 renderHistory();
                 return;
@@ -588,91 +645,91 @@ function formatSolTimestamp() {
                     state.terminalHistory.push({ text: `Role: ${state.job}`, type: "standard" });
                     break;
 
-                case 'date':
-                    state.terminalHistory.push({ text: state.currentDate.toString(), type: "standard" });
-                    break;
-
                 case 'ls':
-                    state.terminalHistory.push({ text: "config.sys   manifest.db   notes.txt   netlink.exe", type: "standard" });
+                    state.terminalHistory.push({ text: "config.sys   manifest.db   netlink.exe", type: "standard" });
                     break;
 
                 case 'status':
                     const voltage = state.poweredOn ? "100%" : "0%";
                     state.terminalHistory.push({ text: `System Power: ${state.poweredOn ? 'ONLINE' : 'OFFLINE'}`, type: "system" });
-                    state.terminalHistory.push({ text: `Battery Integrity: ${voltage}`, type: "standard" });
                     break;
 
-                // --- NEW COMMANDS ---
+                // --- RESTORED ANIMATION LOGIC FOR CHAT ---
                 case 'chat':
                     state.terminalMode = 'CHAT';
                     
                     // 1. Setup for "Sending Communication Request" animation
                     let sendingMessageIndex = state.terminalHistory.length;
+                    // Note: We use 'text' here because this is a system status, not a grouped message
                     state.terminalHistory.push({ text: "Sending Communication Request.", type: "system" });
-                    
+                    renderHistory(); // Render immediately so the user sees the start
+
                     let dots1 = 0;
                     const maxDots = 3;
-                    const interval = 500; // Time in milliseconds between each dot
-                    // --- Animation 1: Sending Communication Request ---
+                    const interval = 500; 
+
+                    // --- Animation 1: Sending ---
                     const updateDots1 = () => {
                         if (dots1 < maxDots) {
                             dots1++;
                             const dotsString = ".".repeat(dots1);
                             
-                            // Update the existing "Sending Communication Request" message
-                            state.terminalHistory[sendingMessageIndex].text = "Sending Communication Request" + dotsString;
+                            // Update the existing message in history
+                            if (state.terminalHistory[sendingMessageIndex]) {
+                                state.terminalHistory[sendingMessageIndex].text = "Sending Communication Request" + dotsString;
+                            }
                             renderHistory(); 
-                            
                             setTimeout(updateDots1, interval);
                         } else {
-                            // Once the first animation is complete, start the second animation
+                            // Start Animation 2
                             initializeConnection();
                         }
                     };
-                    // Start the first animation process
+                    
                     setTimeout(updateDots1, interval); 
-                    // --- Animation 2: Initializing Secure Connection ---
+
+                    // --- Animation 2: Initializing ---
                     const initializeConnection = () => {
-                        
-                        // Initial message for connection initialization
                         let connectionMessageIndex = state.terminalHistory.length;
                         state.terminalHistory.push({ text: "Initializing Secure Connection.", type: "system" });
-                        
+                        renderHistory();
+
                         let dots2 = 0;
-                        
                         const updateDots2 = () => {
                             if (dots2 < maxDots) {
                                 dots2++;
                                 const dotsString = ".".repeat(dots2);
-                                
-                                // Update the existing "Initializing Secure Connection" message
-                                state.terminalHistory[connectionMessageIndex].text = "Initializing Secure Connection" + dotsString;
+                                if (state.terminalHistory[connectionMessageIndex]) {
+                                    state.terminalHistory[connectionMessageIndex].text = "Initializing Secure Connection" + dotsString;
+                                }
                                 renderHistory(); 
-                                
                                 setTimeout(updateDots2, interval);
                             } else {
-                                // Success message
+                                // Success
                                 state.terminalHistory.push({ 
-                                    text: "Communication Request Recieved. Successfully Connected. Type 'exit' to disconnect.", 
+                                    text: "Communication Request Received. Connected. Type 'exit' to disconnect.", 
                                     type: "system" 
                                 });
                                 promptSpan.textContent = '[NETLINK] user:';
                                 renderHistory(); 
                             }
                         };
-                        
-                        // Start the second animation
                         setTimeout(updateDots2, interval);
                     };
-                
-                    
                     break;
 
                 case 'transmit':
                     if (args.length > 0) {
                         const msg = args.join(' ');
                         discordBridge.send(msg, state.owner);
-                        state.terminalHistory.push({ text: `Transmission sent: "${msg}"`, type: "standard" });
+                         // Push structured object for grouping
+                        state.terminalHistory.push({
+                            source: "LOCAL",
+                            author: serialNum,
+                            timestamp: formatSolTimestamp(),
+                            content: msg,
+                            type: "standard"
+                        });
                     } else {
                         state.terminalHistory.push({ text: "Usage: transmit <message>", type: "error" });
                     }
@@ -691,7 +748,6 @@ function formatSolTimestamp() {
             renderHistory();
         }
 
-        // 5. Input Event Listener
         inputField.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 executeCommand(inputField.value);
@@ -699,7 +755,6 @@ function formatSolTimestamp() {
             }
         });
 
-        // 6. Initial Render and Focus
         renderHistory();
         document.querySelector('.terminal-console').addEventListener('click', () => {
             inputField.focus();
