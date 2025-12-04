@@ -52,10 +52,11 @@ function formatSolTimestamp() {
 
 (async () => {
     const savedIdentity = localStorage.getItem('pda_user_identity');
-    const defaultOwner = savedIdentity || "Ramona Orthall";
+    const defaultOwner = "Ramona Orthall";
+
     const state = {
-        owner: "Ramona Orthall",
-        id: "Ramona Orthall",
+        owner: defaultOwner, // FIXED: Always Ramona Orthall
+        id: savedIdentity || "Unknown", // VARIABLE: Changes based on user input
         job: "Scientist",
         station: "NTTD Manta Station PR-960",
         alert: "Green",
@@ -123,6 +124,7 @@ function formatSolTimestamp() {
             { text: "Welcome, user.", type: "standard" }
         ],
         terminalMode: 'SHELL', // 'SHELL' or 'CHAT'
+        pendingConnection: null,
         unlockedNews: null 
     };
 
@@ -166,41 +168,63 @@ function formatSolTimestamp() {
 
     // --- Discord Bridge Initialization ---
     const discordBridge = createTerminalBridge('http://localhost:3000', (msg) => {
-        const logEntry = { 
-            source: "EXTERNAL", 
-            author: msg.author, 
-            timestamp: msg.solTimestamp,
-            content: msg.content,
-            type: "system"
-        };
-        
-        state.terminalHistory.push(logEntry);
-
+        // 1. If already chatting, pass the message through normally
+        if (state.terminalMode === 'CHAT') {
+            const logEntry = { 
+                source: "EXTERNAL", 
+                author: msg.author, 
+                timestamp: msg.solTimestamp,
+                content: msg.content,
+                type: "system"
+            };
+            
+            state.terminalHistory.push(logEntry);
+    
+            // Immediate DOM update if the view is active
+            const outputDiv = document.getElementById('termOutput');
+            if (outputDiv) {
+                 const history = state.terminalHistory;
+                 const prevMsg = history[history.length - 2];
+                 
+                 // Check for grouping
+                 if (!prevMsg || prevMsg.source !== "EXTERNAL" || prevMsg.author !== msg.author) {
+                     const header = document.createElement('div');
+                     header.className = 'terminal-header system';
+                     header.textContent = `TRANSMITTING FROM: [NU-J5PR]`;
+                     outputDiv.appendChild(header);
+                 }
+    
+                 const line = document.createElement('div');
+                 line.className = `terminal-line system`;
+                 line.textContent = `${msg.solTimestamp}: ${msg.content}`;
+                 outputDiv.appendChild(line);
+                 
+                 outputDiv.scrollTop = outputDiv.scrollHeight;
+            }
+            return;
+        }
+    
+        // 2. If NOT chatting, intercept as a connection request
+        // Prevent spamming the prompt if one is already pending
+        if (state.pendingConnection) return;
+    
+        state.pendingConnection = msg; // Store the message for later
+    
+        const alertText = "Receiving Secure Connection Request... Accept? [Y/N]";
+        state.terminalHistory.push({
+            text: alertText,
+            type: "system" // Uses blue system color
+        });
+    
+        // Immediate DOM update for the prompt
         const outputDiv = document.getElementById('termOutput');
         if (outputDiv) {
-            const inputField = document.getElementById('termInput');
-            if(inputField) {
-                 const terminalView = document.getElementById('view-program');
-
-                 if(terminalView && terminalView.innerHTML.includes('terminal-console')) {
-                     const history = state.terminalHistory;
-                     const prevMsg = history[history.length - 2];
-                     
-                     if (!prevMsg || prevMsg.source !== "EXTERNAL" || prevMsg.author !== msg.author) {
-                         const header = document.createElement('div');
-                         header.className = 'terminal-header system';
-                         header.textContent = `TRANSMITTING FROM: [NU-J5PR]`;
-                         outputDiv.appendChild(header);
-                     }
-
-                     const line = document.createElement('div');
-                     line.className = `terminal-line system`;
-                     line.textContent = `${msg.solTimestamp}: ${msg.content}`;
-                     outputDiv.appendChild(line);
-                     
-                     outputDiv.scrollTop = outputDiv.scrollHeight;
-                 }
-            }
+             const line = document.createElement('div');
+             line.className = 'terminal-line system';
+             line.style.fontWeight = 'bold'; // Make it pop
+             line.textContent = alertText;
+             outputDiv.appendChild(line);
+             outputDiv.scrollTop = outputDiv.scrollHeight;
         }
     });
 
@@ -240,8 +264,8 @@ function formatSolTimestamp() {
     };
 
     function updateHome() {
-        if (el('owner')) el('owner').textContent = state.owner;
-        if (el('idline')) el('idline').innerHTML = `${state.id}, <span id="job" class="job">${state.job}</span>`;
+        if (el('owner')) el('owner').textContent = state.owner; // Always Ramona
+        if (el('idline')) el('idline').innerHTML = `${state.id}, <span id="job" class="job">${state.job}</span>`; // Shows user input ID
         if (el('station')) el('station').textContent = state.station;
         if (el('instructions')) el('instructions').textContent = state.instructions;
         if (el('date')) el('date').textContent = state.currentDate.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' });
@@ -510,7 +534,7 @@ function formatSolTimestamp() {
             const text = input.value.trim();
             if (text) {
                 state.nanochat.channels[state.nanochat.currentContact].messages.push({
-                    sender: state.owner,
+                    sender: state.id, // CHANGED from state.owner
                     text: text,
                     type: "sent"
                 });
@@ -532,234 +556,204 @@ function formatSolTimestamp() {
     }
     
     // --- UPDATED TERMINAL RENDERER ---
-    function renderTerminal() {
-        const programArea = el('programArea');
-        const serialNum = el('serial') ? el('serial').textContent : "AE-239A";
-        
-        // 1. Determine Prompt based on Mode
-        const promptText = state.terminalMode === 'CHAT' ? '[NETLINK] user:' : 'user@pda:~#';
-        
-        // 2. Build the HTML Structure
-        programArea.innerHTML = `
-            <div class="terminal-console">
-                <div class="terminal-output" id="termOutput"></div>
-                <div class="terminal-input-area">
-                    <span class="terminal-prompt" id="termPrompt">${promptText}</span>
-                    <input type="text" class="terminal-input" id="termInput" autocomplete="off" spellcheck="false" autofocus>
-                </div>
+    // --- UPDATED TERMINAL RENDERER ---
+function renderTerminal() {
+    const programArea = document.getElementById('programArea');
+    const serialNum = document.getElementById('serial') ? document.getElementById('serial').textContent : "AE-239A";
+    
+    // 1. Determine Prompt based on Mode
+    const promptText = state.terminalMode === 'CHAT' ? '[NETLINK] user:' : 'user@pda:~#';
+    
+    // 2. Build the HTML Structure
+    programArea.innerHTML = `
+        <div class="terminal-console">
+            <div class="terminal-output" id="termOutput"></div>
+            <div class="terminal-input-area">
+                <span class="terminal-prompt" id="termPrompt">${promptText}</span>
+                <input type="text" class="terminal-input" id="termInput" autocomplete="off" spellcheck="false" autofocus>
             </div>
-        `;
+        </div>
+    `;
 
-        const outputDiv = el('termOutput');
-        const inputField = el('termInput');
-        const promptSpan = el('termPrompt');
+    const outputDiv = document.getElementById('termOutput');
+    const inputField = document.getElementById('termInput');
+    const promptSpan = document.getElementById('termPrompt');
 
-        // 3. Render History Buffer (NEW GROUPING LOGIC)
-        function renderHistory() {
-            outputDiv.innerHTML = '';
-            
-            let lastSource = null;
-            let lastAuthor = null;
+    // 3. Render History Buffer
+    function renderHistory() {
+        outputDiv.innerHTML = '';
+        
+        let lastSource = null;
+        let lastAuthor = null;
 
-            state.terminalHistory.forEach(line => {
-                // If this is a grouped message (has a source)
-                if (line.source) {
-                    // Check if we need to print a header (New source, or same source but different author)
-                    if (line.source !== lastSource || line.author !== lastAuthor) {
-                        const header = document.createElement('div');
-                        header.className = `terminal-header ${line.type || ''}`;
-                        header.textContent = `TRANSMITTING FROM: [${line.author}]`;
-                        outputDiv.appendChild(header);
-                        
-                        lastSource = line.source;
-                        lastAuthor = line.author;
-                    }
+        state.terminalHistory.forEach(line => {
+            if (line.source) {
+                if (line.source !== lastSource || line.author !== lastAuthor) {
+                    const header = document.createElement('div');
+                    header.className = `terminal-header ${line.type || ''}`;
+                    header.textContent = `TRANSMITTING FROM: [${line.author}]`;
+                    outputDiv.appendChild(header);
                     
-                    // Print the message line with timestamp
-                    const div = document.createElement('div');
-                    div.className = `terminal-line ${line.type || ''}`;
-                    // Use solTimestamp if available, otherwise formatted content
-                    div.textContent = `${line.timestamp}: ${line.content}`;
-                    outputDiv.appendChild(div);
-
-                } else {
-                    // Standard system message (no grouping header)
-                    lastSource = null; 
-                    lastAuthor = null;
-                    const div = document.createElement('div');
-                    div.className = `terminal-line ${line.type || ''}`;
-                    div.textContent = line.text;
-                    outputDiv.appendChild(div);
+                    lastSource = line.source;
+                    lastAuthor = line.author;
                 }
-            });
-            outputDiv.scrollTop = outputDiv.scrollHeight;
+                
+                const div = document.createElement('div');
+                div.className = `terminal-line ${line.type || ''}`;
+                div.textContent = `${line.timestamp}: ${line.content}`;
+                outputDiv.appendChild(div);
+
+            } else {
+                lastSource = null; 
+                lastAuthor = null;
+                const div = document.createElement('div');
+                div.className = `terminal-line ${line.type || ''}`;
+                div.textContent = line.text;
+                outputDiv.appendChild(div);
+            }
+        });
+        outputDiv.scrollTop = outputDiv.scrollHeight;
+    }
+
+    // 4. Command Processor
+    function executeCommand(cmdRaw) {
+        const cmd = cmdRaw.trim();
+        if (!cmd) return;
+
+        // --- NEW: Handle Pending Connection Request ---
+        if (state.pendingConnection) {
+            if (cmd.toUpperCase() === 'Y') {
+                // Accept Logic
+                state.terminalMode = 'CHAT';
+                state.terminalHistory.push({ text: "Connection Accepted. Secure Uplink Established.", type: "system" });
+                
+                // Replay the pending message that triggered the request
+                const msg = state.pendingConnection;
+                state.terminalHistory.push({
+                    source: "EXTERNAL",
+                    author: msg.author,
+                    timestamp: msg.solTimestamp,
+                    content: msg.content,
+                    type: "system"
+                });
+                
+                state.pendingConnection = null;
+                promptSpan.textContent = '[NETLINK] user:';
+                
+            } else if (cmd.toUpperCase() === 'N') {
+                // Deny Logic
+                state.terminalHistory.push({ text: "Connection Refused.", type: "error" });
+                state.pendingConnection = null;
+                
+            } else {
+                // Invalid Input during prompt
+                state.terminalHistory.push({ text: "Invalid input. Accept? [Y/N]", type: "system" });
+            }
+            renderHistory();
+            return;
         }
 
-        // 4. Command Processor
-        function executeCommand(cmdRaw) {
-            const cmd = cmdRaw.trim();
-            if (!cmd) return;
+        // --- Existing Chat Mode Logic ---
+        if (state.terminalMode === 'CHAT') {
+            if (cmd.toLowerCase() === 'exit') {
+                state.terminalMode = 'SHELL';
+                state.terminalHistory.push({ text: "Terminating secure uplink...", type: "system" });
+                promptSpan.textContent = 'user@pda:~#';
+            } else {
+                discordBridge.send(cmd, state.id);
+                state.terminalHistory.push({
+                    source: "LOCAL",
+                    author: serialNum,
+                    timestamp: formatSolTimestamp(),
+                    content: cmd,
+                    type: "muted" 
+                });
+            }
+            renderHistory();
+            return;
+        }
 
-            // Handle CHAT MODE
-            if (state.terminalMode === 'CHAT') {
-                if (cmd.toLowerCase() === 'exit') {
-                    state.terminalMode = 'SHELL';
-                    state.terminalHistory.push({ text: "Terminating secure uplink...", type: "system" });
-                    promptSpan.textContent = 'user@pda:~#';
-                } else {
-                    // Send to Discord
-                    discordBridge.send(cmd, state.owner);
-                    
-                    // Push structured object for grouping
-                    // We use "LOCAL" source so it groups consecutive messages
+        // --- Existing Shell Mode Logic ---
+        state.terminalHistory.push({ text: `${state.id}:~# ${cmd}`, type: "muted" });
+
+        const parts = cmd.split(' ');
+        const command = parts[0].toLowerCase();
+        const args = parts.slice(1);
+
+        switch (command) {
+            case 'help':
+                state.terminalHistory.push({ text: "Available commands: help, clear, whoami, date, ls, status, chat, transmit <msg>", type: "system" });
+                break;
+            
+            case 'clear':
+                state.terminalHistory = []; 
+                break;
+            
+            case 'whoami':
+                state.terminalHistory.push({ text: `User: ${state.id}`, type: "standard" });
+                state.terminalHistory.push({ text: `Role: ${state.job}`, type: "standard" });
+                break;
+
+            case 'ls':
+                state.terminalHistory.push({ text: "config.sys   manifest.db   netlink.exe", type: "standard" });
+                break;
+
+            case 'status':
+                state.terminalHistory.push({ text: `System Power: ${state.poweredOn ? 'ONLINE' : 'OFFLINE'}`, type: "system" });
+                break;
+
+            case 'chat':
+                // Manually trigger chat mode (Outgoing request)
+                state.terminalMode = 'CHAT';
+                state.terminalHistory.push({ text: "Initializing Secure Connection...", type: "system" });
+                setTimeout(() => {
+                    state.terminalHistory.push({ text: "Connected. Type 'exit' to disconnect.", type: "system" });
+                    promptSpan.textContent = '[NETLINK] user:';
+                    renderHistory();
+                }, 1000);
+                break;
+
+            case 'transmit':
+                if (args.length > 0) {
+                    const msg = args.join(' ');
+                    discordBridge.send(msg, state.id);
                     state.terminalHistory.push({
                         source: "LOCAL",
                         author: serialNum,
                         timestamp: formatSolTimestamp(),
-                        content: cmd,
-                        type: "muted" 
+                        content: msg,
+                        type: "standard"
                     });
+                } else {
+                    state.terminalHistory.push({ text: "Usage: transmit <message>", type: "error" });
                 }
+                break;
+
+            case 'reboot':
+                state.terminalHistory.push({ text: "Rebooting system...", type: "error" });
                 renderHistory();
+                setTimeout(() => location.reload(), 1000);
                 return;
-            }
 
-            // Handle STANDARD SHELL MODE
-            state.terminalHistory.push({ text: `${state.owner}:~# ${cmd}`, type: "muted" });
-
-            const parts = cmd.split(' ');
-            const command = parts[0].toLowerCase();
-            const args = parts.slice(1);
-
-            switch (command) {
-                case 'help':
-                    state.terminalHistory.push({ text: "Available commands: help, clear, whoami, date, ls, status, chat, transmit <msg>", type: "system" });
-                    break;
-                
-                case 'clear':
-                    state.terminalHistory = []; 
-                    break;
-                
-                case 'whoami':
-                    state.terminalHistory.push({ text: `User: ${state.owner}`, type: "standard" });
-                    state.terminalHistory.push({ text: `Role: ${state.job}`, type: "standard" });
-                    break;
-
-                case 'ls':
-                    state.terminalHistory.push({ text: "config.sys   manifest.db   netlink.exe", type: "standard" });
-                    break;
-
-                case 'status':
-                    const voltage = state.poweredOn ? "100%" : "0%";
-                    state.terminalHistory.push({ text: `System Power: ${state.poweredOn ? 'ONLINE' : 'OFFLINE'}`, type: "system" });
-                    break;
-
-                // --- RESTORED ANIMATION LOGIC FOR CHAT ---
-                case 'chat':
-                    state.terminalMode = 'CHAT';
-                    
-                    // 1. Setup for "Sending Communication Request" animation
-                    let sendingMessageIndex = state.terminalHistory.length;
-                    // Note: We use 'text' here because this is a system status, not a grouped message
-                    state.terminalHistory.push({ text: "Sending Communication Request.", type: "system" });
-                    renderHistory(); // Render immediately so the user sees the start
-
-                    let dots1 = 0;
-                    const maxDots = 3;
-                    const interval = 500; 
-
-                    // --- Animation 1: Sending ---
-                    const updateDots1 = () => {
-                        if (dots1 < maxDots) {
-                            dots1++;
-                            const dotsString = ".".repeat(dots1);
-                            
-                            // Update the existing message in history
-                            if (state.terminalHistory[sendingMessageIndex]) {
-                                state.terminalHistory[sendingMessageIndex].text = "Sending Communication Request" + dotsString;
-                            }
-                            renderHistory(); 
-                            setTimeout(updateDots1, interval);
-                        } else {
-                            // Start Animation 2
-                            initializeConnection();
-                        }
-                    };
-                    
-                    setTimeout(updateDots1, interval); 
-
-                    // --- Animation 2: Initializing ---
-                    const initializeConnection = () => {
-                        let connectionMessageIndex = state.terminalHistory.length;
-                        state.terminalHistory.push({ text: "Initializing Secure Connection.", type: "system" });
-                        renderHistory();
-
-                        let dots2 = 0;
-                        const updateDots2 = () => {
-                            if (dots2 < maxDots) {
-                                dots2++;
-                                const dotsString = ".".repeat(dots2);
-                                if (state.terminalHistory[connectionMessageIndex]) {
-                                    state.terminalHistory[connectionMessageIndex].text = "Initializing Secure Connection" + dotsString;
-                                }
-                                renderHistory(); 
-                                setTimeout(updateDots2, interval);
-                            } else {
-                                // Success
-                                state.terminalHistory.push({ 
-                                    text: "Communication Request Received. Connected. Type 'exit' to disconnect.", 
-                                    type: "system" 
-                                });
-                                promptSpan.textContent = '[NETLINK] user:';
-                                renderHistory(); 
-                            }
-                        };
-                        setTimeout(updateDots2, interval);
-                    };
-                    break;
-
-                case 'transmit':
-                    if (args.length > 0) {
-                        const msg = args.join(' ');
-                        discordBridge.send(msg, state.owner);
-                         // Push structured object for grouping
-                        state.terminalHistory.push({
-                            source: "LOCAL",
-                            author: serialNum,
-                            timestamp: formatSolTimestamp(),
-                            content: msg,
-                            type: "standard"
-                        });
-                    } else {
-                        state.terminalHistory.push({ text: "Usage: transmit <message>", type: "error" });
-                    }
-                    break;
-
-                case 'reboot':
-                    state.terminalHistory.push({ text: "Rebooting system...", type: "error" });
-                    renderHistory();
-                    setTimeout(() => location.reload(), 1000);
-                    return;
-
-                default:
-                    state.terminalHistory.push({ text: `Command not found: ${command}`, type: "error" });
-            }
-
-            renderHistory();
+            default:
+                state.terminalHistory.push({ text: `Command not found: ${command}`, type: "error" });
         }
 
-        inputField.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                executeCommand(inputField.value);
-                inputField.value = '';
-            }
-        });
-
         renderHistory();
-        document.querySelector('.terminal-console').addEventListener('click', () => {
-            inputField.focus();
-        });
     }
+
+    inputField.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            executeCommand(inputField.value);
+            inputField.value = '';
+        }
+    });
+
+    renderHistory();
+    document.querySelector('.terminal-console').addEventListener('click', () => {
+        inputField.focus();
+    });
+}
 
     function playRingtone() {
         const currentRingtone = Array.from(document.querySelectorAll('.ringtone-note-input')).map(input => input.value.toUpperCase());
@@ -906,7 +900,7 @@ function formatSolTimestamp() {
 
         const updateIdentity = (name) => {
             if (!name) return;
-            state.owner = name;
+            // state.owner = name; // REMOVED: Owner is always Ramona
             state.id = name;
             
             localStorage.setItem('pda_user_identity', name);
@@ -957,9 +951,14 @@ function formatSolTimestamp() {
         if (btnAdminId) {
             btnAdminId.addEventListener('click', () => {
                 if (identityModal) {
+                    // CRITICAL FIX: Remove the class AND clear the inline style
                     identityModal.classList.remove('hidden');
-                    identityInput.value = state.owner; // Pre-fill with current
-                    identityInput.focus();
+                    identityModal.style.display = ''; // <--- Clears the 'display: none' set by updateIdentity
+                    
+                    if(identityInput) {
+                        identityInput.value = state.id; // Changed to pre-fill ID not Owner
+                        identityInput.focus();
+                    }
                 }
             });
         }
