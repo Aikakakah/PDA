@@ -36,7 +36,23 @@ async function loadCircuitMarkup(containerId, filePath) {
     return false;
 }
 
+function formatSolTimestamp() {
+    const now = new Date();
+    
+    // Using UTC time to ensure consistency
+    const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(now.getUTCDate()).padStart(2, '0');
+    const hours = String(now.getUTCHours()).padStart(2, '0');
+    const seconds = String(now.getUTCSeconds()).padStart(2, '0');
+
+    // Format: SOL-MMDD.HHSS
+    return `SOL-${month}${day}.${hours}${seconds}`;
+}
+// --- END SOL-TIME UTILITY ---
+
 (async () => {
+    const savedIdentity = localStorage.getItem('pda_user_identity');
+    const defaultOwner = savedIdentity || "Ramona Orthall";
     const state = {
         owner: "Ramona Orthall",
         id: "Ramona Orthall",
@@ -153,7 +169,7 @@ async function loadCircuitMarkup(containerId, filePath) {
     const discordBridge = createTerminalBridge('http://localhost:3000', (msg) => {
         // 1. Add to history
         const logEntry = { 
-            text: `[UPLINK] ${msg.author}: ${msg.content}`, 
+            text: `${msg.content}`, 
             type: "system" // Using 'system' style (blue/cyan) for incoming msgs
         };
         state.terminalHistory.push(logEntry);
@@ -540,18 +556,19 @@ async function loadCircuitMarkup(containerId, filePath) {
                 if (cmd.toLowerCase() === 'exit') {
                     state.terminalMode = 'SHELL';
                     state.terminalHistory.push({ text: "Terminating secure uplink...", type: "system" });
-                    promptSpan.textContent = 'user@pda:~#';
+                    promptSpan.textContent = state.owner;
                 } else {
                     // Send to Discord
                     discordBridge.send(cmd, state.owner);
-                    state.terminalHistory.push({ text: `[SENT] ${cmd}`, type: "muted" });
+                    const timestamp = formatSolTimestamp();
+                    state.terminalHistory.push({ text: `[${timestamp}] ${cmd}`, type: "muted" });
                 }
                 renderHistory();
                 return;
             }
 
             // Handle STANDARD SHELL MODE
-            state.terminalHistory.push({ text: `user@pda:~# ${cmd}`, type: "muted" });
+            state.terminalHistory.push({ text: `${state.owner}:~# ${cmd}`, type: "muted" });
 
             const parts = cmd.split(' ');
             const command = parts[0].toLowerCase();
@@ -588,9 +605,67 @@ async function loadCircuitMarkup(containerId, filePath) {
                 // --- NEW COMMANDS ---
                 case 'chat':
                     state.terminalMode = 'CHAT';
-                    state.terminalHistory.push({ text: "Initializing Secure Netlink...", type: "system" });
-                    state.terminalHistory.push({ text: "Connected to external relay. Type 'exit' to disconnect.", type: "system" });
-                    promptSpan.textContent = '[NETLINK] user:';
+                    
+                    // 1. Setup for "Sending Communication Request" animation
+                    let sendingMessageIndex = state.terminalHistory.length;
+                    state.terminalHistory.push({ text: "Sending Communication Request.", type: "system" });
+                    
+                    let dots1 = 0;
+                    const maxDots = 3;
+                    const interval = 500; // Time in milliseconds between each dot
+                    // --- Animation 1: Sending Communication Request ---
+                    const updateDots1 = () => {
+                        if (dots1 < maxDots) {
+                            dots1++;
+                            const dotsString = ".".repeat(dots1);
+                            
+                            // Update the existing "Sending Communication Request" message
+                            state.terminalHistory[sendingMessageIndex].text = "Sending Communication Request" + dotsString;
+                            renderHistory(); 
+                            
+                            setTimeout(updateDots1, interval);
+                        } else {
+                            // Once the first animation is complete, start the second animation
+                            initializeConnection();
+                        }
+                    };
+                    // Start the first animation process
+                    setTimeout(updateDots1, interval); 
+                    // --- Animation 2: Initializing Secure Connection ---
+                    const initializeConnection = () => {
+                        
+                        // Initial message for connection initialization
+                        let connectionMessageIndex = state.terminalHistory.length;
+                        state.terminalHistory.push({ text: "Initializing Secure Connection.", type: "system" });
+                        
+                        let dots2 = 0;
+                        
+                        const updateDots2 = () => {
+                            if (dots2 < maxDots) {
+                                dots2++;
+                                const dotsString = ".".repeat(dots2);
+                                
+                                // Update the existing "Initializing Secure Connection" message
+                                state.terminalHistory[connectionMessageIndex].text = "Initializing Secure Connection" + dotsString;
+                                renderHistory(); 
+                                
+                                setTimeout(updateDots2, interval);
+                            } else {
+                                // Success message
+                                state.terminalHistory.push({ 
+                                    text: "Communication Request Recieved. Successfully Connected. Type 'exit' to disconnect.", 
+                                    type: "system" 
+                                });
+                                promptSpan.textContent = '[NETLINK] user:';
+                                renderHistory(); 
+                            }
+                        };
+                        
+                        // Start the second animation
+                        setTimeout(updateDots2, interval);
+                    };
+                
+                    
                     break;
 
                 case 'transmit':
@@ -764,7 +839,79 @@ async function loadCircuitMarkup(containerId, filePath) {
         const pdaContainer = el('pda');
         const flipTriggerBtn = el('btn-flip-trigger');
         const flipBackBtn = el('btn-flip-back');       
-    
+        // ... existing code ...
+   
+        // ... existing definitions ...
+
+        // --- NEW IDENTITY LOGIC START ---
+        const identityModal = el('identityModal');
+        const identityInput = el('identityInput');
+        const identitySubmitBtn = el('identitySubmitBtn');
+        const btnAdminId = el('btn-admin-id'); // Admin button
+
+        const updateIdentity = (name) => {
+            if (!name) return;
+            state.owner = name;
+            state.id = name;
+            
+            localStorage.setItem('pda_user_identity', name);
+            
+            updateHome(); 
+            
+            // Ensure we are referencing the element correctly
+            if (identityModal) {
+                identityModal.classList.add('hidden');
+                identityModal.style.display = 'none'; // Force hide via inline style as a backup
+            }
+        
+            state.terminalHistory.push({ 
+                text: `Identity verified. Welcome, ${name}.`, 
+                type: "system" 
+            });
+        };
+
+        // 1. Check for saved identity on load
+        const savedIdentity = localStorage.getItem('pda_user_identity');
+        
+        if (savedIdentity) {
+            updateIdentity(savedIdentity);
+        } else {
+            // No ID found, show modal
+            if (identityModal) {
+                identityModal.classList.remove('hidden');
+                if(identityInput) identityInput.focus();
+            }
+        }
+
+        // 2. Submit Button Logic
+        if (identitySubmitBtn && identityInput) {
+            identitySubmitBtn.addEventListener('click', () => {
+                const val = identityInput.value.trim();
+                if (val.length > 0) {
+                    updateIdentity(val);
+                }
+            });
+
+            // Allow pressing "Enter" to submit
+            identityInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') identitySubmitBtn.click();
+            });
+        }
+
+        // 3. Admin Reset Button Logic
+        if (btnAdminId) {
+            btnAdminId.addEventListener('click', () => {
+                if (identityModal) {
+                    identityModal.classList.remove('hidden');
+                    identityInput.value = state.owner; // Pre-fill with current
+                    identityInput.focus();
+                }
+            });
+        }
+        // --- NEW IDENTITY LOGIC END ---
+
+        // ... continue with existing code (views = { ... }) ...
+
         if (flipTriggerBtn && pdaContainer) {
             flipTriggerBtn.addEventListener('click', () => {
                 if (pdaContainer.classList.contains('flipped')) {
