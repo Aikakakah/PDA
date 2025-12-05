@@ -165,6 +165,8 @@
                                         <div class="detail-row">HARDWARE: <span id="statusHardware">OFFLINE</span></div>
                                         <div class="detail-row">SOFTWARE: <span id="statusSoftware">CORRUPT</span></div>
                                         <div class="detail-row">SECRETS: <span id="statusSecrets">0 FOUND</span></div>
+                                        <div class="detail-row">SYSTEM VERSION: <span id="statusVersion">Ver 0.0</span></div>
+                                        <div class="detail-row">SYSTEM OS: <span id="statusOS">XXX</span></div>
                                     </div>
                                 </div>
                             </section>
@@ -177,6 +179,43 @@
                         <div class="footer">
                             <div class="left">Robust#OS™</div>
                             <div class="right"><span id="serial">CLS-2282-0865</span></div>
+                        </div>
+
+                        <div class="modal hidden" id="changelogModal">
+                            <div class="modal-content" style="width: 320px;">
+                                <button class="small modal-close" id="closeChangelogModal">✕</button>
+                                <div class="modal-title">System Patch Notes</div>
+                                <div class="changelog-list" id="changelogList">
+                                    </div>
+                                <div class="modal-actions">
+                                    <button class="action-btn" id="closeChangelogBtn">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="modal hidden" id="osCopyModal">
+                            <div class="modal-content">
+                                <button class="small modal-close" id="closeOsModal">✕</button>
+                                <div class="modal-title">System Hash Interface</div>
+                                
+                                <p style="color:var(--muted); font-size:0.9em; text-align:center;">
+                                    Use this token to verify or transfer progress between systems.
+                                </p>
+                                
+                                <label style="display:block; margin-top: 15px; color:var(--info);">Current Hash (Copy)</label>
+                                <div style="background:#000; padding:10px; border:1px solid var(--accent); color:var(--ok); font-family:monospace; margin-bottom:15px; font-size:1.2em;" id="osModalDisplay">
+                                    UNKNOWN
+                                </div>
+                                
+                                <label for="osPasteInput" style="display:block; color:var(--info);">Paste New Hash (Transfer)</label>
+                                <input type="text" id="osPasteInput" placeholder="Paste verification token here..." style="width: 100%; margin-bottom: 10px; padding: 8px; font-family: monospace; background: #1a1a1a; border: 1px solid #444; color: var(--text);">
+                                <p id="pasteFeedback" style="color: var(--danger); font-size: 0.8em; height: 1em; text-align: center;"></p>
+                        
+                                <div class="modal-actions" style="margin-top: 20px;">
+                                    <button class="action-btn" id="copyOsBtn">Copy Current Hash</button>
+                                    <button class="action-btn danger-btn" id="applyOsBtn">Apply & Reboot</button>
+                                </div>
+                            </div>
                         </div>
     
                         <div class="modal ringtone-modal hidden" id="ringtoneModal">
@@ -259,6 +298,5 @@
                 <div class="pda-wall back"></div>
             </div>
         </div>
-        <script src="script.js"></script>
         <script type="module" src="script.js"></script>
     </body></html>

@@ -4,7 +4,8 @@
     import { initializeBookSystem } from './Book/book.js'; 
     import { createNanoChatTriggers } from './nanochat_triggers.js';
     import { createTerminalBridge } from './terminal_bridge.js';
-    
+    import { SYSTEM_VERSION, CHANGELOG_CONTENT } from './changelog.js';
+
     // Helper to inject HTML from file
     async function loadBookMarkup(containerId, filePath) {
         try {
@@ -55,7 +56,55 @@
         '10':  { b1: '#964B00', b2: '#000', b3: '#000',    b4: '#D4AF37' }
     };
     
-    (async () => {
+    function getPersistentHash() {
+    let hash = localStorage.getItem('pda_global_hash');
+    if (!hash) {
+        // Generate initial hash if none exists
+        hash = '0x' + Math.floor(Math.random() * 16777215).toString(16).toUpperCase();
+        localStorage.setItem('pda_global_hash', hash);
+    }
+    return hash;
+}
+
+function rotatePersistentHash() {
+    // Called when a puzzle is solved to "evolve" the OS version
+    const newSegment = Math.floor(Math.random() * 255).toString(16).toUpperCase().padStart(2, '0');
+    let current = localStorage.getItem('pda_global_hash') || "0x00";
+    
+    // Append or modify the hash to make it look like a growing chain
+    if(current.length > 12) {
+        // Reset length if too long, keep prefix
+        current = '0x' + newSegment + Math.floor(Math.random()*9999);
+    } else {
+        current += `-${newSegment}`;
+    }
+    
+    localStorage.setItem('pda_global_hash', current);
+    return current;
+}
+function applyNewHash(newHash) {
+    if (!newHash || newHash.trim() === '') return false;
+
+    // A basic check to ensure it looks like a token
+    const hashPattern = /^[0-9A-Fx-]+$/i; 
+
+    if (!hashPattern.test(newHash.trim())) {
+        return false;
+    }
+
+    // 1. Store the new persistent hash
+    localStorage.setItem('pda_global_hash', newHash.trim().toUpperCase());
+
+    // 2. Wipe the old game progress so the new system state applies fully
+    // This meets the transfer requirement (like starting a new game with this hash)
+    localStorage.removeItem('pda_game_state');
+    localStorage.removeItem('pda_user_identity');
+
+    // 3. Reboot the system to apply changes
+    location.reload();
+    return true;
+}
+(async () => {
         const savedIdentity = localStorage.getItem('pda_user_identity');
         const defaultOwner = "Ramona Orthall";
     
@@ -81,6 +130,9 @@
             },
             puzzles: new Set(),
             totalPuzzles: 7,
+            systemVersion: SYSTEM_VERSION, 
+        systemOSName: "Robust#OS",
+        systemHash: getPersistentHash(),
     
             adminOverride: false,
             programs: [
@@ -172,6 +224,14 @@
         let newsModule = null;
         let secretHandler = null;
         let nanoChatTriggers = null; 
+
+        let changelogModal = null;
+    let changelogList = null;
+    let osCopyModal = null;
+    let osModalDisplay = null;
+    let osPasteInput = null;      // <-- ADD THIS
+    let pasteFeedback = null;     // <-- ADD THIS
+    let applyOsBtn = null;
     
         // --- SAVE / LOAD SYSTEM ---
         function saveGameProgress() {
@@ -294,8 +354,12 @@
     
         function resetGameProgress() {
             if(confirm("Are you sure you want to reset all progress? This will lock the PDA and remove all repairs.")) {
+                // Only remove specific keys
                 localStorage.removeItem('pda_game_state');
                 localStorage.removeItem('pda_user_identity');
+                
+                // DO NOT REMOVE 'pda_global_hash'
+                
                 location.reload();
             }
         }
@@ -365,8 +429,9 @@
         function markPuzzleComplete(id) {
             if (!state.puzzles.has(id)) {
                 state.puzzles.add(id);
-                // console.log(`[System] Puzzle Unlocked: ${id}`);
-                saveGameProgress(); // Save immediately when a puzzle is marked complete
+                // UPDATE THE OS HASH ON SUCCESS
+                state.systemHash = rotatePersistentHash();
+                saveGameProgress(); 
             }
         }
     
@@ -376,18 +441,20 @@
             const statusHardware = el('statusHardware');
             const statusSoftware = el('statusSoftware');
             const statusSecrets = el('statusSecrets');
+            
+            // UPDATED: Version and OS Rendering
+            const statusVersion = el('statusVersion');
+            const statusOS = el('statusOS');
     
             const hardwareIds = ['fix_power', 'fix_nanochat', 'fix_notekeeper', 'fix_news', 'fix_terminal'];
             const secretIds = ['secret_ringtone', 'secret_chat'];
-    
             const hardwareDone = hardwareIds.filter(id => state.puzzles.has(id)).length;
             const secretsDone = secretIds.filter(id => state.puzzles.has(id)).length;
             const totalDone = state.puzzles.size;
-    
             const percent = Math.min(100, Math.round((totalDone / state.totalPuzzles) * 100));
-    
-            if (progressBar) progressBar.style.width = `${percent}%`;
-            if (percentageText) percentageText.textContent = `${percent}%`;
+
+        if (progressBar) progressBar.style.width = `${percent}%`;
+        if (percentageText) percentageText.textContent = `${percent}%`;
     
             if (statusHardware) {
                 statusHardware.textContent = `${hardwareDone}/5 ONLINE`;
@@ -402,6 +469,81 @@
             if (statusSecrets) {
                 statusSecrets.textContent = `${secretsDone} FOUND`;
                 statusSecrets.style.color = secretsDone > 0 ? "var(--accent)" : "var(--muted)";
+            }
+
+            if (statusVersion) {
+                statusVersion.textContent = state.systemVersion;
+                statusVersion.classList.add('clickable-status');
+                statusVersion.title = "Click to view Changelog";
+                
+                // Remove old listener to prevent duplicates (simple cloning trick)
+                const newVer = statusVersion.cloneNode(true);
+                statusVersion.parentNode.replaceChild(newVer, statusVersion);
+                
+                newVer.addEventListener('click', () => {
+                    openChangelog();
+                });
+            }
+
+            if (statusOS) {
+                // We split the inner HTML to allow distinct click targets
+                statusOS.innerHTML = `
+                    <span class="os-name-part" title="Click for details">${state.systemOSName}</span> 
+                    <span class="os-hash-part" title="Click to copy">${state.systemHash}</span>
+                `;
+                
+                const namePart = statusOS.querySelector('.os-name-part');
+                const hashPart = statusOS.querySelector('.os-hash-part');
+    
+                // 1. Click Name -> Open Popup
+                namePart.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openOSModal();
+                });
+                // 2. Click Number -> Copy immediately
+            hashPart.addEventListener('click', (e) => {
+                e.stopPropagation();
+                copyToClipboard(state.systemHash);
+                
+                // Visual feedback
+                const originalText = hashPart.textContent;
+                hashPart.textContent = "COPIED!";
+                hashPart.style.color = "#fff";
+                setTimeout(() => {
+                    hashPart.textContent = originalText;
+                    hashPart.style.color = "";
+                }, 1000);
+            });
+        }
+        }
+        function openChangelog() {
+            if (!changelogModal || !changelogList) return;
+            
+            // Generate HTML from CHANGELOG_CONTENT
+            changelogList.innerHTML = CHANGELOG_CONTENT.map(entry => `
+                <div class="changelog-entry">
+                    <div class="changelog-ver">${entry.version} <span class="changelog-date">${entry.date}</span></div>
+                    <ul class="changelog-items">
+                        ${entry.changes.map(c => `<li>${c}</li>`).join('')}
+                    </ul>
+                </div>
+            `).join('');
+    
+            changelogModal.classList.remove('hidden');
+        }
+    
+        function openOSModal() {
+            if (!osCopyModal || !osModalDisplay) return;
+            osModalDisplay.textContent = state.systemHash;
+            osCopyModal.classList.remove('hidden');
+        }
+    
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                console.log('Hash copied to clipboard');
+            } catch (err) {
+                console.error('Failed to copy: ', err);
             }
         }
     
@@ -1030,6 +1172,42 @@
             const flipTriggerBtn = el('btn-flip-trigger');
             const flipBackBtn = el('btn-flip-back');       
        
+            changelogModal = el('changelogModal');
+        changelogList = el('changelogList');
+        osCopyModal = el('osCopyModal');
+        osModalDisplay = el('osModalDisplay');
+        osPasteInput = el('osPasteInput');    // <-- ADD THIS
+        pasteFeedback = el('pasteFeedback');  // <-- ADD THIS
+        applyOsBtn = el('applyOsBtn');        // <-- ADD THIS
+
+        // Close Button Logic for new modals
+        el('closeChangelogModal')?.addEventListener('click', () => changelogModal.classList.add('hidden'));
+        el('closeChangelogBtn')?.addEventListener('click', () => changelogModal.classList.add('hidden'));
+        
+        el('closeOsModal')?.addEventListener('click', () => osCopyModal.classList.add('hidden'));
+        
+        el('copyOsBtn')?.addEventListener('click', () => {
+            copyToClipboard(state.systemHash);
+            const btn = el('copyOsBtn');
+            btn.textContent = "Copied!";
+            setTimeout(() => btn.textContent = "Copy to Clipboard", 1500);
+        });
+        applyOsBtn?.addEventListener('click', () => {
+            const pastedHash = osPasteInput.value.trim();
+            pasteFeedback.textContent = ''; // Clear previous message
+            
+            if (pastedHash === '') {
+                pasteFeedback.textContent = "Error: Hash field cannot be empty.";
+                return;
+            }
+
+            if (applyNewHash(pastedHash)) {
+                 // applyNewHash reloads on success, so this is just a fallback for feedback
+            } else {
+                pasteFeedback.textContent = "Error: Invalid hash format detected.";
+            }
+        });
+
             // --- System Status UI Wiring ---
             const systemStatusRow = el('systemStatusRow');
             const settingsList = el('settingsList');
