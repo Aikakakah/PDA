@@ -1446,25 +1446,31 @@ function renderTerminal() {
                             const result = validateResistorDrop(resistor, slot);
                             
                             if (result.success) {
+                                slot.style.boxShadow = "0 0 15px #0f0, inset 0 0 10px #0f0";
+                                
+                                if (result.feature) {
+                                    state.unlockedFeatures[result.feature] = true;
+                                    renderPrograms(); 
+                                }
+                                
                                 if (result.effects) {
                                     result.effects.forEach(cls => {
-                                        // SPECIAL CHECK FOR TERMINAL OVERLAY
-                                        if (cls === 'overlay-terminal' && !checkTerminalReady(item)) return;
-
+                                        if (cls === 'overlay-terminal' && !checkTerminalReady()) return;
                                         const el = document.querySelector('.' + cls);
                                         if (el) el.classList.add('active');
                                     });
                                 }
-
+                    
                                 if (result.action === 'repair') {
-                                     if(powerBtn) {
-                                        powerBtn.disabled = false;
-                                        powerBtn.textContent = "Power On";
-                                        powerBtn.style.backgroundColor = ""; 
-                                        powerBtn.style.cursor = "pointer";
-                                    }
+                                    // 🟢 ADD THIS LINE: Update progress immediately
+                                    markPuzzleComplete('fix_power'); 
+                                    
+                                    repairPDA();
                                 }
+                                
+                                checkCircuitState(); 
                             }
+                        
                         }
                     });
                     setTimeout(() => {
