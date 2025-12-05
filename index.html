@@ -136,11 +136,36 @@
                         </section>
 
                         <section id="view-settings" class="view">
-                            <div class="settings-list">
+                            <div class="settings-list" id="settingsList">
                                 <div class="setting-row" id="ringtoneRow">
                                     <div class="setting-title">Ringtone</div>
                                     <div class="setting-desc">Change your PDA's ringtone</div>
                                 </div>
+                                
+                                <div class="setting-row" id="systemStatusRow">
+                                    <div class="setting-title">System Status</div>
+                                    <div class="setting-desc">View system diagnostics</div>
+                                </div>
+                            </div>
+                        
+                            <div id="systemStatusView" class="hidden system-status-container">
+                                <div class="cartridge-header">System Diagnostics</div>
+                                
+                                <div class="status-block">
+                                    <div class="status-label">Integrity Repaired</div>
+                                    <div class="progress-track">
+                                        <div class="progress-fill" id="statusProgressBar" style="width: 0%"></div>
+                                    </div>
+                                    <div class="status-percentage" id="statusPercentageText">0%</div>
+                                </div>
+                        
+                                <div class="status-details">
+                                    <div class="detail-row">HARDWARE: <span id="statusHardware">OFFLINE</span></div>
+                                    <div class="detail-row">SOFTWARE: <span id="statusSoftware">CORRUPT</span></div>
+                                    <div class="detail-row">SECRETS: <span id="statusSecrets">0 FOUND</span></div>
+                                </div>
+                        
+                                <button id="backToSettingsBtn" class="action-btn" style="margin-top:auto; width:100%;">Back</button>
                             </div>
                         </section>
 

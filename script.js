@@ -3,7 +3,7 @@ import { createSecretHandler } from './secret_handler.js';
 import { validateResistorDrop } from './Circuit/circuit.js';
 import { initializeBookSystem } from './Book/book.js'; 
 import { createNanoChatTriggers } from './nanochat_triggers.js';
-import { createTerminalBridge } from './terminal_bridge.js'; // NEW IMPORT
+import { createTerminalBridge } from './terminal_bridge.js';
 
 // Helper to inject HTML from file
 async function loadBookMarkup(containerId, filePath) {
@@ -44,18 +44,15 @@ function formatSolTimestamp() {
     const day = String(now.getUTCDate()).padStart(2, '0');
     const hours = String(now.getUTCHours()).padStart(2, '0');
     const seconds = String(now.getUTCSeconds()).padStart(2, '0');
-
-    // Format: SOL-MMDD.HHSS
     return `SOL-${month}${day}.${hours}${seconds}`;
 }
-// --- END SOL-TIME UTILITY ---
 
 (async () => {
     const savedIdentity = localStorage.getItem('pda_user_identity');
     const defaultOwner = "Ramona Orthall";
 
     const state = {
-        owner: defaultOwner, // FIXED: Always Ramona Orthall
+        owner: defaultOwner,
         id: savedIdentity || "Unknown", // VARIABLE: Changes based on user input
         job: "Scientist",
         station: "NTTD Manta Station PR-960",
@@ -70,10 +67,15 @@ function formatSolTimestamp() {
             notekeeper: false,
             nanochat: false,
             news: false,
-            terminal: false, // New terminal lock
+            terminal: false,
             ringtone: false,
             power: false 
         },
+        // Puzzle Tracking
+        puzzles: new Set(),
+        // Define total breakdown for percentage calculation
+        totalPuzzles: 7, // 5 Hardware fixes + 1 Ringtone Secret + 1 Chat Secret
+
         adminOverride: false,
         programs: [
             { uid: 1, name: "Crew manifest", icon: "CM", type: "manifest" },
@@ -121,9 +123,8 @@ function formatSolTimestamp() {
         },
         terminalHistory: [
             { text: "Robust#OS Kernel v4.2.0 initialized...", type: "system" },
-            { text: "Welcome, user.", type: "standard" }
         ],
-        terminalMode: 'SHELL', // 'SHELL' or 'CHAT'
+        terminalMode: 'SHELL',
         pendingConnection: null,
         unlockedNews: null 
     };
@@ -285,7 +286,62 @@ function formatSolTimestamp() {
             shiftEl.textContent = `${hh}:${mm}:${ss}`;
         }
     }
+    // --- NEW: System Status Logic ---
+    function markPuzzleComplete(id) {
+        if (!state.puzzles.has(id)) {
+            state.puzzles.add(id);
+            console.log(`Puzzle Progress: ${id} unlocked.`);
+            // Optional: Play a small sound or show a notification
+        }
+    }
 
+    function markPuzzleComplete(id) {
+        if (!state.puzzles.has(id)) {
+            state.puzzles.add(id);
+            console.log(`[System] Puzzle Unlocked: ${id}`);
+            // Optional: Save to localStorage if you want progress to persist
+            localStorage.setItem('pda_puzzles', JSON.stringify([...state.puzzles]));
+        }
+    }
+
+    function renderSystemStatus() {
+        const progressBar = el('statusProgressBar');
+        const percentageText = el('statusPercentageText');
+        const statusHardware = el('statusHardware');
+        const statusSoftware = el('statusSoftware');
+        const statusSecrets = el('statusSecrets');
+
+        // 1. Define Puzzle Groups
+        const hardwareIds = ['fix_power', 'fix_nanochat', 'fix_notekeeper', 'fix_news', 'fix_terminal'];
+        const secretIds = ['secret_ringtone', 'secret_chat'];
+
+        // 2. Calculate Counts
+        const hardwareDone = hardwareIds.filter(id => state.puzzles.has(id)).length;
+        const secretsDone = secretIds.filter(id => state.puzzles.has(id)).length;
+        const totalDone = state.puzzles.size;
+
+        // 3. Calculate Percentage
+        const percent = Math.min(100, Math.round((totalDone / state.totalPuzzles) * 100));
+
+        // 4. Update UI
+        if (progressBar) progressBar.style.width = `${percent}%`;
+        if (percentageText) percentageText.textContent = `${percent}%`;
+
+        if (statusHardware) {
+            statusHardware.textContent = `${hardwareDone}/5 ONLINE`;
+            statusHardware.style.color = hardwareDone === 5 ? "var(--ok)" : "var(--danger)";
+        }
+        
+        if (statusSoftware) {
+            statusSoftware.textContent = percent === 100 ? "OPTIMIZED" : "DEGRADED";
+            statusSoftware.style.color = percent === 100 ? "var(--ok)" : "var(--danger)";
+        }
+        
+        if (statusSecrets) {
+            statusSecrets.textContent = `${secretsDone} FOUND`;
+            statusSecrets.style.color = secretsDone > 0 ? "var(--accent)" : "var(--muted)";
+        }
+    }
     // --- PROGRAM LOGIC ---
     function renderPrograms() {
     const programGrid = el('programGrid'); 
@@ -544,6 +600,7 @@ function formatSolTimestamp() {
                 const currentContactName = state.nanochat.channels[state.nanochat.currentContact].name;
                 if (nanoChatTriggers) {
                     nanoChatTriggers.checkAndTrigger(currentContactName, text);
+                    markPuzzleComplete('secret_chat');
                 }
             }
         }
@@ -770,6 +827,7 @@ function renderTerminal() {
         const key = notes.map(n => n.toLowerCase()).join('');
 
         if (secretHandler.handleSecretRingtone(key)) {
+            markPuzzleComplete('secret_ringtone');
              return; 
         }
         
@@ -828,18 +886,34 @@ function renderTerminal() {
             return false;
         };
 
-        // Update state based on physical board
-        state.unlockedFeatures.nanochat = isRepaired('slot-r2', '100');
-        state.unlockedFeatures.notekeeper = isRepaired('slot-r3', '10k');
-        state.unlockedFeatures.news = isRepaired('slot-r6', '10');
+        // Track Power
+    if (state.poweredOn) markPuzzleComplete('fix_power');
 
-        // Terminal requires BOTH R4 (220) and R5 (10k)
-        const r4Ok = isRepaired('slot-r4', '220');
-        const r5Ok = isRepaired('slot-r5', '10k');
-        state.unlockedFeatures.terminal = r4Ok && r5Ok;
+    // Track Resistors
+    if (isRepaired('slot-r2', '100')) {
+        state.unlockedFeatures.nanochat = true;
+        markPuzzleComplete('fix_nanochat');
+    } else { state.unlockedFeatures.nanochat = false; }
 
-        renderPrograms();
-    }
+    if (isRepaired('slot-r3', '10k')) {
+        state.unlockedFeatures.notekeeper = true;
+        markPuzzleComplete('fix_notekeeper');
+    } else { state.unlockedFeatures.notekeeper = false; }
+
+    if (isRepaired('slot-r6', '10')) {
+        state.unlockedFeatures.news = true;
+        markPuzzleComplete('fix_news');
+    } else { state.unlockedFeatures.news = false; }
+
+    const r4Ok = isRepaired('slot-r4', '220');
+    const r5Ok = isRepaired('slot-r5', '10k');
+    if (r4Ok && r5Ok) {
+        state.unlockedFeatures.terminal = true;
+        markPuzzleComplete('fix_terminal');
+    } else { state.unlockedFeatures.terminal = false; }
+
+    renderPrograms();
+}
 
     document.addEventListener('DOMContentLoaded', async () => {
         await loadBookMarkup('book-injection-point', './Book/book.html');
@@ -890,7 +964,39 @@ function renderTerminal() {
         const flipBackBtn = el('btn-flip-back');       
         // ... existing code ...
    
-        // ... existing definitions ...
+        // --- System Status UI Wiring ---
+    const systemStatusRow = el('systemStatusRow');
+    const settingsList = el('settingsList');
+    const systemStatusView = el('systemStatusView');
+    const backToSettingsBtn = el('backToSettingsBtn');
+
+    if (systemStatusRow) {
+        systemStatusRow.addEventListener('click', () => {
+            renderSystemStatus(); // Recalculate before showing
+            if(settingsList) settingsList.classList.add('hidden');
+            if(systemStatusView) systemStatusView.classList.remove('hidden');
+        });
+    }
+
+    if (backToSettingsBtn) {
+        backToSettingsBtn.addEventListener('click', () => {
+            if(systemStatusView) systemStatusView.classList.add('hidden');
+            if(settingsList) settingsList.classList.remove('hidden');
+        });
+    }
+
+    // Ensure tab switching resets the view
+    if (tabs && tabs.length) {
+        tabs.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // If user leaves Settings tab and comes back, reset to main list
+                if (btn.dataset.tab === 'settings') {
+                    if(settingsList) settingsList.classList.remove('hidden');
+                    if(systemStatusView) systemStatusView.classList.add('hidden');
+                }
+            });
+        });
+    }
 
         // --- NEW IDENTITY LOGIC START ---
         const identityModal = el('identityModal');
@@ -914,7 +1020,7 @@ function renderTerminal() {
             }
         
             state.terminalHistory.push({ 
-                text: `Identity verified. Welcome, ${name}.`, 
+                text: `Identity verified. Welcome, ${name}.`,
                 type: "system" 
             });
         };
