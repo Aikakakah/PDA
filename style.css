@@ -223,7 +223,10 @@ body{
     /* Move down 300px and rotate */
     transform: translateY(300px) rotate(15deg); 
     opacity: 1; /* Keep visible so we see it "on the table" */
-    pointer-events: none;
+    
+    /* CHANGE: Allow clicks so we can pick it back up */
+    pointer-events: auto; 
+    cursor: pointer;
 }
 
 .panel-screw-hole {

@@ -1385,15 +1385,25 @@
             const resistorSlots = document.querySelectorAll('.resistor-slot');
             const powerBtn = document.getElementById('powerOn');
             
+            // --- UPDATED: Back Panel Click Behavior ---
             if (backPanel) {
                 backPanel.addEventListener('click', () => {
-                    if (backPanel.classList.contains('unlocked')) {
-                        backPanel.classList.toggle('detached');
+                    // If it's already popped off (detached), put it back on and flip pda
+                    if (backPanel.classList.contains('detached')) {
+                        backPanel.classList.remove('detached');
+                        
+                        // Wait for the slide-in animation (0.6s) before flipping
+                        setTimeout(() => {
+                            if (pda) pda.classList.remove('flipped');
+                        }, 600);
+                    } 
+                    // If it's unlocked but sitting on the device, pop it off
+                    else if (backPanel.classList.contains('unlocked')) {
+                        backPanel.classList.add('detached');
                     }
                 });
             }
             
-            // Initial state logic managed by Restore logic now
             if(!state.poweredOn) {
                  if(pda) pda.classList.add('powered-off');
                  if(powerOverlay) powerOverlay.classList.remove('hidden');
@@ -1473,7 +1483,6 @@
                         isUnplacing = true;
                         item.classList.remove('placed');
                     
-        
                         if (item.parentElement && item.parentElement.id) {
                             if (item.parentElement.id === 'slot-r2') {
                                 state.unlockedFeatures.nanochat = false;
@@ -1518,20 +1527,22 @@
                                             if (el) el.classList.add('active');
                                         });
                                     }
-                        
+                                    
+                                    // --- UPDATED: REMOVED repairPDA() from here ---
+                                    // We update the puzzle state (markPuzzleComplete) but we DO NOT 
+                                    // trigger the repair animation (repairPDA) just because we scanned 
+                                    // the power resistor while moving something else.
                                     if (result.action === 'repair') {
                                         markPuzzleComplete('fix_power'); 
-                                        repairPDA();
                                     }
                                     
                                     checkCircuitState(); 
                                 }
-                            
                             }
                         });
                         setTimeout(() => {
                             checkCircuitState();
-                            saveGameProgress(); // SAVE: State changed on removal
+                            saveGameProgress(); 
                         }, 50);
                     }
                     
@@ -1611,7 +1622,7 @@
     
                                     if (result.success) {
                                         slot.style.boxShadow = "0 0 15px #0f0, inset 0 0 10px #0f0";
-                                    if (result.feature) {
+                                        if (result.feature) {
                                             state.unlockedFeatures[result.feature] = true;
                                             renderPrograms(); 
                                         }
@@ -1624,12 +1635,15 @@
                                             });
                                         }
     
+                                        // --- UPDATED: Animation Trigger ---
+                                        // We only run repairPDA() (auto-flip) when we physically DROP
+                                        // the correct resistor into the slot.
                                         if (result.action === 'repair') {
                                             repairPDA();
                                         }
                                         checkCircuitState(); 
                                     }
-                                    saveGameProgress(); // SAVE: State changed on placement
+                                    saveGameProgress(); 
                                 }
                             });
     
