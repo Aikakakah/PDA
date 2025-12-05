@@ -1,511 +1,525 @@
-    import { createNewsModule } from './news.js';
-    import { createSecretHandler } from './secret_handler.js';
-    import { validateResistorDrop } from './Circuit/circuit.js';
-    import { initializeBookSystem } from './Book/book.js'; 
-    import { createNanoChatTriggers } from './nanochat_triggers.js';
-    import { createTerminalBridge } from './terminal_bridge.js';
-    import { SYSTEM_VERSION, CHANGELOG_CONTENT } from './changelog.js';
+import { createNewsModule } from './news.js';
+import { createSecretHandler } from './secret_handler.js';
+import { validateResistorDrop } from './Circuit/circuit.js';
+import { initializeBookSystem } from './Book/book.js'; 
+import { createNanoChatTriggers } from './nanochat_triggers.js';
+import { createTerminalBridge } from './terminal_bridge.js';
+import { SYSTEM_VERSION, CHANGELOG_CONTENT } from './changelog.js';
+import { 
+    createRingtoneModalMarkup, 
+    createIdentityModalMarkup, 
+    createChangelogModalMarkup, 
+    createOSModalMarkup,
+    createNanoChatNewContactModal
+} from './modal.js';
 
-    // Helper to inject HTML from file
-    async function loadBookMarkup(containerId, filePath) {
-        try {
-            const response = await fetch(filePath);
-            const html = await response.text();
-            const container = document.getElementById(containerId);
-            if (container) {
-                container.innerHTML = html;
-                return true;
-            }
-        } catch (e) {
-            console.error("Could not load book markup:", e);
+// Helper to inject HTML from file
+async function loadBookMarkup(containerId, filePath) {
+    try {
+        const response = await fetch(filePath);
+        const html = await response.text();
+        const container = document.getElementById(containerId);
+        if (container) {
+            container.innerHTML = html;
+            return true;
         }
-        return false;
+    } catch (e) {
+        console.error("Could not load book markup:", e);
     }
+    return false;
+}
     
-    async function loadCircuitMarkup(containerId, filePath) {
-        try {
-            const response = await fetch(filePath);
-            const html = await response.text();
-            const container = document.getElementById(containerId);
-            if (container) {
-                container.innerHTML = html;
-                return true;
-            }
-        } catch (e) {
-            console.error("Could not load circuit markup:", e);
+async function loadCircuitMarkup(containerId, filePath) {
+    try {
+        const response = await fetch(filePath);
+        const html = await response.text();
+        const container = document.getElementById(containerId);
+        if (container) {
+            container.innerHTML = html;
+            return true;
         }
-        return false;
+    } catch (e) {
+        console.error("Could not load circuit markup:", e);
     }
+    return false;
+}
     
-    function formatSolTimestamp() {
-        const now = new Date();
-        
-        // Using UTC time to ensure consistency
-        const month = String(now.getUTCMonth() + 1).padStart(2, '0');
-        const day = String(now.getUTCDate()).padStart(2, '0');
-        const hours = String(now.getUTCHours()).padStart(2, '0');
-        const seconds = String(now.getUTCSeconds()).padStart(2, '0');
-        return `SOL-${month}${day}.${hours}${seconds}`;
-    }
+function formatSolTimestamp() {
+    const now = new Date();
+    const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(now.getUTCDate()).padStart(2, '0');
+    const hours = String(now.getUTCHours()).padStart(2, '0');
+    const seconds = String(now.getUTCSeconds()).padStart(2, '0');
+    return `SOL-${month}${day}.${hours}${seconds}`;
+}
+
+const resistorVisuals = {
+    '100': { b1: '#964B00', b2: '#000', b3: '#964B00', b4: '#D4AF37' },
+    '220': { b1: '#E74C3C', b2: '#E74C3C', b3: '#964B00', b4: '#D4AF37' },
+    '10k': { b1: '#964B00', b2: '#000', b3: '#E67E22', b4: '#D4AF37' },
+    '10':  { b1: '#964B00', b2: '#000', b3: '#000',    b4: '#D4AF37' }
+};
     
-    // --- CONFIG: Resistor Visual Definitions for Restoration ---
-    const resistorVisuals = {
-        '100': { b1: '#964B00', b2: '#000', b3: '#964B00', b4: '#D4AF37' },
-        '220': { b1: '#E74C3C', b2: '#E74C3C', b3: '#964B00', b4: '#D4AF37' },
-        '10k': { b1: '#964B00', b2: '#000', b3: '#E67E22', b4: '#D4AF37' },
-        '10':  { b1: '#964B00', b2: '#000', b3: '#000',    b4: '#D4AF37' }
-    };
-    
-    function getPersistentHash() {
-    let hash = localStorage.getItem('pda_global_hash');
-    if (!hash) {
-        // Generate initial hash if none exists
-        hash = '0x' + Math.floor(Math.random() * 16777215).toString(16).toUpperCase();
-        localStorage.setItem('pda_global_hash', hash);
-    }
-    return hash;
+function getPersistentHash() {
+let hash = localStorage.getItem('pda_global_hash');
+if (!hash) {
+    hash = '0x' + Math.floor(Math.random() * 16777215).toString(16).toUpperCase();
+    localStorage.setItem('pda_global_hash', hash);
+}
+return hash;
 }
 
 function rotatePersistentHash() {
     // Called when a puzzle is solved to "evolve" the OS version
     const newSegment = Math.floor(Math.random() * 255).toString(16).toUpperCase().padStart(2, '0');
     let current = localStorage.getItem('pda_global_hash') || "0x00";
-    
     // Append or modify the hash to make it look like a growing chain
     if(current.length > 12) {
-        // Reset length if too long, keep prefix
         current = '0x' + newSegment + Math.floor(Math.random()*9999);
     } else {
         current += `-${newSegment}`;
     }
-    
     localStorage.setItem('pda_global_hash', current);
     return current;
 }
+
 function applyNewHash(newHash) {
     if (!newHash || newHash.trim() === '') return false;
-
-    // A basic check to ensure it looks like a token
     const hashPattern = /^[0-9A-Fx-]+$/i; 
-
     if (!hashPattern.test(newHash.trim())) {
         return false;
     }
-
-    // 1. Store the new persistent hash
     localStorage.setItem('pda_global_hash', newHash.trim().toUpperCase());
-
-    // 2. Wipe the old game progress so the new system state applies fully
-    // This meets the transfer requirement (like starting a new game with this hash)
     localStorage.removeItem('pda_game_state');
     localStorage.removeItem('pda_user_identity');
-
-    // 3. Reboot the system to apply changes
     location.reload();
     return true;
 }
+
 (async () => {
-        const savedIdentity = localStorage.getItem('pda_user_identity');
-        const defaultOwner = "Ramona Orthall";
-    
-        const state = {
-            owner: defaultOwner,
-            id: savedIdentity || "Unknown", 
-            job: "Scientist",
-            station: "NTTD Manta Station PR-960",
-            alert: "Green",
-            instructions: "Don't stray far.",
-            currentDate: new Date(),
-            shiftStart: Date.now(),
-            flashlight: false,
-            stylus: false,
-            poweredOn: false, // Default to false, load will update
-            unlockedFeatures: {
-                notekeeper: false,
-                nanochat: false,
-                news: false,
-                terminal: false,
-                ringtone: false,
-                power: false 
-            },
-            puzzles: new Set(),
-            totalPuzzles: 7,
-            systemVersion: SYSTEM_VERSION, 
+    const savedIdentity = localStorage.getItem('pda_user_identity');
+    const defaultOwner = "Ramona Orthall";
+
+    const state = {
+        owner: defaultOwner,
+        id: savedIdentity || "Unknown", 
+        job: "Scientist",
+        station: "NTTD Manta Station PR-960",
+        alert: "Green",
+        instructions: "Don't stray far.",
+        currentDate: new Date(),
+        shiftStart: Date.now(),
+        flashlight: false,
+        stylus: false,
+        poweredOn: false, // Default to false, load will update
+        unlockedFeatures: {
+            notekeeper: false,
+            nanochat: false,
+            news: false,
+            terminal: false,
+            ringtone: false,
+            power: false 
+        },
+        puzzles: new Set(),
+        totalPuzzles: 7,
+        systemVersion: SYSTEM_VERSION, 
         systemOSName: "Robust#OS",
         systemHash: getPersistentHash(),
-    
-            adminOverride: false,
-            programs: [
-                { uid: 1, name: "Crew manifest", icon: "CM", type: "manifest" },
-                { uid: 2, name: "Notekeeper", icon: "NK", type: "notekeeper" },
-                { uid: 3, name: "Station news", icon: "News", type: "news" },
-                { uid: 4, name: "NanoChat", icon: "NC", type: "nanochat" },
-                { uid: 5, name: "Settings", icon: "⛭", type: "settings" },
-                { uid: 6, name: "Terminal", icon: ">_", type: "terminal" }
-            ],
-            notes: ["Check filter", "Bring gloves"],
-            crew: [
-                { name: "Sam Nighteyes", rank: "Dignitary", role: "Blueshield Officer" },
-                { name: "Claire Vallis", rank: "Command", role: "Captain" },
-                { name: "Lexi Tachibana-Hawking", rank: "Command", role: "Head of Personnel" },
-                { name: "Ramona Orthall", rank: "Science", role: "Scientist" },
-                { name: "Diablo", rank: "Science", role: "Chief Scientist" },
-                { name: "Agena Sweets", rank: "Security", role: "Corpsman" },
-                { name: "Holds-Head-High", rank: "Security", role: "Junior Officer" },
-                { name: "Bonnie Byrne", rank: "Service", role: "Janitor" }
-            ],
-            nanochat: {
-                currentContact: "sam",
-                channels: {
-                    sam: {
-                        name: "Sam Nighteyes",
-                        messages: [
-                            { sender: "Sam", text: "Alert: Unauthorized access detected at Cargo Bay 3. Security on site. Standby for updates.", type: "received" },
-                            { sender: "Ramona", text: "Understood. Maintaining distance from the area.", type: "sent" }
-                        ]
-                    },
-                    batbayar: {
-                        name: "Batbayar Le...",
-                        messages: [
-                            { sender: "Batbayar", text: "Hey Ramona, saw you in the lab. Still working on that warp core analysis?", type: "received" }
-                        ]
-                    }
-                }
-            },
-            settings: {
-                ringtone: ["A", "A", "A", "A", "A", "G"]
-            },
-            book: {
-                currentPage: 1,
-                maxPages: 6
-            },
-            terminalHistory: [
-                { text: "Robust#OS Kernel v4.2.0 initialized...", type: "system" },
-            ],
-            terminalMode: 'SHELL',
-            pendingConnection: null,
-            unlockedNews: null 
-        };
-    
-        const preloadedNotes = {};
-        const noteNames = ["a","asharp","b","c","csharp","d","dsharp","e","f","fsharp","g","gsharp"];
-        
-        for (const n of noteNames) {
-            const a = new Audio(`/Audio/${n}.ogg`);
-            a.preload = "auto";
-            preloadedNotes[n] = a;
-        }
-    
-        state.currentDate.setFullYear(state.currentDate.getFullYear() + 630);
-    
-        // --- Variables ---
-        let pda = null;
-        let views = {};
-        let tabs = null;
-        let programGrid = null;
-        let btnLight = null;
-        let btnStylus = null;
-        let btnFull = null;
-        let btnEject = null;
-        let powerOverlay = null;
-        let powerOn = null;
-        let programArea = null;
-        let programTitleMini = null;
-        let ringtoneRow = null;
-        let ringtoneModal = null;
-        let closeRingtoneModal = null;
-        let ringtoneDisplay = null;
-        let testRingtoneBtn = null;
-        let setRingtoneBtn = null;
-        let nanochatModal = null;
-        let closeNanochatModal = null;
-        let backPanel = null;
-    
-        let newsModule = null;
-        let secretHandler = null;
-        let nanoChatTriggers = null; 
+        adminOverride: false,
 
-        let changelogModal = null;
+        programs: [
+            { uid: 1, name: "Crew manifest", icon: "CM", type: "manifest" },
+            { uid: 2, name: "Notekeeper", icon: "NK", type: "notekeeper" },
+            { uid: 3, name: "Station news", icon: "News", type: "news" },
+            { uid: 4, name: "NanoChat", icon: "NC", type: "nanochat" },
+            { uid: 5, name: "Settings", icon: "⛭", type: "settings" },
+            { uid: 6, name: "Terminal", icon: ">_", type: "terminal" }
+        ],
+        notes: ["Check filter", "Bring gloves"],
+        crew: [
+            { name: "Sam Nighteyes", rank: "Dignitary", role: "Blueshield Officer" },
+            { name: "Claire Vallis", rank: "Command", role: "Captain" },
+            { name: "Lexi Tachibana-Hawking", rank: "Command", role: "Head of Personnel" },
+            { name: "Ramona Orthall", rank: "Science", role: "Scientist" },
+            { name: "Diablo", rank: "Science", role: "Chief Scientist" },
+            { name: "Agena Sweets", rank: "Security", role: "Corpsman" },
+            { name: "Holds-Head-High", rank: "Security", role: "Junior Officer" },
+            { name: "Bonnie Byrne", rank: "Service", role: "Janitor" }
+        ],
+        nanochat: {
+            currentContact: "sam",
+            channels: {
+                sam: {
+                    name: "Sam Nighteyes",
+                    messages: [
+                        { sender: "Sam", text: "Alert: Unauthorized access detected at Cargo Bay 3. Security on site. Standby for updates.", type: "received" },
+                        { sender: "Ramona", text: "Understood. Maintaining distance from the area.", type: "sent" }
+                    ]
+                },
+                batbayar: {
+                    name: "Batbayar Le...",
+                    messages: [
+                        { sender: "Batbayar", text: "Hey Ramona, saw you in the lab. Still working on that warp core analysis?", type: "received" }
+                    ]
+                }
+            }
+        },
+        settings: {
+            ringtone: ["A", "A", "A", "A", "A", "G"]
+        },
+        book: {
+            currentPage: 1,
+            maxPages: 6
+        },
+        terminalHistory: [
+            { text: "Robust#OS Kernel v4.2.0 initialized...", type: "system" },
+        ],
+        terminalMode: 'SHELL',
+        pendingConnection: null,
+        unlockedNews: null 
+    };
+
+    const preloadedNotes = {};
+    const noteNames = ["a","asharp","b","c","csharp","d","dsharp","e","f","fsharp","g","gsharp"];
+    
+    for (const n of noteNames) {
+        const a = new Audio(`/Audio/${n}.ogg`);
+        a.preload = "auto";
+        preloadedNotes[n] = a;
+    }
+    
+    state.currentDate.setFullYear(state.currentDate.getFullYear() + 630);
+    document.body.insertAdjacentHTML('beforeend', createRingtoneModalMarkup(state.settings.ringtone));
+    document.body.insertAdjacentHTML('beforeend', createChangelogModalMarkup(state.systemVersion));
+    document.body.insertAdjacentHTML('beforeend', createOSModalMarkup(state.systemHash));
+    
+
+    // --- Variables ---
+    let pda = null;
+    let views = {};
+    let tabs = null;
+    let programGrid = null;
+    let btnLight = null;
+    let btnStylus = null;
+    let btnFull = null;
+    let btnEject = null;
+    let powerOverlay = null;
+    let powerOn = null;
+    let programArea = null;
+    let programTitleMini = null;
+
+    let ringtoneRow = null;
+    let ringtoneModal = null;
+    let closeRingtoneModal = null;
+    let ringtoneDisplay = null;
+    let testRingtoneBtn = null;
+    let setRingtoneBtn = null;
+
+    let closeChangelogModal = null;
+    
+    let nanochatModal = null;
+    let closeNanochatModal = null;
+    let backPanel = null;
+
+    let newsModule = null;
+    let secretHandler = null;
+    let nanoChatTriggers = null; 
+
+    let changelogModal = null;
     let changelogList = null;
     let osCopyModal = null;
     let osModalDisplay = null;
-    let osPasteInput = null;      // <-- ADD THIS
-    let pasteFeedback = null;     // <-- ADD THIS
+    let osPasteInput = null;
+    let pasteFeedback = null;
     let applyOsBtn = null;
+   
+    // --- MODAL ASSIGNMENT AND HANDLERS ---
+    // Assign Changelog Elements
+    changelogModal = document.getElementById('changelogModal');
+    changelogList = document.getElementById('changelogList');
+    closeChangelogModal = document.getElementById('closeChangelogModal');
+    const changelogRow = document.getElementById('changelogRow'); 
+
+    // Ringtone elements
+    ringtoneModal = document.getElementById('ringtoneModal');
+    closeRingtoneModal = document.getElementById('closeRingtoneModal');
+    ringtoneDisplay = document.getElementById('ringtoneDisplay');
+    testRingtoneBtn = document.getElementById('testRingtoneBtn');
+    setRingtoneBtn = document.getElementById('setRingtoneBtn');
+    ringtoneRow = document.getElementById('ringtoneRow');
+
+
+    // 1. Close Handlers
+    closeRingtoneModal?.addEventListener('click', () => {
+        ringtoneModal?.classList.add('hidden'); 
+    });
+
+    closeChangelogModal?.addEventListener('click', () => {
+        changelogModal?.classList.add('hidden'); 
+    });
     
-        // --- SAVE / LOAD SYSTEM ---
-        function saveGameProgress() {
-            const slots = {};
-            const resistorSlots = document.querySelectorAll('.resistor-slot');
+    // 2. Open Handlers 
+    if (ringtoneRow) {
+        ringtoneRow.addEventListener('click', () => {
+            ringtoneModal?.classList.remove('hidden'); 
+        });
+    }
+
+    if (changelogRow) { 
+        changelogRow.addEventListener('click', openChangelog); 
+    }
+    // --- END MODAL ASSIGNMENT AND HANDLERS ---
+
+    // --- SAVE / LOAD SYSTEM ---
+    function saveGameProgress() {
+        const slots = {};
+        const resistorSlots = document.querySelectorAll('.resistor-slot');
+        
+        // Map current board state
+        resistorSlots.forEach(slot => {
+            if (slot.children.length > 0) {
+                const resistor = slot.children[0];
+                slots[slot.id] = resistor.dataset.ohms;
+            }
+        });
+
+        const saveData = {
+            unlockedFeatures: state.unlockedFeatures,
+            puzzles: Array.from(state.puzzles),
+            slots: slots,
+            poweredOn: state.poweredOn
+        };
+
+        localStorage.setItem('pda_game_state', JSON.stringify(saveData));
+    }
+    
+    function createResistorDOM(ohms) {
+        const visuals = resistorVisuals[ohms] || resistorVisuals['100'];
+        const el = document.createElement('div');
+        el.className = 'drawer-item resistor-prop placed';
+        el.dataset.ohms = ohms;
+        el.title = `${ohms} Ohm Resistor`;
+        el.style.position = 'absolute';
+        el.style.top = '50%';
+        el.style.left = '50%';
+        el.style.transform = 'translate(-50%, -50%) rotate(90deg)';
+        el.style.pointerEvents = 'auto'; 
+
+        const body = document.createElement('div');
+        body.className = 'resistor-body';
+        body.style.setProperty('--b1', visuals.b1);
+        body.style.setProperty('--b2', visuals.b2);
+        body.style.setProperty('--b3', visuals.b3);
+        body.style.setProperty('--b4', visuals.b4);
+        
+        el.appendChild(body);
+        return el;
+    }
+    
+    function restoreGameProgress() {
+        const rawData = localStorage.getItem('pda_game_state');
+        if (!rawData) return;
+        try {
+            const data = JSON.parse(rawData);
             
-            // Map current board state
-            resistorSlots.forEach(slot => {
-                if (slot.children.length > 0) {
-                    const resistor = slot.children[0];
-                    slots[slot.id] = resistor.dataset.ohms;
-                }
-            });
-    
-            const saveData = {
-                unlockedFeatures: state.unlockedFeatures,
-                puzzles: Array.from(state.puzzles),
-                slots: slots,
-                poweredOn: state.poweredOn
-            };
-    
-            localStorage.setItem('pda_game_state', JSON.stringify(saveData));
-            // console.log("Game Saved", saveData);
-        }
-    
-        function createResistorDOM(ohms) {
-            const visuals = resistorVisuals[ohms] || resistorVisuals['100']; // Default if missing
-            
-            const el = document.createElement('div');
-            el.className = 'drawer-item resistor-prop placed';
-            el.dataset.ohms = ohms;
-            el.title = `${ohms} Ohm Resistor`;
-            
-            // Ensure restoration style matches dropped style
-            el.style.position = 'absolute';
-            el.style.top = '50%';
-            el.style.left = '50%';
-            el.style.transform = 'translate(-50%, -50%) rotate(90deg)';
-            el.style.pointerEvents = 'auto'; 
-    
-            const body = document.createElement('div');
-            body.className = 'resistor-body';
-            body.style.setProperty('--b1', visuals.b1);
-            body.style.setProperty('--b2', visuals.b2);
-            body.style.setProperty('--b3', visuals.b3);
-            body.style.setProperty('--b4', visuals.b4);
-            
-            el.appendChild(body);
-            return el;
-        }
-    
-        function restoreGameProgress() {
-            const rawData = localStorage.getItem('pda_game_state');
-            if (!rawData) return;
-    
-            try {
-                const data = JSON.parse(rawData);
-                
-                // 1. Restore Logic State
-                if (data.unlockedFeatures) state.unlockedFeatures = data.unlockedFeatures;
-                if (data.puzzles) state.puzzles = new Set(data.puzzles);
-                if (data.poweredOn !== undefined) state.poweredOn = data.poweredOn;
-    
-                // 2. Restore Physical Resistors
-                if (data.slots) {
-                    Object.entries(data.slots).forEach(([slotId, ohms]) => {
-                        const slot = document.getElementById(slotId);
-                        if (slot && slot.children.length === 0) {
-                            const resistor = createResistorDOM(ohms);
-                            slot.appendChild(resistor);
-                            
-                            // Re-trigger validation to show wires/overlays
-                            const result = validateResistorDrop(resistor, slot);
-                            if (result.success) {
-                                slot.style.boxShadow = "0 0 15px #0f0, inset 0 0 10px #0f0";
-                                if (result.effects) {
-                                    result.effects.forEach(cls => {
-                                        // Special check for terminal overlay requiring 2 slots
-                                        if (cls === 'overlay-terminal') {
-                                            const r4 = document.getElementById('slot-r4');
-                                            const r5 = document.getElementById('slot-r5');
-                                            const hasR4 = r4?.children.length > 0;
-                                            const hasR5 = r5?.children.length > 0;
-                                            if (!hasR4 || !hasR5) return;
-                                        }
-                                        const el = document.querySelector('.' + cls);
-                                        if (el) el.classList.add('active');
-                                    });
-                                }
+            // 1. Restore Logic State
+            if (data.unlockedFeatures) state.unlockedFeatures = data.unlockedFeatures;
+            if (data.puzzles) state.puzzles = new Set(data.puzzles);
+            if (data.poweredOn !== undefined) state.poweredOn = data.poweredOn;
+
+            // 2. Restore Physical Resistors
+            if (data.slots) {
+                Object.entries(data.slots).forEach(([slotId, ohms]) => {
+                    const slot = document.getElementById(slotId);
+                    if (slot && slot.children.length === 0) {
+                        const resistor = createResistorDOM(ohms);
+                        slot.appendChild(resistor);
+                        
+                        // Re-trigger validation to show wires/overlays
+                        const result = validateResistorDrop(resistor, slot);
+                        if (result.success) {
+                            slot.style.boxShadow = "0 0 15px #0f0, inset 0 0 10px #0f0";
+                            if (result.effects) {
+                                result.effects.forEach(cls => {
+                                    // Special check for terminal overlay requiring 2 slots
+                                    if (cls === 'overlay-terminal') {
+                                        const r4 = document.getElementById('slot-r4');
+                                        const r5 = document.getElementById('slot-r5');
+                                        const hasR4 = r4?.children.length > 0;
+                                        const hasR5 = r5?.children.length > 0;
+                                        if (!hasR4 || !hasR5) return;
+                                    }
+                                    const el = document.querySelector('.' + cls);
+                                    if (el) el.classList.add('active');
+                                });
                             }
                         }
-                    });
-                }
-    
-                // 3. Update Visuals
-                renderPrograms();
-                
-                // 4. Handle Power Button State on Restore
-                if (state.puzzles.has('fix_power')) {
-                    const powerBtn = document.getElementById('powerOn');
-                    if (powerBtn) {
-                        powerBtn.disabled = false;
-                        powerBtn.textContent = "Power On";
-                        powerBtn.style.backgroundColor = ""; 
-                        powerBtn.style.cursor = "pointer";
-                    }
-                }
-                
-                if (state.poweredOn) {
-                     const pdaScreen = document.querySelector('.PDA-screen');
-                     const powerOverlay = document.getElementById('powerOverlay');
-                     if(powerOverlay) powerOverlay.classList.add('hidden');
-                     if(pdaScreen) pdaScreen.classList.remove('screen-off');
-                }
-    
-            } catch (e) {
-                console.error("Failed to load save game", e);
-            }
-        }
-    
-        function resetGameProgress() {
-            if(confirm("Are you sure you want to reset all progress? This will lock the PDA and remove all repairs.")) {
-                // Only remove specific keys
-                localStorage.removeItem('pda_game_state');
-                localStorage.removeItem('pda_user_identity');
-                
-                // DO NOT REMOVE 'pda_global_hash'
-                
-                location.reload();
-            }
-        }
-    
-    
-        const el = id => document.getElementById(id);
-    
-        // [Discord Bridge Code Omitted for brevity, assumed unchanged]
-         const discordBridge = createTerminalBridge('http://localhost:3000', (msg) => {
-            // ... (existing implementation)
-        });
-        discordBridge.start();
-    
-    
-        function showView(v) {
-            if (!views || Object.keys(views).length === 0) return;
-            Object.values(views).forEach(x => x?.classList?.remove('active'));
-            if (views[v]) views[v].classList.add('active');
-    
-            const progHeader = el('progHeader');
-            if (progHeader) {
-                progHeader.style.display = (v === 'program' ? 'flex' : 'none');
-            }
-        }
-    
-        // SHINE EFFECT
-        const initializeShineEffect = () => {
-            const pdaScreen = document.querySelector('.PDA-screen');
-            const COOLDOWN_MS = 60 * 1000;
-            let lastPlayed = 0;
-    
-            if (pdaScreen) {
-                pdaScreen.addEventListener('mouseenter', () => {
-                    const now = Date.now();
-                    if (now - lastPlayed > COOLDOWN_MS) {
-                        lastPlayed = now;
-                        pdaScreen.classList.add('shine-active');
-                        setTimeout(() => pdaScreen.classList.remove('shine-active'), 1500);
                     }
                 });
             }
-        };
-    
-        function updateHome() {
-            if (el('owner')) el('owner').textContent = state.owner; 
-            if (el('idline')) el('idline').innerHTML = `${state.id}, <span id="job" class="job">${state.job}</span>`; 
-            if (el('station')) el('station').textContent = state.station;
-            if (el('instructions')) el('instructions').textContent = state.instructions;
-            if (el('date')) el('date').textContent = state.currentDate.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' });
-    
-            const alertEl = el('alert');
-            if (alertEl) {
-                alertEl.textContent = state.alert;
-                alertEl.className = 'alert ' + state.alert.toLowerCase();
-            }
-    
-            const shiftEl = el('shift');
-            if (shiftEl) {
-                const elapsed = Date.now() - state.shiftStart;
-                const hh = String(Math.floor(elapsed / 3600000)).padStart(2, '0');
-                const mm = String(Math.floor((elapsed % 3600000) / 60000)).padStart(2, '0');
-                const ss = String(Math.floor((elapsed % 60000) / 1000)).padStart(2, '0');
-                shiftEl.textContent = `${hh}:${mm}:${ss}`;
-            }
-        }
-    
-        function markPuzzleComplete(id) {
-            if (!state.puzzles.has(id)) {
-                state.puzzles.add(id);
-                // UPDATE THE OS HASH ON SUCCESS
-                state.systemHash = rotatePersistentHash();
-                saveGameProgress(); 
-            }
-        }
-    
-        function renderSystemStatus() {
-            const progressBar = el('statusProgressBar');
-            const percentageText = el('statusPercentageText');
-            const statusHardware = el('statusHardware');
-            const statusSoftware = el('statusSoftware');
-            const statusSecrets = el('statusSecrets');
+            renderPrograms();
             
-            // UPDATED: Version and OS Rendering
-            const statusVersion = el('statusVersion');
-            const statusOS = el('statusOS');
+            // 4. Handle Power Button State on Restore
+            if (state.puzzles.has('fix_power')) {
+                const powerBtn = document.getElementById('powerOn');
+                if (powerBtn) {
+                    powerBtn.disabled = false;
+                    powerBtn.textContent = "Power On";
+                    powerBtn.style.backgroundColor = ""; 
+                    powerBtn.style.cursor = "pointer";
+                }
+            }
+            
+            if (state.poweredOn) {
+                    const pdaScreen = document.querySelector('.PDA-screen');
+                    const powerOverlay = document.getElementById('powerOverlay');
+                    if(powerOverlay) powerOverlay.classList.add('hidden');
+                    if(pdaScreen) pdaScreen.classList.remove('screen-off');
+            }
+
+        } catch (e) {
+            console.error("Failed to load save game", e);
+        }
+    }
     
-            const hardwareIds = ['fix_power', 'fix_nanochat', 'fix_notekeeper', 'fix_news', 'fix_terminal'];
-            const secretIds = ['secret_ringtone', 'secret_chat'];
-            const hardwareDone = hardwareIds.filter(id => state.puzzles.has(id)).length;
-            const secretsDone = secretIds.filter(id => state.puzzles.has(id)).length;
-            const totalDone = state.puzzles.size;
-            const percent = Math.min(100, Math.round((totalDone / state.totalPuzzles) * 100));
+    function resetGameProgress() {
+        if(confirm("Are you sure you want to reset all progress? This will lock the PDA and remove all repairs.")) {
+            localStorage.removeItem('pda_game_state');
+            localStorage.removeItem('pda_user_identity');
+            location.reload();
+        }
+    }
+    const el = id => document.getElementById(id);
+    
+    const discordBridge = createTerminalBridge('http://localhost:3000', (msg) => {
+        // ... (existing implementation)
+    });
+    discordBridge.start();
+    
+    function showView(v) {
+        if (!views || Object.keys(views).length === 0) return;
+        Object.values(views).forEach(x => x?.classList?.remove('active'));
+        if (views[v]) views[v].classList.add('active');
+
+        const progHeader = el('progHeader');
+        if (progHeader) {
+            progHeader.style.display = (v === 'program' ? 'flex' : 'none');
+        }
+    }
+
+    // SHINE EFFECT
+    const initializeShineEffect = () => {
+        const pdaScreen = document.querySelector('.PDA-screen');
+        const COOLDOWN_MS = 60 * 1000;
+        let lastPlayed = 0;
+
+        if (pdaScreen) {
+            pdaScreen.addEventListener('mouseenter', () => {
+                const now = Date.now();
+                if (now - lastPlayed > COOLDOWN_MS) {
+                    lastPlayed = now;
+                    pdaScreen.classList.add('shine-active');
+                    setTimeout(() => pdaScreen.classList.remove('shine-active'), 1500);
+                }
+            });
+        }
+    };
+    
+    function updateHome() {
+        if (el('owner')) el('owner').textContent = state.owner; 
+        if (el('idline')) el('idline').innerHTML = `${state.id}, <span id="job" class="job">${state.job}</span>`; 
+        if (el('station')) el('station').textContent = state.station;
+        if (el('instructions')) el('instructions').textContent = state.instructions;
+        if (el('date')) el('date').textContent = state.currentDate.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' });
+
+        const alertEl = el('alert');
+        if (alertEl) {
+            alertEl.textContent = state.alert;
+            alertEl.className = 'alert ' + state.alert.toLowerCase();
+        }
+
+        const shiftEl = el('shift');
+        if (shiftEl) {
+            const elapsed = Date.now() - state.shiftStart;
+            const hh = String(Math.floor(elapsed / 3600000)).padStart(2, '0');
+            const mm = String(Math.floor((elapsed % 3600000) / 60000)).padStart(2, '0');
+            const ss = String(Math.floor((elapsed % 60000) / 1000)).padStart(2, '0');
+            shiftEl.textContent = `${hh}:${mm}:${ss}`;
+        }
+    }
+    
+    function markPuzzleComplete(id) {
+        if (!state.puzzles.has(id)) {
+            state.puzzles.add(id);
+            // UPDATE THE OS HASH ON SUCCESS
+            state.systemHash = rotatePersistentHash();
+            saveGameProgress(); 
+        }
+    }
+    
+    function renderSystemStatus() {
+        const progressBar = el('statusProgressBar');
+        const percentageText = el('statusPercentageText');
+        const statusHardware = el('statusHardware');
+        const statusSoftware = el('statusSoftware');
+        const statusSecrets = el('statusSecrets');
+        const statusVersion = el('statusVersion');
+        const statusOS = el('statusOS');
+        const hardwareIds = ['fix_power', 'fix_nanochat', 'fix_notekeeper', 'fix_news', 'fix_terminal'];
+        const secretIds = ['secret_ringtone', 'secret_chat'];
+        const hardwareDone = hardwareIds.filter(id => state.puzzles.has(id)).length;
+        const secretsDone = secretIds.filter(id => state.puzzles.has(id)).length;
+        const totalDone = state.puzzles.size;
+        const percent = Math.min(100, Math.round((totalDone / state.totalPuzzles) * 100));
 
         if (progressBar) progressBar.style.width = `${percent}%`;
         if (percentageText) percentageText.textContent = `${percent}%`;
     
-            if (statusHardware) {
-                statusHardware.textContent = `${hardwareDone}/5 ONLINE`;
-                statusHardware.style.color = hardwareDone === 5 ? "var(--ok)" : "var(--danger)";
-            }
+        if (statusHardware) {
+            statusHardware.textContent = `${hardwareDone}/5 ONLINE`;
+            statusHardware.style.color = hardwareDone === 5 ? "var(--ok)" : "var(--danger)";
+        }
             
-            if (statusSoftware) {
-                statusSoftware.textContent = percent === 100 ? "OPTIMIZED" : "DEGRADED";
-                statusSoftware.style.color = percent === 100 ? "var(--ok)" : "var(--danger)";
-            }
+        if (statusSoftware) {
+            statusSoftware.textContent = percent === 100 ? "OPTIMIZED" : "DEGRADED";
+            statusSoftware.style.color = percent === 100 ? "var(--ok)" : "var(--danger)";
+        }
+        
+        if (statusSecrets) {
+            statusSecrets.textContent = `${secretsDone} FOUND`;
+            statusSecrets.style.color = secretsDone > 0 ? "var(--accent)" : "var(--muted)";
+        }
+
+        if (statusVersion) {
+            statusVersion.textContent = state.systemVersion;
+            statusVersion.classList.add('clickable-status');
+            statusVersion.title = "Click to view Changelog";
+            const newVer = statusVersion.cloneNode(true);
+            statusVersion.parentNode.replaceChild(newVer, statusVersion);
             
-            if (statusSecrets) {
-                statusSecrets.textContent = `${secretsDone} FOUND`;
-                statusSecrets.style.color = secretsDone > 0 ? "var(--accent)" : "var(--muted)";
-            }
+            newVer.addEventListener('click', () => {
+                openChangelog();
+            });
+        }
 
-            if (statusVersion) {
-                statusVersion.textContent = state.systemVersion;
-                statusVersion.classList.add('clickable-status');
-                statusVersion.title = "Click to view Changelog";
-                
-                // Remove old listener to prevent duplicates (simple cloning trick)
-                const newVer = statusVersion.cloneNode(true);
-                statusVersion.parentNode.replaceChild(newVer, statusVersion);
-                
-                newVer.addEventListener('click', () => {
-                    openChangelog();
-                });
-            }
+        if (statusOS) {
+            statusOS.innerHTML = `
+                <span class="os-name-part" title="Click for details">${state.systemOSName}</span> 
+                <span class="os-hash-part" title="Click to copy">${state.systemHash}</span>
+            `;
+            
+            const namePart = statusOS.querySelector('.os-name-part');
+            const hashPart = statusOS.querySelector('.os-hash-part');
 
-            if (statusOS) {
-                // We split the inner HTML to allow distinct click targets
-                statusOS.innerHTML = `
-                    <span class="os-name-part" title="Click for details">${state.systemOSName}</span> 
-                    <span class="os-hash-part" title="Click to copy">${state.systemHash}</span>
-                `;
-                
-                const namePart = statusOS.querySelector('.os-name-part');
-                const hashPart = statusOS.querySelector('.os-hash-part');
-    
-                // 1. Click Name -> Open Popup
-                namePart.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    openOSModal();
-                });
-                // 2. Click Number -> Copy immediately
+            namePart.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openOSModal();
+            });
+
             hashPart.addEventListener('click', (e) => {
                 e.stopPropagation();
                 copyToClipboard(state.systemHash);
-                
-                // Visual feedback
+
                 const originalText = hashPart.textContent;
                 hashPart.textContent = "COPIED!";
                 hashPart.style.color = "#fff";
@@ -515,167 +529,161 @@ function applyNewHash(newHash) {
                 }, 1000);
             });
         }
+    }
+
+    function openChangelog() {
+        if (!changelogModal || !changelogList) return;
+        changelogList.innerHTML = CHANGELOG_CONTENT.map(entry => `
+            <div class="changelog-entry">
+                <div class="changelog-ver">${entry.version} <span class="changelog-date">${entry.date}</span></div>
+                <ul class="changelog-items">
+                    ${entry.changes.map(c => `<li>${c}</li>`).join('')}
+                </ul>
+            </div>
+        `).join('');
+        changelogModal.classList.remove('hidden'); 
+    }
+    
+    function openOSModal() {
+        if (!osCopyModal || !osModalDisplay) return;
+        osModalDisplay.textContent = state.systemHash;
+        osCopyModal.classList.remove('hidden');
+    }
+    
+    async function copyToClipboard(text) { // Copies Hash when clicked
+        try {
+            await navigator.clipboard.writeText(text);
+            console.log('Hash copied to clipboard');
+        } catch (err) {
+            console.error('Failed to copy: ', err);
         }
-        function openChangelog() {
-            if (!changelogModal || !changelogList) return;
+    }
+    
+    function renderPrograms() {
+        const programGrid = el('programGrid'); 
+        if (!programGrid) return;
+        programGrid.innerHTML = '';
+        
+        for (const p of state.programs) {
+            const tile = document.createElement('div');
+            tile.className = 'tile';
+            tile.dataset.uid = p.uid;
             
-            // Generate HTML from CHANGELOG_CONTENT
-            changelogList.innerHTML = CHANGELOG_CONTENT.map(entry => `
-                <div class="changelog-entry">
-                    <div class="changelog-ver">${entry.version} <span class="changelog-date">${entry.date}</span></div>
-                    <ul class="changelog-items">
-                        ${entry.changes.map(c => `<li>${c}</li>`).join('')}
-                    </ul>
-                </div>
-            `).join('');
-    
-            changelogModal.classList.remove('hidden');
-        }
-    
-        function openOSModal() {
-            if (!osCopyModal || !osModalDisplay) return;
-            osModalDisplay.textContent = state.systemHash;
-            osCopyModal.classList.remove('hidden');
-        }
-    
-        async function copyToClipboard(text) {
-            try {
-                await navigator.clipboard.writeText(text);
-                console.log('Hash copied to clipboard');
-            } catch (err) {
-                console.error('Failed to copy: ', err);
-            }
-        }
-    
-        function renderPrograms() {
-            const programGrid = el('programGrid'); 
-            if (!programGrid) return;
-            programGrid.innerHTML = '';
+            let isLocked = false;
             
-            for (const p of state.programs) {
-                const tile = document.createElement('div');
-                tile.className = 'tile';
-                tile.dataset.uid = p.uid;
-                
-                let isLocked = false;
-                
-                if (['nanochat', 'notekeeper', 'news', 'terminal'].includes(p.type)) {
-                    if (!state.unlockedFeatures[p.type]) {
-                        isLocked = true;
-                    }
+            if (['nanochat', 'notekeeper', 'news', 'terminal'].includes(p.type)) {
+                if (!state.unlockedFeatures[p.type]) {
+                    isLocked = true;
                 }
-    
-                if (isLocked) {
-                    tile.classList.add('disabled');
-                }
-    
-                tile.innerHTML = `<div class="glyph">${p.icon}</div><div class="label">${p.name}</div>`;
-                
-                if (!isLocked) {
-                    tile.addEventListener('click', () => openProgram(p));
-                }
-                
-                programGrid.appendChild(tile);
             }
+
+            if (isLocked) {
+                tile.classList.add('disabled');
+            }
+
+            tile.innerHTML = `<div class="glyph">${p.icon}</div><div class="label">${p.name}</div>`;
+            
+            if (!isLocked) {
+                tile.addEventListener('click', () => openProgram(p));
+            }
+            
+            programGrid.appendChild(tile);
         }
+    }
     
-        function openProgram(p) {
-            // [Program opening logic... unchanged]
-             const programArea = el('programArea'); 
-            if (!programArea) return;
-            showView('program');
-            programArea.innerHTML = '';
-    
-            switch (p.type) {
-            case 'notekeeper': renderNotekeeper(); break;
-            case 'manifest': renderManifest(); break;
-            case 'nanochat': renderNanoChat(); break;
-            case 'news': 
-                if (newsModule) newsModule.renderNewsProgram(); 
+    function openProgram(p) {
+        const programArea = el('programArea'); 
+        if (!programArea) return;
+        showView('program');
+        programArea.innerHTML = '';
+
+        switch (p.type) {
+        case 'notekeeper': renderNotekeeper(); break;
+        case 'manifest': renderManifest(); break;
+        case 'nanochat': renderNanoChat(); break;
+        case 'news': 
+            if (newsModule) newsModule.renderNewsProgram(); 
+            break;
+        case 'terminal': renderTerminal(); break; 
+        case 'settings':
+                showView('settings');
+                document.querySelectorAll('.nav-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
+                const ts = el('tab-settings'); if (ts) ts.setAttribute('aria-pressed', 'true');
                 break;
-            case 'terminal': renderTerminal(); break; 
-            case 'settings':
-                    showView('settings');
-                    document.querySelectorAll('.nav-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
-                    const ts = el('tab-settings'); if (ts) ts.setAttribute('aria-pressed', 'true');
-                    break;
-                default:
-                    programArea.innerHTML = `<div class="cartridge-header">${p.name}</div><div class="muted">This cartridge is simulated.</div>`;
-            }
+            default:
+                programArea.innerHTML = `<div class="cartridge-header">${p.name}</div><div class="muted">This cartridge is simulated.</div>`;
         }
-    
-        function renderNotekeeper() {
-            // [Existing Notekeeper Logic... unchanged]
-            const programArea = el('programArea');
-            programArea.innerHTML = `
-                <div class="notekeeper-container">
-                    <div class="cartridge-header">Notekeeper</div>
-                    <div class="notes-wrap" id="notesWrap"></div>
-                    <div class="note-input">
-                        <input id="noteInput" placeholder="Type a note and press Enter" />
-                        <button id="addNoteBtn">Add</button>
-                    </div>
-                </div>`;
-    
-            const notesWrap = el('notesWrap');
-            const noteInput = el('noteInput');
-            const addBtn = el('addNoteBtn');
-    
-            function refreshNotes() {
-                notesWrap.innerHTML = '';
-                for (const n of state.notes) {
-                    const div = document.createElement('div');
-                    div.className = 'note';
-                    div.innerHTML = `<span>${n}</span><button>×</button>`;
-                    div.querySelector('button').addEventListener('click', () => {
-                        state.notes = state.notes.filter(x => x !== n);
-                        refreshNotes();
-                    });
-                    notesWrap.appendChild(div);
-                }
-            }
-            addBtn.onclick = () => {
-                const v = noteInput.value.trim();
-                if (v) { state.notes.push(v); noteInput.value = ''; refreshNotes(); }
-            };
-            noteInput.onkeydown = e => { if (e.key === 'Enter') addBtn.click(); };
-            refreshNotes();
-        }
-    
-        function renderManifest() {
-           // [Existing Manifest Logic... unchanged]
-           const wrap = document.createElement('div');
-            wrap.className = 'crew-manifest';
-            wrap.innerHTML = `<div class="cartridge-header">${state.station} Crew Manifest</div><div class="manifest-list" id="manifestList"></div>`;
-            programArea.appendChild(wrap);
-            const manifestList = wrap.querySelector('#manifestList');
-    
-            const groupedCrew = state.crew.reduce((acc, member) => {
-                acc[member.rank] = acc[member.rank] || [];
-                acc[member.rank].push(member);
-                return acc;
-            }, {});
-    
-            for (const rank in groupedCrew) {
-                const rankHeader = document.createElement('h4');
-                rankHeader.textContent = rank;
-                manifestList.appendChild(rankHeader);
-    
-                groupedCrew[rank].forEach(member => {
-                    const entry = document.createElement('div');
-                    entry.className = 'manifest-entry';
-                    entry.innerHTML = `
-                        <div class="name">${member.name}</div>
-                        <div class="role"><span class="rank">${member.rank}</span>: ${member.role}</div>
-                    `;
-                    manifestList.appendChild(entry);
+    }
+
+    function renderNotekeeper() {
+        const programArea = el('programArea');
+        programArea.innerHTML = `
+            <div class="notekeeper-container">
+                <div class="cartridge-header">Notekeeper</div>
+                <div class="notes-wrap" id="notesWrap"></div>
+                <div class="note-input">
+                    <input id="noteInput" placeholder="Type a note and press Enter" />
+                    <button id="addNoteBtn">Add</button>
+                </div>
+            </div>`;
+
+        const notesWrap = el('notesWrap');
+        const noteInput = el('noteInput');
+        const addBtn = el('addNoteBtn');
+
+        function refreshNotes() {
+            notesWrap.innerHTML = '';
+            for (const n of state.notes) {
+                const div = document.createElement('div');
+                div.className = 'note';
+                div.innerHTML = `<span>${n}</span><button>×</button>`;
+                div.querySelector('button').addEventListener('click', () => {
+                    state.notes = state.notes.filter(x => x !== n);
+                    refreshNotes();
                 });
+                notesWrap.appendChild(div);
             }
         }
+        addBtn.onclick = () => {
+            const v = noteInput.value.trim();
+            if (v) { state.notes.push(v); noteInput.value = ''; refreshNotes(); }
+        };
+        noteInput.onkeydown = e => { if (e.key === 'Enter') addBtn.click(); };
+        refreshNotes();
+    }
     
-        function renderNanoChat() {
-            // [Existing Nanochat Logic... unchanged]
-             const programArea = el('programArea');
+    function renderManifest() {
+        const wrap = document.createElement('div');
+        wrap.className = 'crew-manifest';
+        wrap.innerHTML = `<div class="cartridge-header">${state.station} Crew Manifest</div><div class="manifest-list" id="manifestList"></div>`;
+        programArea.appendChild(wrap);
+        const manifestList = wrap.querySelector('#manifestList');
+
+        const groupedCrew = state.crew.reduce((acc, member) => {
+            acc[member.rank] = acc[member.rank] || [];
+            acc[member.rank].push(member);
+            return acc;
+        }, {});
+
+        for (const rank in groupedCrew) {
+            const rankHeader = document.createElement('h4');
+            rankHeader.textContent = rank;
+            manifestList.appendChild(rankHeader);
+
+            groupedCrew[rank].forEach(member => {
+                const entry = document.createElement('div');
+                entry.className = 'manifest-entry';
+                entry.innerHTML = `
+                    <div class="name">${member.name}</div>
+                    <div class="role"><span class="rank">${member.rank}</span>: ${member.role}</div>
+                `;
+                manifestList.appendChild(entry);
+            });
+        }
+    }
+    
+    function renderNanoChat() {
+        const programArea = el('programArea');
         const wrap = document.createElement('div');
         wrap.className = 'nanochat nanochat-container';
         wrap.innerHTML = `
@@ -713,7 +721,6 @@ function applyNewHash(newHash) {
         const messagesContainer = el('chatMessages');
         const input = el('chatInput');
         const sendBtn = el('chatSendBtn');
-        
         const newChatBtn = el('newChatBtn'); 
         const newChatModal = el('newChatModal');
         const cancelBtn = el('cancelNewChatBtn');
@@ -793,41 +800,37 @@ function applyNewHash(newHash) {
         }
     
         function sendMessage() {
-                if (!input) return;
-                const text = input.value.trim();
-                if (text) {
-                    state.nanochat.channels[state.nanochat.currentContact].messages.push({
-                        sender: state.id, 
-                        text: text,
-                        type: "sent"
-                    });
-                    input.value = '';
-                    renderMessages();
-                    
-                    const currentContactName = state.nanochat.channels[state.nanochat.currentContact].name;
-                    if (nanoChatTriggers) {
-                        nanoChatTriggers.checkAndTrigger(currentContactName, text);
-                        markPuzzleComplete('secret_chat');
-                    }
+            if (!input) return;
+            const text = input.value.trim();
+            if (text) {
+                state.nanochat.channels[state.nanochat.currentContact].messages.push({
+                    sender: state.id, 
+                    text: text,
+                    type: "sent"
+                });
+                input.value = '';
+                renderMessages();
+                
+                const currentContactName = state.nanochat.channels[state.nanochat.currentContact].name;
+                if (nanoChatTriggers) {
+                    nanoChatTriggers.checkAndTrigger(currentContactName, text);
+                    markPuzzleComplete('secret_chat');
                 }
             }
-    
-            if (sendBtn) sendBtn.addEventListener('click', sendMessage);
-            if (input) input.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(); });
-    
-            renderSidebar();
-            renderMessages();
         }
+    
+        if (sendBtn) sendBtn.addEventListener('click', sendMessage);
+        if (input) input.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(); });
+    
+        renderSidebar();
+        renderMessages();
+    }
         
-        function renderTerminal() {
-            // [Existing Terminal Logic... unchanged]
-            const programArea = document.getElementById('programArea');
+    function renderTerminal() {
+        const programArea = document.getElementById('programArea');
         const serialNum = document.getElementById('serial') ? document.getElementById('serial').textContent : "AE-239A";
-        
-        // 1. Determine Prompt based on Mode
         const promptText = state.terminalMode === 'CHAT' ? '[NETLINK] user:' : 'user@pda:~#';
         
-        // 2. Build the HTML Structure
         programArea.innerHTML = `
             <div class="terminal-console">
                 <div class="terminal-output" id="termOutput"></div>
@@ -841,8 +844,7 @@ function applyNewHash(newHash) {
         const outputDiv = document.getElementById('termOutput');
         const inputField = document.getElementById('termInput');
         const promptSpan = document.getElementById('termPrompt');
-    
-        // 3. Render History Buffer
+
         function renderHistory() {
             outputDiv.innerHTML = '';
             
@@ -878,19 +880,13 @@ function applyNewHash(newHash) {
             outputDiv.scrollTop = outputDiv.scrollHeight;
         }
     
-        // 4. Command Processor
         function executeCommand(cmdRaw) {
             const cmd = cmdRaw.trim();
             if (!cmd) return;
-    
-            // --- NEW: Handle Pending Connection Request ---
             if (state.pendingConnection) {
                 if (cmd.toUpperCase() === 'Y') {
-                    // Accept Logic
                     state.terminalMode = 'CHAT';
                     state.terminalHistory.push({ text: "Connection Accepted. Secure Uplink Established.", type: "system" });
-                    
-                    // Replay the pending message that triggered the request
                     const msg = state.pendingConnection;
                     state.terminalHistory.push({
                         source: "EXTERNAL",
@@ -904,19 +900,15 @@ function applyNewHash(newHash) {
                     promptSpan.textContent = '[NETLINK] user:';
                     
                 } else if (cmd.toUpperCase() === 'N') {
-                    // Deny Logic
                     state.terminalHistory.push({ text: "Connection Refused.", type: "error" });
                     state.pendingConnection = null;
-                    
                 } else {
-                    // Invalid Input during prompt
                     state.terminalHistory.push({ text: "Invalid input. Accept? [Y/N]", type: "system" });
                 }
                 renderHistory();
                 return;
             }
     
-            // --- Existing Chat Mode Logic ---
             if (state.terminalMode === 'CHAT') {
                 if (cmd.toLowerCase() === 'exit') {
                     state.terminalMode = 'SHELL';
@@ -935,8 +927,7 @@ function applyNewHash(newHash) {
                 renderHistory();
                 return;
             }
-    
-            // --- Existing Shell Mode Logic ---
+
             state.terminalHistory.push({ text: `${state.id}:~# ${cmd}`, type: "muted" });
     
             const parts = cmd.split(' ');
@@ -966,7 +957,6 @@ function applyNewHash(newHash) {
                     break;
     
                 case 'chat':
-                    // Manually trigger chat mode (Outgoing request)
                     state.terminalMode = 'CHAT';
                     state.terminalHistory.push({ text: "Initializing Secure Connection...", type: "system" });
                     setTimeout(() => {
@@ -1016,174 +1006,206 @@ function applyNewHash(newHash) {
         document.querySelector('.terminal-console').addEventListener('click', () => {
             inputField.focus();
         });
+    }
+    
+    function playRingtone() {
+        const currentRingtone = Array.from(document.querySelectorAll('.ringtone-note-input')).map(input => input.value.toUpperCase());
+        
+        const notes = currentRingtone;
+        if (!notes || notes.length === 0) return;
+
+        const RINGTONE_LENGTH = 6;
+        const NOTE_TEMPO = 300; 
+        const NOTE_DELAY = 60 / NOTE_TEMPO; 
+        const VOLUME = 0.6;
+        const AUDIO_PATH = "/Audio/Effects/RingtoneNotes/";
+        
+        const key = notes.map(n => n.toLowerCase()).join('');
+
+        if (secretHandler.handleSecretRingtone(key)) {
+            markPuzzleComplete('secret_ringtone');
+                return; 
         }
-    
-        function playRingtone() {
-            const currentRingtone = Array.from(document.querySelectorAll('.ringtone-note-input')).map(input => input.value.toUpperCase());
-            
-            const notes = currentRingtone;
-            if (!notes || notes.length === 0) return;
-    
-            const RINGTONE_LENGTH = 6;
-            const NOTE_TEMPO = 300; 
-            const NOTE_DELAY = 60 / NOTE_TEMPO; 
-            const VOLUME = 0.6;
-            const AUDIO_PATH = "/Audio/Effects/RingtoneNotes/";
-            
-            const key = notes.map(n => n.toLowerCase()).join('');
-    
-            if (secretHandler.handleSecretRingtone(key)) {
-                markPuzzleComplete('secret_ringtone');
-                 return; 
+        
+        if (newsModule) newsModule.handleNewsArticle(key); 
+        
+        let i = 0;
+        const playNext = () => {
+            if (i >= notes.length || i >= RINGTONE_LENGTH) return;
+        
+            const inputNote = notes[i].toUpperCase();
+            let note;
+
+            if (inputNote.length > 1 && inputNote.endsWith('#')) {
+                note = inputNote[0].toLowerCase() + 'sharp';
+            } else {
+                note = inputNote[0]?.toLowerCase();
             }
-            
-            if (newsModule) newsModule.handleNewsArticle(key); 
-            
-            let i = 0;
-            const playNext = () => {
-                if (i >= notes.length || i >= RINGTONE_LENGTH) return;
-            
-                const inputNote = notes[i].toUpperCase();
-                let note;
-    
-                if (inputNote.length > 1 && inputNote.endsWith('#')) {
-                    note = inputNote[0].toLowerCase() + 'sharp';
-                } else {
-                    note = inputNote[0]?.toLowerCase();
-                }
-    
-                if (!note) {
-                    i++;
-                    setTimeout(playNext, NOTE_DELAY * 1000);
-                    return;
-                }
-    
-                if (!preloadedNotes[note]) { 
-                    i++;
-                    setTimeout(playNext, NOTE_DELAY * 1000);
-                    return;
-                }
-    
-                const audio = preloadedNotes[note]?.cloneNode() || new Audio(`${AUDIO_PATH}${note}.ogg`);
-                audio.volume = VOLUME;
-                audio.play().catch(() => {});
-            
+
+            if (!note) {
                 i++;
                 setTimeout(playNext, NOTE_DELAY * 1000);
-            };
-            
-            playNext();
-        }
+                return;
+            }
+
+            if (!preloadedNotes[note]) { 
+                i++;
+                setTimeout(playNext, NOTE_DELAY * 1000);
+                return;
+            }
+
+            const audio = preloadedNotes[note]?.cloneNode() || new Audio(`${AUDIO_PATH}${note}.ogg`);
+            audio.volume = VOLUME;
+            audio.play().catch(() => {});
+        
+            i++;
+            setTimeout(playNext, NOTE_DELAY * 1000);
+        };
+        
+        playNext();
+    }
     
-        function checkCircuitState() {
-            if (state.adminOverride) {
-                Object.keys(state.unlockedFeatures).forEach(k => state.unlockedFeatures[k] = true);
-                renderPrograms();
+    function checkCircuitState() {
+        if (state.adminOverride) {
+            Object.keys(state.unlockedFeatures).forEach(k => state.unlockedFeatures[k] = true);
+            renderPrograms();
+            return;
+        }
+
+        const isRepaired = (slotId, correctOhms) => {
+            const slot = document.getElementById(slotId);
+            if (slot && slot.children.length > 0) {
+                return slot.children[0].dataset.ohms === correctOhms;
+            }
+            return false;
+        };
+
+        if (state.poweredOn) markPuzzleComplete('fix_power');
+
+        if (isRepaired('slot-r2', '100')) {
+            state.unlockedFeatures.nanochat = true;
+            markPuzzleComplete('fix_nanochat');
+        } else { state.unlockedFeatures.nanochat = false; }
+
+        if (isRepaired('slot-r3', '10k')) {
+            state.unlockedFeatures.notekeeper = true;
+            markPuzzleComplete('fix_notekeeper');
+        } else { state.unlockedFeatures.notekeeper = false; }
+
+        if (isRepaired('slot-r6', '10')) {
+            state.unlockedFeatures.news = true;
+            markPuzzleComplete('fix_news');
+        } else { state.unlockedFeatures.news = false; }
+
+        const r4Ok = isRepaired('slot-r4', '220');
+        const r5Ok = isRepaired('slot-r5', '10k');
+        if (r4Ok && r5Ok) {
+            state.unlockedFeatures.terminal = true;
+            markPuzzleComplete('fix_terminal');
+        } else { state.unlockedFeatures.terminal = false; }
+
+        renderPrograms();
+        saveGameProgress();
+    }
+    function setupHashModal() {
+        const pdaScreen = document.querySelector('.PDA-screen');
+
+        if (!pdaScreen || document.getElementById('hash-modal')) return;
+        
+        // Bind Global Variables
+        osCopyModal = document.getElementById('hash-modal');
+        osModalDisplay = document.getElementById('osModalDisplay');
+        osPasteInput = document.getElementById('osPasteInput');
+        pasteFeedback = document.getElementById('pasteFeedback');
+        applyOsBtn = document.getElementById('applyOsBtn');
+    
+        // Bind Events Locally
+        document.getElementById('closeOsModal')?.addEventListener('click', () => {
+            osCopyModal.classList.add('hidden');
+            if(pasteFeedback) pasteFeedback.textContent = ''; 
+        });
+    
+        document.getElementById('copyOsBtn')?.addEventListener('click', () => {
+            copyToClipboard(state.systemHash);
+            const btn = document.getElementById('copyOsBtn');
+            const originalText = btn.textContent;
+            btn.textContent = "Copied!";
+            setTimeout(() => btn.textContent = originalText, 1500);
+        });
+    
+        applyOsBtn?.addEventListener('click', () => {
+            const pastedHash = osPasteInput.value.trim();
+            pasteFeedback.textContent = ''; 
+            
+            if (pastedHash === '') {
+                pasteFeedback.textContent = "Error: Hash field cannot be empty.";
                 return;
             }
     
-            const isRepaired = (slotId, correctOhms) => {
-                const slot = document.getElementById(slotId);
-                if (slot && slot.children.length > 0) {
-                    return slot.children[0].dataset.ohms === correctOhms;
-                }
-                return false;
-            };
+            if (applyNewHash(pastedHash)) {
+            } else {
+                pasteFeedback.textContent = "Error: Invalid hash format detected.";
+            }
+        });
+    }
     
-            // Track Power
-            if (state.poweredOn) markPuzzleComplete('fix_power');
+    document.addEventListener('DOMContentLoaded', async () => {
+        await loadBookMarkup('book-injection-point', './Book/book.html');
+        await loadCircuitMarkup('circuit-injection-point', './Circuit/circuit.html');
+        
+        pda = el('pda');
+        views = {
+            home: el('view-home'),
+            programs: el('view-programs'),
+            settings: el('view-settings'),
+            program: el('view-program')
+        };
+        tabs = document.querySelectorAll('.nav-btn');
+        programGrid = el('programGrid');
+        btnLight = el('btn-light');
+        btnStylus = el('btn-stylus');
+        btnFull = el('btn-full');
+        btnEject = el('btn-eject');
+        powerOverlay = el('powerOverlay');
+        powerOn = el('powerOn');
+        programArea = el('programArea');
+        programTitleMini = el('programTitleMini');
+        nanochatModal = el('nanochatModal');
+        closeNanochatModal = el('closeNanochatModal'); 
+        ringtoneRow = el('ringtoneRow');
+        ringtoneModal = el('ringtoneModal');
+        closeRingtoneModal = el('closeRingtoneModal');
+        ringtoneDisplay = el('ringtoneDisplay');
+        testRingtoneBtn = el('testRingtoneBtn');
+        setRingtoneBtn = el('setRingtoneBtn');
+        backPanel = document.querySelector('.pda-back-panel'); 
+        newsModule = createNewsModule(state, el, showView, ringtoneModal);
+        secretHandler = createSecretHandler(el, showView, ringtoneModal);
+        nanoChatTriggers = createNanoChatTriggers();
+        
+        restoreGameProgress();
+        renderPrograms();
+        showView('home');
+        setInterval(updateHome, 1000);
+        updateHome();
+        setupHashModal();
+
+        const pdaContainer = el('pda');
+        const flipTriggerBtn = el('btn-flip-trigger');
+        const flipBackBtn = el('btn-flip-back');       
     
-            // Track Resistors
-            if (isRepaired('slot-r2', '100')) {
-                state.unlockedFeatures.nanochat = true;
-                markPuzzleComplete('fix_nanochat');
-            } else { state.unlockedFeatures.nanochat = false; }
-    
-            if (isRepaired('slot-r3', '10k')) {
-                state.unlockedFeatures.notekeeper = true;
-                markPuzzleComplete('fix_notekeeper');
-            } else { state.unlockedFeatures.notekeeper = false; }
-    
-            if (isRepaired('slot-r6', '10')) {
-                state.unlockedFeatures.news = true;
-                markPuzzleComplete('fix_news');
-            } else { state.unlockedFeatures.news = false; }
-    
-            const r4Ok = isRepaired('slot-r4', '220');
-            const r5Ok = isRepaired('slot-r5', '10k');
-            if (r4Ok && r5Ok) {
-                state.unlockedFeatures.terminal = true;
-                markPuzzleComplete('fix_terminal');
-            } else { state.unlockedFeatures.terminal = false; }
-    
-            renderPrograms();
-            
-            // Save state after checking circuit
-            saveGameProgress();
-        }
-    
-        document.addEventListener('DOMContentLoaded', async () => {
-            await loadBookMarkup('book-injection-point', './Book/book.html');
-            await loadCircuitMarkup('circuit-injection-point', './Circuit/circuit.html');
-            
-            pda = el('pda');
-            views = {
-                home: el('view-home'),
-                programs: el('view-programs'),
-                settings: el('view-settings'),
-                program: el('view-program')
-            };
-            tabs = document.querySelectorAll('.nav-btn');
-            programGrid = el('programGrid');
-            btnLight = el('btn-light');
-            btnStylus = el('btn-stylus');
-            btnFull = el('btn-full');
-            btnEject = el('btn-eject');
-            powerOverlay = el('powerOverlay');
-            powerOn = el('powerOn');
-            programArea = el('programArea');
-            programTitleMini = el('programTitleMini');
-            nanochatModal = el('nanochatModal');
-            closeNanochatModal = el('closeNanochatModal'); 
-            ringtoneRow = el('ringtoneRow');
-            ringtoneModal = el('ringtoneModal');
-            closeRingtoneModal = el('closeRingtoneModal');
-            ringtoneDisplay = el('ringtoneDisplay');
-            testRingtoneBtn = el('testRingtoneBtn');
-            setRingtoneBtn = el('setRingtoneBtn');
-            backPanel = document.querySelector('.pda-back-panel'); 
-    
-            newsModule = createNewsModule(state, el, showView, ringtoneModal);
-            secretHandler = createSecretHandler(el, showView, ringtoneModal);
-            nanoChatTriggers = createNanoChatTriggers();
-            
-            // --- RESTORE SAVE GAME ---
-            // We do this BEFORE initial rendering to ensure correct state
-            restoreGameProgress();
-            
-            renderPrograms();
-    
-            showView('home');
-    
-            setInterval(updateHome, 1000);
-            updateHome();
-            
-            const pdaContainer = el('pda');
-            const flipTriggerBtn = el('btn-flip-trigger');
-            const flipBackBtn = el('btn-flip-back');       
-       
-            changelogModal = el('changelogModal');
+        changelogModal = el('changelogModal');
         changelogList = el('changelogList');
-        osCopyModal = el('osCopyModal');
+        osCopyModal = el('hash-modal');
         osModalDisplay = el('osModalDisplay');
-        osPasteInput = el('osPasteInput');    // <-- ADD THIS
-        pasteFeedback = el('pasteFeedback');  // <-- ADD THIS
-        applyOsBtn = el('applyOsBtn');        // <-- ADD THIS
+        osPasteInput = el('osPasteInput');
+        pasteFeedback = el('pasteFeedback');
+        applyOsBtn = el('applyOsBtn');
 
         // Close Button Logic for new modals
         el('closeChangelogModal')?.addEventListener('click', () => changelogModal.classList.add('hidden'));
         el('closeChangelogBtn')?.addEventListener('click', () => changelogModal.classList.add('hidden'));
-        
+
         el('closeOsModal')?.addEventListener('click', () => osCopyModal.classList.add('hidden'));
         
         el('copyOsBtn')?.addEventListener('click', () => {
@@ -1194,7 +1216,7 @@ function applyNewHash(newHash) {
         });
         applyOsBtn?.addEventListener('click', () => {
             const pastedHash = osPasteInput.value.trim();
-            pasteFeedback.textContent = ''; // Clear previous message
+            pasteFeedback.textContent = '';
             
             if (pastedHash === '') {
                 pasteFeedback.textContent = "Error: Hash field cannot be empty.";
@@ -1202,161 +1224,160 @@ function applyNewHash(newHash) {
             }
 
             if (applyNewHash(pastedHash)) {
-                 // applyNewHash reloads on success, so this is just a fallback for feedback
             } else {
                 pasteFeedback.textContent = "Error: Invalid hash format detected.";
             }
         });
 
-            // --- System Status UI Wiring ---
-            const systemStatusRow = el('systemStatusRow');
-            const settingsList = el('settingsList');
-            const systemStatusView = el('systemStatusView');
-            const backToSettingsBtn = el('backToSettingsBtn');
-    
-            if (systemStatusRow) {
-                systemStatusRow.addEventListener('click', () => {
-                    renderSystemStatus(); 
-                    if(settingsList) settingsList.classList.add('hidden');
-                    if(systemStatusView) systemStatusView.classList.remove('hidden');
+        // --- System Status UI Wiring ---
+        const systemStatusRow = el('systemStatusRow');
+        const settingsList = el('settingsList');
+        const systemStatusView = el('systemStatusView');
+        const backToSettingsBtn = el('backToSettingsBtn');
+
+        if (systemStatusRow) {
+            systemStatusRow.addEventListener('click', () => {
+                renderSystemStatus(); 
+                if(settingsList) settingsList.classList.add('hidden');
+                if(systemStatusView) systemStatusView.classList.remove('hidden');
+            });
+        }
+
+        if (backToSettingsBtn) {
+            backToSettingsBtn.addEventListener('click', () => {
+                if(systemStatusView) systemStatusView.classList.add('hidden');
+                if(settingsList) settingsList.classList.remove('hidden');
+            });
+        }
+
+        if (tabs && tabs.length) {
+            tabs.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (btn.dataset.tab === 'settings') {
+                        if(settingsList) settingsList.classList.remove('hidden');
+                        if(systemStatusView) systemStatusView.classList.add('hidden');
+                    }
                 });
+            });
+        }
+
+        // --- IDENTITY LOGIC ---
+        const identityModal = el('identityModal');
+        const identityInput = el('identityInput');
+        const identitySubmitBtn = el('identitySubmitBtn');
+        const btnAdminId = el('btn-admin-id'); 
+
+        const updateIdentity = (name) => {
+            if (!name) return;
+            state.id = name;
+            localStorage.setItem('pda_user_identity', name);
+            updateHome(); 
+            if (identityModal) {
+                identityModal.classList.add('hidden');
+                identityModal.style.display = 'none'; 
             }
-    
-            if (backToSettingsBtn) {
-                backToSettingsBtn.addEventListener('click', () => {
-                    if(systemStatusView) systemStatusView.classList.add('hidden');
-                    if(settingsList) settingsList.classList.remove('hidden');
-                });
+            state.terminalHistory.push({ 
+                text: `Identity verified. Welcome, ${name}.`,
+                type: "system" 
+            });
+        };
+
+        const savedIdentity = localStorage.getItem('pda_user_identity');
+        
+        if (savedIdentity) {
+            updateIdentity(savedIdentity);
+        } else {
+            if (identityModal) {
+                identityModal.classList.remove('hidden');
+                if(identityInput) identityInput.focus();
             }
-    
-            if (tabs && tabs.length) {
-                tabs.forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        if (btn.dataset.tab === 'settings') {
-                            if(settingsList) settingsList.classList.remove('hidden');
-                            if(systemStatusView) systemStatusView.classList.add('hidden');
-                        }
-                    });
-                });
-            }
-    
-            // --- IDENTITY LOGIC ---
-            const identityModal = el('identityModal');
-            const identityInput = el('identityInput');
-            const identitySubmitBtn = el('identitySubmitBtn');
-            const btnAdminId = el('btn-admin-id'); 
-    
-            const updateIdentity = (name) => {
-                if (!name) return;
-                state.id = name;
-                localStorage.setItem('pda_user_identity', name);
-                updateHome(); 
-                if (identityModal) {
-                    identityModal.classList.add('hidden');
-                    identityModal.style.display = 'none'; 
+        }
+
+        if (identitySubmitBtn && identityInput) {
+            identitySubmitBtn.addEventListener('click', () => {
+                const val = identityInput.value.trim();
+                if (val.length > 0) {
+                    updateIdentity(val);
                 }
-                state.terminalHistory.push({ 
-                    text: `Identity verified. Welcome, ${name}.`,
-                    type: "system" 
-                });
-            };
-    
-            const savedIdentity = localStorage.getItem('pda_user_identity');
-            
-            if (savedIdentity) {
-                updateIdentity(savedIdentity);
-            } else {
+            });
+
+            identityInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') identitySubmitBtn.click();
+            });
+        }
+
+        if (btnAdminId) {
+            btnAdminId.addEventListener('click', () => {
                 if (identityModal) {
                     identityModal.classList.remove('hidden');
-                    if(identityInput) identityInput.focus();
+                    identityModal.style.display = ''; 
+                    
+                    if(identityInput) {
+                        identityInput.value = state.id; 
+                        identityInput.focus();
+                    }
                 }
-            }
-    
-            if (identitySubmitBtn && identityInput) {
-                identitySubmitBtn.addEventListener('click', () => {
-                    const val = identityInput.value.trim();
-                    if (val.length > 0) {
-                        updateIdentity(val);
-                    }
-                });
-    
-                identityInput.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') identitySubmitBtn.click();
-                });
-            }
-    
-            if (btnAdminId) {
-                btnAdminId.addEventListener('click', () => {
-                    if (identityModal) {
-                        identityModal.classList.remove('hidden');
-                        identityModal.style.display = ''; 
-                        
-                        if(identityInput) {
-                            identityInput.value = state.id; 
-                            identityInput.focus();
-                        }
-                    }
-                });
-            }
-            
-            // --- NEW: WIRE UP RESET BUTTON ---
-            const btnAdminReset = el('btn-admin-reset');
-            if (btnAdminReset) {
-                btnAdminReset.addEventListener('click', () => {
-                    resetGameProgress();
-                });
-            }
-    
-            if (flipTriggerBtn && pdaContainer) {
-                flipTriggerBtn.addEventListener('click', () => {
-                    if (pdaContainer.classList.contains('flipped')) {
-                        if (backPanel && backPanel.classList.contains('detached')) {
-                            backPanel.classList.remove('detached');
-                        }
-                        pdaContainer.classList.remove('flipped');
-                    } else {
-                        pdaContainer.classList.add('flipped');
-                    }
-                });
-            }
+            });
+        }
         
-            if (flipBackBtn && pdaContainer) {
-                flipBackBtn.addEventListener('click', () => {
-                    pdaContainer.classList.remove('flipped');
-                });
-            }
-            if (tabs && tabs.length) {
-                tabs.forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const tab = btn.dataset.tab;
-                        document.querySelectorAll('.nav-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
-                        btn.setAttribute('aria-pressed', 'true');
-                        if (programTitleMini) programTitleMini.classList.add('hidden');
-                        if (tab) showView(tab);
-                    });
-                });
-            }
-    
-            if (btnStylus) {
-                btnStylus.addEventListener('click', () => {
-                    state.stylus = !state.stylus;
-                    btnStylus.setAttribute('aria-pressed', String(state.stylus));
-                });
-            }
-    
-            if (btnFull && pda) {
-                btnFull.addEventListener('click', () => {
-                    if (!document.fullscreenElement) {
-                        pda.requestFullscreen?.();
-                    } else {
-                        document.exitFullscreen?.();
+        // --- NEW: WIRE UP RESET BUTTON ---
+        const btnAdminReset = el('btn-admin-reset');
+        if (btnAdminReset) {
+            btnAdminReset.addEventListener('click', () => {
+                resetGameProgress();
+            });
+        }
+
+        if (flipTriggerBtn && pdaContainer) {
+            flipTriggerBtn.addEventListener('click', () => {
+                if (pdaContainer.classList.contains('flipped')) {
+                    if (backPanel && backPanel.classList.contains('detached')) {
+                        backPanel.classList.remove('detached');
                     }
-                });
-            }
+                    pdaContainer.classList.remove('flipped');
+                } else {
+                    pdaContainer.classList.add('flipped');
+                }
+            });
+        }
     
-            const pdaScreen = document.querySelector('.PDA-screen');
-            const btnAdminPower = el('btn-admin-power');
-            const btnAdminUnlockAll = el('btn-admin-unlock-all');
+        if (flipBackBtn && pdaContainer) {
+            flipBackBtn.addEventListener('click', () => {
+                pdaContainer.classList.remove('flipped');
+            });
+        }
+        if (tabs && tabs.length) {
+            tabs.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tab = btn.dataset.tab;
+                    document.querySelectorAll('.nav-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
+                    btn.setAttribute('aria-pressed', 'true');
+                    if (programTitleMini) programTitleMini.classList.add('hidden');
+                    if (tab) showView(tab);
+                });
+            });
+        }
+
+        if (btnStylus) {
+            btnStylus.addEventListener('click', () => {
+                state.stylus = !state.stylus;
+                btnStylus.setAttribute('aria-pressed', String(state.stylus));
+            });
+        }
+
+        if (btnFull && pda) {
+            btnFull.addEventListener('click', () => {
+                if (!document.fullscreenElement) {
+                    pda.requestFullscreen?.();
+                } else {
+                    document.exitFullscreen?.();
+                }
+            });
+        }
+
+        const pdaScreen = document.querySelector('.PDA-screen');
+        const btnAdminPower = el('btn-admin-power');
+        const btnAdminUnlockAll = el('btn-admin-unlock-all');
     
         if (btnAdminPower) {
             btnAdminPower.addEventListener('click', () => {
