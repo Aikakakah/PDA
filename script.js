@@ -250,12 +250,19 @@ function applyNewHash(newHash) {
 
 
     // 1. Close Handlers
-    closeRingtoneModal?.addEventListener('click', () => {
-        ringtoneModal?.classList.add('hidden'); 
-    });
-
+    
     closeChangelogModal?.addEventListener('click', () => {
-        changelogModal?.classList.add('hidden'); 
+        // 1. Start the fade-out animation
+        changelogModal?.classList.add('closing');
+
+        // 2. Use setTimeout (250ms) instead of 'animationend'. 
+        // The animation duration is 0.2s (200ms) in modals.css.
+        setTimeout(() => {
+            // 3. After the animation is guaranteed to be done:
+            changelogModal?.classList.remove('closing');
+            changelogModal?.classList.add('hidden');
+            // No need to remove an event listener here
+        }, 250); // 250ms ensures the 200ms fade is complete.
     });
     
     // 2. Open Handlers 
@@ -1447,69 +1454,67 @@ function applyNewHash(newHash) {
             });
         }
         
-            const turnOffScreen = () => {
-                if(powerOverlay) powerOverlay.classList.remove('hidden');
-                if(pdaScreen) pdaScreen.classList.add('screen-off'); 
-                state.poweredOn = false;
-                saveGameProgress();
-            };
+        const turnOffScreen = () => {
+            if(powerOverlay) powerOverlay.classList.remove('hidden');
+            if(pdaScreen) pdaScreen.classList.add('screen-off'); 
+            state.poweredOn = false;
+            saveGameProgress();
+        };
     
-            const turnOnScreen = () => {
-                if(powerOverlay) powerOverlay.classList.add('hidden');
-                if(pdaScreen) pdaScreen.classList.remove('screen-off');
-                state.poweredOn = true;
-                saveGameProgress();
-            };
-    
-            if(!state.poweredOn) {
+        const turnOnScreen = () => {
+            if(powerOverlay) powerOverlay.classList.add('hidden');
+            if(pdaScreen) pdaScreen.classList.remove('screen-off');
+            state.poweredOn = true;
+            saveGameProgress();
+        };
+
+        if(!state.poweredOn) {
+            turnOffScreen();
+        }
+
+        if (btnEject) {
+            btnEject.addEventListener('click', () => {
                 turnOffScreen();
-            }
-    
-            if (btnEject) {
-                btnEject.addEventListener('click', () => {
-                    turnOffScreen();
-                });
-            }
-    
-            if (powerOn) {
-                powerOn.addEventListener('click', () => {
-                    turnOnScreen();
-                });
-            }
-            const selectAllText = (event) => {
-                event.target.select();
-            };
-    
-            const ringtoneInputs = document.querySelectorAll('.ringtone-note-input');
-            ringtoneInputs.forEach(input => {
-                input.addEventListener('focus', selectAllText);
             });
-    
-            if (ringtoneRow && ringtoneModal) {
-                ringtoneRow.addEventListener('click', () => {
-                    const inputs = document.querySelectorAll('.ringtone-note-input');
-                    state.settings.ringtone.forEach((note, index) => {
-                        if(inputs[index]) inputs[index].value = note;
-                    });
-        
-                    ringtoneModal.classList.remove('hidden');
-                });
-            }
-            if (closeRingtoneModal) closeRingtoneModal.addEventListener('click', () => ringtoneModal.classList.add('hidden'));
-            if (testRingtoneBtn) testRingtoneBtn.addEventListener('click', playRingtone);
-            if (setRingtoneBtn) setRingtoneBtn.addEventListener('click', () => {
-                const currentRingtone = Array.from(document.querySelectorAll('.ringtone-note-input')).map(input => input.value.toUpperCase());
-                state.settings.ringtone = currentRingtone;
-                ringtoneModal.classList.add('hidden');
-                playRingtone();
+        }
+
+        if (powerOn) {
+            powerOn.addEventListener('click', () => {
+                turnOnScreen();
             });
+        }
+        const selectAllText = (event) => {
+            event.target.select();
+        };
+
+        const ringtoneInputs = document.querySelectorAll('.ringtone-note-input');
+        ringtoneInputs.forEach(input => {
+            input.addEventListener('focus', selectAllText);
+        });
+
+        if (ringtoneRow && ringtoneModal) {
+            ringtoneRow.addEventListener('click', () => {
+                const inputs = document.querySelectorAll('.ringtone-note-input');
+                state.settings.ringtone.forEach((note, index) => {
+                    if(inputs[index]) inputs[index].value = note;
+                });
     
-            initializeBookSystem(el);
+                ringtoneModal.classList.remove('hidden');
+            });
+        }
+        if (closeRingtoneModal) closeRingtoneModal.addEventListener('click', () => ringtoneModal.classList.add('hidden'));
+        if (testRingtoneBtn) testRingtoneBtn.addEventListener('click', playRingtone);
+        if (setRingtoneBtn) setRingtoneBtn.addEventListener('click', () => {
+            const currentRingtone = Array.from(document.querySelectorAll('.ringtone-note-input')).map(input => input.value.toUpperCase());
+            state.settings.ringtone = currentRingtone;
+            ringtoneModal.classList.add('hidden');
+            playRingtone();
+        });
     
-            initializeShineEffect();
-    
-            initializeDraggableItems();
-    
+        initializeBookSystem(el);
+        initializeShineEffect();
+        initializeDraggableItems();
+
         const panDownBtn = el('panDownBtn');
         const panDownButtons = document.querySelectorAll('.pan-down');
         const panUpBtn = el('panUpBtn');
@@ -1579,7 +1584,6 @@ function applyNewHash(newHash) {
             const items = document.querySelectorAll('.drawer-item');
             const drawerZone = document.getElementById('drawerDropZone');
             const drawerPanel = document.querySelector('.top-right-drawer-panel');
-    
             const screws = document.querySelectorAll('.screw');
             const resistorSlots = document.querySelectorAll('.resistor-slot');
             const powerBtn = document.getElementById('powerOn');
@@ -1587,16 +1591,12 @@ function applyNewHash(newHash) {
             // --- UPDATED: Back Panel Click Behavior ---
             if (backPanel) {
                 backPanel.addEventListener('click', () => {
-                    // If it's already popped off (detached), put it back on and flip pda
                     if (backPanel.classList.contains('detached')) {
                         backPanel.classList.remove('detached');
-                        
-                        // Wait for the slide-in animation (0.6s) before flipping
                         setTimeout(() => {
                             if (pda) pda.classList.remove('flipped');
                         }, 600);
                     } 
-                    // If it's unlocked but sitting on the device, pop it off
                     else if (backPanel.classList.contains('unlocked')) {
                         backPanel.classList.add('detached');
                     }
@@ -1727,10 +1727,6 @@ function applyNewHash(newHash) {
                                         });
                                     }
                                     
-                                    // --- UPDATED: REMOVED repairPDA() from here ---
-                                    // We update the puzzle state (markPuzzleComplete) but we DO NOT 
-                                    // trigger the repair animation (repairPDA) just because we scanned 
-                                    // the power resistor while moving something else.
                                     if (result.action === 'repair') {
                                         markPuzzleComplete('fix_power'); 
                                     }
@@ -1739,6 +1735,7 @@ function applyNewHash(newHash) {
                                 }
                             }
                         });
+
                         setTimeout(() => {
                             checkCircuitState();
                             saveGameProgress(); 
@@ -1834,9 +1831,6 @@ function applyNewHash(newHash) {
                                             });
                                         }
     
-                                        // --- UPDATED: Animation Trigger ---
-                                        // We only run repairPDA() (auto-flip) when we physically DROP
-                                        // the correct resistor into the slot.
                                         if (result.action === 'repair') {
                                             repairPDA();
                                         }
@@ -1875,7 +1869,6 @@ function applyNewHash(newHash) {
                             }
                         }
                     };
-    
                     document.addEventListener('mousemove', onMouseMove);
                     document.addEventListener('mouseup', onMouseUp);
                 });
