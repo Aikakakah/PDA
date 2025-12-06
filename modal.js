@@ -22,21 +22,6 @@ export function createIdentityModalMarkup() {
     `;
 }
 
-/* --- CHANGELOG --- */
-export function createChangelogModalMarkup(systemVersion) {
-    return `
-        <div class="modal changelog-modal hidden" id="changelogModal">
-            <div class="modal-content">
-            <button class="modal-close" id="closeChangelogModal">✕</button>
-                <div class="modal-header">
-                    <div class="modal-title">System Patch Notes</div>
-                </div>
-                <div class="changelog-list" id="changelogList"></div>
-            </div>
-        </div>
-    `;
-}
-
 /**
  * Generates the HTML for the OS Hash / System Interface modal.
  */
@@ -73,28 +58,9 @@ export function createOSModalMarkup() {
     `;
 }
 
-/**
- * Generates the HTML for the NanoChat "New Contact" modal.
- */
-export function createNanoChatNewContactModal() {
-    return `
-        <div id="newChatModal" class="modal nanochat-modal hidden">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="modal-title">New Contact</div>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
-                    <input type="text" id="newContactName" placeholder="Contact Name" maxlength="20" style="padding:8px; background:var(--panel); border:none; color:var(--text);">
-                    <input type="text" id="newContactNumber" placeholder="Number" maxlength="10" style="padding:8px; background:var(--panel); border:none; color:var(--text);">
-                </div>
-                <div class="modal-actions">
-                    <button id="cancelNewChatBtn" class="action-btn" style="background:#444;">Cancel</button>
-                    <button id="createNewChatBtn" class="action-btn confirm">Create</button>
-                </div>
-            </div>
-        </div>
-    `;
-}
+
+
+
 
 /**
  * Generates the HTML for the Ringtone configuration modal.
@@ -120,6 +86,46 @@ export function createRingtoneModalMarkup(currentRingtone) {
                     <button id="testRingtoneBtn" class="action-btn">Test</button>
                     <button id="setRingtoneBtn" class="action-btn confirm">Set</button>
                 </div>
+            </div>
+        </div>
+    `;
+}
+
+/* --- Embedded Modals --- */
+/**
+ * Generates the HTML for the NanoChat "New Contact" modal.
+ */
+       
+
+export function createNanoChatNewContactModal() {
+    return `
+        <div class="modal nanochat-modal hidden" id="newChatModal">
+            <div class="modal-content">
+                <div class="modal-title">New Contact</div>
+                <input type="text" id="newContactName" placeholder="Contact Name" maxlength="20">
+                <input type="text" id="newContactNumber" placeholder="Number" maxlength="10">
+                <div class="modal-actions">
+                    <button id="cancelNewChatBtn">Cancel</button>
+                    <button id="createNewChatBtn" class="action-btn">Create</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+
+/* --- Popup Modals --- */
+
+/* --- CHANGELOG --- */
+export function createChangelogModalMarkup(systemVersion) {
+    return `
+        <div class="modal changelog-modal hidden" id="changelogModal">
+            <div class="modal-content">
+                <button class="modal-close" id="closeChangelogModal">✕</button>
+                <div class="modal-header">
+                    <div class="modal-title">System Patch Notes</div>
+                </div>
+                <div class="changelog-list" id="changelogList"></div>
             </div>
         </div>
     `;

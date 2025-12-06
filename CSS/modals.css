@@ -1,0 +1,712 @@
+.modal {
+    background-color: rgba(0, 0, 0, 0.85); /* Darkens the rest of the PDA */
+    z-index: 2000;
+    display: flex; /* Centers the modal on the screen */
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    animation: modalFadeIn 0.2s ease-in forwards;
+}
+
+.modal.hidden {
+    display: none !important;
+}
+
+.modal.closing {
+    animation: modalFadeOut 0.2s ease-out;
+    display: flex !important; 
+    opacity: 1;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes modalFadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+.modal-close {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: .75em;
+    cursor: pointer;
+    padding: 0 1px;
+    line-height: 1;
+    transition: color 0.1s;
+    position: absolute;
+    top: 3%;
+    right: 3%;
+}
+
+
+
+.modal-close:hover {
+    color: var(--danger);
+}
+
+
+/* --- Embedded Modals --- */
+/* --- NanoChat Modal (.nanochat-modal) --- */
+.nanochat-modal {
+    position: absolute; 
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 100; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nanochat-modal .modal-content {
+    width: 90%;
+    max-width: 260px;
+    border-color: #444;
+}
+
+.nanochat-modal input {
+    width: 100%;
+    box-sizing: border-box;
+    outline: none;
+}
+
+
+
+.nanochat-modal .modal-content {
+    background: var(--inner); 
+    padding: 15px;
+    border-radius: var(--radius);
+    width: 90%; 
+    max-width: 280px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.nanochat-modal .modal-title {
+    font-size: 1.1em;
+    font-weight: bold;
+    text-align: center;
+    color: var(--text);
+}
+
+.nanochat-modal input[type="text"] {
+    padding: 8px;
+    border: none;
+    border-radius: 5px;
+    background: var(--panel);
+    color: var(--text);
+}
+
+.nanochat-modal .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.nanochat-modal .modal-actions button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+.nanochat-modal .modal-actions #cancelNewChatBtn {
+    background-color: #555;
+    color: var(--text);
+}
+
+.nanochat-modal .modal-actions #createNewChatBtn {
+    background-color: var(--accent);
+    color: #fff;
+}
+
+
+
+
+.ringtone-modal {
+    background: var(--inner); 
+    padding: 15px;
+    border-radius: var(--radius);
+    width: 90%; 
+    max-width: 280px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+}
+
+.ringtone-modal .modal-content {
+    background: var(--inner); 
+    padding: 15px;
+    border-radius: var(--radius);
+    width: 90%; 
+    max-width: 280px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+}
+
+ .ringtone-modal .ringtone-inputs-wrap {
+    display: flex;
+    gap: 5px;
+    justify-content: center; /* Centers the note input boxes */
+    margin-bottom: 10px;
+}
+
+.ringtone-modal .ringtone-note-input {
+    width: 35px;
+    height: 35px;
+    text-align: center;
+    background: var(--panel);
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: var(--info);
+    font-weight: bold;
+    font-family: inherit;
+    font-size: 1.1em;
+    text-transform: uppercase;
+}
+ /* Specific Content Box for Ringtone */
+ .ringtone-modal .modal-content {
+    background: var(--panel);
+    padding: 20px;
+    border-radius: 8px;
+    border: 2px solid var(--accent);
+    width: 250px; /* Specific width for ringtone inputs */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    position: absolute;
+    justify-content: center;
+ }
+ 
+ 
+ /* Ensure it hides correctly */
+ .ringtone-modal.hidden {
+     display: none !important;
+ }
+
+.ringtone-modal .ringtone-inputs-wrap {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    margin: 10px 0;
+}
+
+.ringtone-modal .ringtone-note-input {
+    width: 35px;
+    height: 35px;
+    text-align: center;
+    background: var(--panel);
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: var(--info);
+    font-weight: bold;
+    font-family: inherit;
+    font-size: 1.1em;
+    text-transform: uppercase;
+}
+
+.ringtone-modal .ringtone-note-input:focus {
+    border-color: var(--accent);
+    outline: none;
+}
+
+
+.modal-title{font-size:1.3em;color:var(--accent);font-weight:bold;}
+.ringtone-notes{display:flex;gap:8px;}
+.ringtone-notes span{background:#333;padding:5px 10px;border-radius:4px;color:var(--info);font-weight:bold;}
+.modal-actions{display:flex;gap:10px;}
+.action-btn{padding:8px 15px;border-radius:6px;border:none;background:var(--accent);color:#fff;cursor:pointer;}
+.action-btn:hover{background:#7a3c80;}
+
+.ringtone-note-input{
+   width: 25px; /* Fixed width for single character */
+   text-align: center;
+   background: #333;
+   padding: 5px 0; /* Padding adjustment due to fixed width */
+   border-radius: 4px;
+   color: var(--info);
+   font-weight: bold;
+   border: 1px solid #444; /* Small border */
+   outline: none;
+   font-family: 'Share Tech Mono', ui-monospace, monospace;
+   font-size: 1em;
+   text-transform: uppercase; /* Ensure note is uppercase for consistency */
+}
+.ringtone-note-input:focus {
+    border-color: var(--accent); /* Highlight on focus */
+}
+
+
+
+
+
+/* --- Popup Modals --- */
+/* --- Identity / Security Modal --- */
+.identity-modal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 3000; /* Highest priority */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px);
+}
+.identity-modal.hidden {
+    display: none;
+}
+.identity-box {
+    background: var(--panel);
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 20px rgba(94, 43, 99, 0.5);
+    width: 300px;
+    border-radius: 8px;
+    overflow: hidden;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.identity-header {
+    background: var(--inner);
+    padding: 10px;
+    border-bottom: 1px solid #333;
+    font-weight: bold;
+    color: var(--danger); /* Red to look like a security alert */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 1px;
+}
+
+.identity-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+}
+
+.identity-content p {
+    margin: 0;
+    font-size: 0.9em;
+    color: var(--muted);
+    line-height: 1.4;
+}
+
+.identity-content input {
+    background: #111;
+    border: 1px solid #444;
+    padding: 10px;
+    color: var(--ok); /* Green text */
+    font-family: inherit;
+    text-align: center;
+    font-size: 1.1em;
+    border-radius: 4px;
+    outline: none;
+    text-transform: uppercase;
+}
+
+.identity-content input:focus {
+    border-color: var(--ok);
+    box-shadow: 0 0 8px rgba(106, 208, 122, 0.3);
+}
+
+.identity-content button {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+.identity-content button:hover {
+    background: #7a3c80;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+
+
+
+
+
+
+/* Overlay: Covers the entire nanochat program area */
+.hash-modal {
+    position: absolute; 
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    /* Semi-transparent dark overlay */
+    background-color: rgba(0, 0, 0, 0.7); 
+    z-index: 1000; 
+    
+    /* Centering with Flexbox */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+
+
+
+
+
+
+/* Modal Box */
+/* .hash-modal .modal-content {
+    background: var(--inner); 
+    padding: 15px;
+    border-radius: var(--radius);
+    width: 90%; 
+    max-width: 280px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+} */
+
+
+
+/* --- 1. Base Modal Structure (Shared) --- */
+/* .modal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    animation: modalFadeIn 0.2s ease-out;
+} */
+
+
+
+.modal-content {
+    background: var(--pda-bg); 
+    border: 1px solid var(--accent);
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.9);
+    width: 85%;
+    max-width: 320px;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-sizing: border-box;
+}
+
+/* Header Area */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* margin-bottom: 15px; */
+    border-bottom: 1px solid var(--panel);
+    padding-bottom: 8px;
+}
+
+.modal-header h2, 
+.modal-title {
+    margin: 0;
+    font-size: 1.1em;
+    color: var(--accent);
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+
+/* Action Buttons Footer */
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.action-btn {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.85em;
+    font-family: inherit;
+    background-color: #444;
+    color: var(--text);
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+
+.action-btn:hover {
+    filter: brightness(1.2);
+}
+
+.action-btn.confirm {
+    background-color: var(--accent);
+    color: #fff;
+}
+
+.action-btn.danger-btn {
+    background-color: var(--danger);
+    color: #fff;
+}
+
+/* --- Ringtone Modal (.ringtone-modal) --- */
+/* Modal Styling (Ringtone) */
+/* .ringtone-modal {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+ } */
+
+
+
+/* --- Identity Modal (.identity-modal) --- */
+.identity-modal .modal-content {
+    /* Override base modal-content styles for a unique security look */
+    padding: 0;
+    border: 2px solid var(--danger); 
+    background: #1a1a1b;
+}
+
+.identity-modal .identity-header {
+    background: #2a1a1a; 
+    padding: 12px;
+    border-bottom: 1px solid var(--danger);
+    font-weight: bold;
+    color: var(--danger);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 1px;
+}
+
+.identity-modal .identity-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+}
+
+.identity-modal #identityInput {
+    background: #000;
+    border: 1px solid var(--danger);
+    padding: 10px;
+    color: var(--ok);
+    font-family: inherit;
+    text-align: center;
+    font-size: 1.2em;
+    border-radius: 4px;
+    outline: none;
+    text-transform: uppercase;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.identity-modal #identitySubmitBtn {
+    background: var(--danger);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+
+
+
+
+/* --- OS Hash Modal (.hash-modal) --- */
+.hash-modal .modal-content {
+    background: var(--inner); 
+    padding: 15px;
+    border-radius: var(--radius);
+    width: 90%; 
+    max-width: 280px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+}
+
+.hash-modal .hash-display {
+    width: 50%;
+    text-align: center;
+    background: #333;
+    padding: 5px 0;
+    border-radius: 4px;
+    color: var(--info);
+    font-weight: bold;
+    border: 1px solid #444;
+    outline: none;
+    font-family: 'Share Tech Mono', ui-monospace, monospace;
+    font-size: 1em;
+    text-transform: uppercase;
+}
+
+.hash-modal #osPasteInput {
+    width: 100%; 
+    box-sizing: border-box; 
+    padding: 8px; 
+    margin-top: 5px; 
+    background: var(--panel); 
+    border: 1px solid #444; 
+    color: var(--text);
+}
+.hash-modal .modal-title {
+    font-size: 1.3em;
+    color: var(--accent);
+    font-weight: bold;
+}
+
+.hash-modal input[type="text"] {
+    padding: 1px;
+    border: none;
+    border-radius: 5px;
+    background: var(--panel);
+    color: var(--text);
+}
+
+.hash-modal .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 5px;
+}
+
+.hash-modal .modal-actions button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+.hash-modal .modal-actions #cancelNewChatBtn {
+    background-color: #555;
+    color: var(--text);
+}
+
+.hash-modal .modal-actions #createNewChatBtn {
+    background-color: var(--accent);
+    color: #fff;
+}
+.hash-modal.hidden {
+    display: none !important;
+}
+
+#osModalDisplay{
+    width: 50%;
+    text-align: center;
+    background: #333;
+    padding: 5px 0;
+    border-radius: 4px;
+    color: var(--info);
+    font-weight: bold;
+    border: 1px solid #444;
+    outline: none;
+    font-family: 'Share Tech Mono', ui-monospace, monospace;
+    font-size: 1em;
+    text-transform: uppercase;
+}
+
+
+
+
+
+/* --- CHANGELOG --- */
+.changelog-modal {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+ }
+
+.changelog-modal .modal-content {
+    max-width: 450px;
+}
+
+.changelog-modal .changelog-list {
+    max-height: 300px;
+    overflow-y: auto;
+    text-align: left;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.changelog-list::-webkit-scrollbar {
+    width: 5px;
+    margin-right: 5px;
+    padding: 1px;
+    border: none;
+}
+
+.changelog-modal .changelog-entry {
+    margin-bottom: 15px;
+    border-bottom: 1px dashed #444;
+    padding-bottom: 10px;
+}
+
+.changelog-modal .changelog-ver {
+    color: var(--ok);
+    font-weight: bold;
+    font-size: 1em;
+    margin-bottom: 4px;
+}
+
+.changelog-modal .changelog-date {
+    color: var(--muted);
+    font-size: 0.8em;
+    right: 8px;
+    font-weight: normal;
+}
+
+.changelog-modal .changelog-items {
+    padding-left: 20px;
+    margin: 5px 0 0 0;
+    color: var(--text);
+    font-size: 0.9em;
+}

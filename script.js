@@ -157,7 +157,7 @@ function applyNewHash(newHash) {
                     ]
                 },
                 batbayar: {
-                    name: "Batbayar Le...",
+                    name: "Batbayar Levinstruck",
                     messages: [
                         { sender: "Batbayar", text: "Hey Ramona, saw you in the lab. Still working on that warp core analysis?", type: "received" }
                     ]
@@ -190,7 +190,7 @@ function applyNewHash(newHash) {
     
     state.currentDate.setFullYear(state.currentDate.getFullYear() + 630);
     document.body.insertAdjacentHTML('beforeend', createRingtoneModalMarkup(state.settings.ringtone));
-    document.body.insertAdjacentHTML('beforeend', createChangelogModalMarkup(state.systemVersion));
+    
     document.body.insertAdjacentHTML('beforeend', createOSModalMarkup(state.systemHash));
     
 
@@ -215,17 +215,17 @@ function applyNewHash(newHash) {
     let testRingtoneBtn = null;
     let setRingtoneBtn = null;
 
-    let closeChangelogModal = null;
     
-    let nanochatModal = null;
-    let closeNanochatModal = null;
+    
+    
+    
     let backPanel = null;
 
     let newsModule = null;
     let secretHandler = null;
-    let nanoChatTriggers = null; 
+    
 
-    let changelogModal = null;
+    
     let changelogList = null;
     let osCopyModal = null;
     let osModalDisplay = null;
@@ -234,12 +234,6 @@ function applyNewHash(newHash) {
     let applyOsBtn = null;
    
     // --- MODAL ASSIGNMENT AND HANDLERS ---
-    // Assign Changelog Elements
-    changelogModal = document.getElementById('changelogModal');
-    changelogList = document.getElementById('changelogList');
-    closeChangelogModal = document.getElementById('closeChangelogModal');
-    const changelogRow = document.getElementById('changelogRow'); 
-
     // Ringtone elements
     ringtoneModal = document.getElementById('ringtoneModal');
     closeRingtoneModal = document.getElementById('closeRingtoneModal');
@@ -247,23 +241,7 @@ function applyNewHash(newHash) {
     testRingtoneBtn = document.getElementById('testRingtoneBtn');
     setRingtoneBtn = document.getElementById('setRingtoneBtn');
     ringtoneRow = document.getElementById('ringtoneRow');
-
-
-    // 1. Close Handlers
     
-    closeChangelogModal?.addEventListener('click', () => {
-        // 1. Start the fade-out animation
-        changelogModal?.classList.add('closing');
-
-        // 2. Use setTimeout (250ms) instead of 'animationend'. 
-        // The animation duration is 0.2s (200ms) in modals.css.
-        setTimeout(() => {
-            // 3. After the animation is guaranteed to be done:
-            changelogModal?.classList.remove('closing');
-            changelogModal?.classList.add('hidden');
-            // No need to remove an event listener here
-        }, 250); // 250ms ensures the 200ms fade is complete.
-    });
     
     // 2. Open Handlers 
     if (ringtoneRow) {
@@ -271,10 +249,184 @@ function applyNewHash(newHash) {
             ringtoneModal?.classList.remove('hidden'); 
         });
     }
+    /* --- CHANGELOG --- */
+    document.body.insertAdjacentHTML('beforeend', createChangelogModalMarkup(state.systemVersion));
 
-    if (changelogRow) { 
-        changelogRow.addEventListener('click', openChangelog); 
+    let changelogModal = null;
+    let openChangelogModal = null;
+    let closeChangelogModal = null;
+
+    openChangelogModal = document.getElementById('openChangelogModal');
+    closeChangelogModal = document.getElementById('closeChangelogModal');
+    changelogModal = document.getElementById('changelogModal');
+    changelogList = document.getElementById('changelogList');
+    
+    if (openChangelogModal) { 
+        openChangelogModal?.addEventListener('click', openChangelog); 
     }
+
+    closeChangelogModal?.addEventListener('click', () => {
+        changelogModal?.classList.add('closing');
+        setTimeout(() => {
+            changelogModal?.classList.remove('closing');
+            changelogModal?.classList.add('hidden');
+        }, 250);
+    });
+    
+    function openChangelog() {
+        if (!changelogModal || !changelogList) return;
+        changelogList.innerHTML = CHANGELOG_CONTENT.map(entry => `
+            <div class="changelog-entry">
+                <div class="changelog-ver">${entry.version} <span class="changelog-date">${entry.date}</span></div>
+                <ul class="changelog-items">
+                    ${entry.changes.map(c => `<li>${c}</li>`).join('')}
+                </ul>
+            </div>
+        `).join('');
+        changelogModal.classList.remove('hidden'); 
+    }
+
+    /* --- NANOCHAT --- */
+    let nanoChatTriggers = null; 
+
+    function renderNanoChat() {
+        const programArea = el('programArea');
+        const wrap = document.createElement('div');
+        wrap.className = 'nanochat nanochat-container';
+        wrap.innerHTML = `
+            <div class="chat-header">NanoChat
+                <div class="right">
+                    <button class="new-chat-btn" id="newChatBtn" title="New Chat" aria-pressed="false" title="New Chat">
+                        <svg width="18" height="18" aria-hidden><path fill="currentColor" d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="chat-body">
+                <div class="chat-sidebar" id="chatSidebar"></div>
+                <div class="chat-messages" id="chatMessages"></div>
+            </div>
+            <div class="chat-input-wrap">
+                <input id="chatInput" placeholder="Message ${state.nanochat.channels[state.nanochat.currentContact].name}" />
+                <button id="chatSendBtn"><i class="fas fa-paper-plane"></i></button>
+            </div>
+            `;
+        programArea.appendChild(wrap);
+        wrap.insertAdjacentHTML('beforeend', createNanoChatNewContactModal());
+    
+        const sidebar = el('chatSidebar');
+        const messagesContainer = el('chatMessages');
+        const input = el('chatInput');
+        const sendBtn = el('chatSendBtn');
+        const createBtn = el('createNewChatBtn');
+        const newChatBtn = el('newChatBtn'); 
+        const newChatModal = el('newChatModal');
+        const contactNameInput = el('newContactName');
+        const contactNumberInput = el('newContactNumber');
+        
+        newChatBtn.addEventListener('click', () => {
+            newChatModal.classList.remove('hidden');
+            contactNameInput.focus();
+        });
+        
+        const cancelBtn = el('cancelNewChatBtn');
+        cancelBtn.addEventListener('click', () => {
+            newChatModal.classList.add('hidden');
+            contactNameInput.value = '';
+            contactNumberInput.value = '';
+        });
+    
+        createBtn.addEventListener('click', () => {
+            const name = contactNameInput.value.trim();
+            const number = contactNumberInput.value.trim();
+            
+            if (name && number) {
+                console.log(`Attempting to create new chat with: ${name} (${number})`);
+                const contactId = name.toLowerCase().replace(/\s+/g, '');
+                
+                state.nanochat.channels[contactId] = {
+                    name: name,
+                    messages: []
+                };
+                
+                state.nanochat.currentContact = contactId;
+                renderSidebar();
+                renderMessages();
+                
+                newChatModal.classList.add('hidden');
+                contactNameInput.value = '';
+                contactNumberInput.value = '';
+            } else {
+                alert('Please enter both a name and a number.');
+            }
+        });
+    
+        function renderSidebar() {
+            if (!sidebar) return;
+            sidebar.innerHTML = '';
+            for (const contactId in state.nanochat.channels) {
+                const channel = state.nanochat.channels[contactId];
+                const contactDiv = document.createElement('div');
+                contactDiv.classList.add('chat-contact');
+                contactDiv.textContent = channel.name;
+                contactDiv.dataset.contactId = contactId;
+                if (contactId === state.nanochat.currentContact) {
+                    contactDiv.classList.add('active');
+                    if (input) input.placeholder = `Message ${channel.name}`;
+                }
+                contactDiv.addEventListener('click', () => {
+                    state.nanochat.currentContact = contactId;
+                    renderSidebar();
+                    renderMessages();
+                });
+                sidebar.appendChild(contactDiv);
+            }
+        }
+    
+        function renderMessages() {
+            if (!messagesContainer) return;
+            messagesContainer.innerHTML = '';
+            const messages = state.nanochat.channels[state.nanochat.currentContact].messages || [];
+            messages.forEach(msg => {
+                const row = document.createElement('div');
+                row.className = 'message-row ' + msg.type;
+                row.innerHTML = `<div class="message-bubble ${msg.type}">${msg.text}</div>`;
+                messagesContainer.appendChild(row);
+            });
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    
+        function sendMessage() {
+            if (!input) return;
+            const text = input.value.trim();
+            if (text) {
+                state.nanochat.channels[state.nanochat.currentContact].messages.push({
+                    sender: state.id, 
+                    text: text,
+                    type: "sent"
+                });
+                input.value = '';
+                renderMessages();
+                
+                const currentContactName = state.nanochat.channels[state.nanochat.currentContact].name;
+                if (nanoChatTriggers) {
+                    nanoChatTriggers.checkAndTrigger(currentContactName, text);
+                    markPuzzleComplete('secret_chat');
+                }
+            }
+        }
+    
+        if (sendBtn) sendBtn.addEventListener('click', sendMessage);
+        if (input) input.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(); });
+    
+        renderSidebar();
+        renderMessages();
+    }
+
+    
+
+    
+
+    
     // --- END MODAL ASSIGNMENT AND HANDLERS ---
 
     // --- SAVE / LOAD SYSTEM ---
@@ -497,7 +649,7 @@ function applyNewHash(newHash) {
             statusSecrets.style.color = secretsDone > 0 ? "var(--accent)" : "var(--muted)";
         }
 
-        if (statusVersion) {
+        if (statusVersion) { /* Changelog */
             statusVersion.textContent = state.systemVersion;
             statusVersion.classList.add('clickable-status');
             statusVersion.title = "Click to view Changelog";
@@ -538,18 +690,7 @@ function applyNewHash(newHash) {
         }
     }
 
-    function openChangelog() {
-        if (!changelogModal || !changelogList) return;
-        changelogList.innerHTML = CHANGELOG_CONTENT.map(entry => `
-            <div class="changelog-entry">
-                <div class="changelog-ver">${entry.version} <span class="changelog-date">${entry.date}</span></div>
-                <ul class="changelog-items">
-                    ${entry.changes.map(c => `<li>${c}</li>`).join('')}
-                </ul>
-            </div>
-        `).join('');
-        changelogModal.classList.remove('hidden'); 
-    }
+    
     
     function openOSModal() {
         if (!osCopyModal || !osModalDisplay) return;
@@ -689,149 +830,7 @@ function applyNewHash(newHash) {
         }
     }
     
-    function renderNanoChat() {
-        const programArea = el('programArea');
-        const wrap = document.createElement('div');
-        wrap.className = 'nanochat nanochat-container';
-        wrap.innerHTML = `
-            <div class="chat-header">NanoChat
-                <div class="right">
-                    <button class="new-chat-btn" id="newChatBtn" title="New Chat" aria-pressed="false" title="New Chat">
-                        <svg width="18" height="18" aria-hidden><path fill="currentColor" d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/></svg>
-                    </button>
-                </div>
-            </div>
-            <div class="chat-body">
-                <div class="chat-sidebar" id="chatSidebar"></div>
-                <div class="chat-messages" id="chatMessages"></div>
-            </div>
-            <div class="chat-input-wrap">
-                <input id="chatInput" placeholder="Message ${state.nanochat.channels[state.nanochat.currentContact].name}..." />
-                <button id="chatSendBtn"><i class="fas fa-paper-plane"></i></button>
-            </div>
     
-            <div id="newChatModal" class="nanochat-modal hidden">
-                <div class="modal-content">
-                    <div class="modal-title">New Contact</div>
-                    <input type="text" id="newContactName" placeholder="Contact Name" maxlength="20">
-                    <input type="text" id="newContactNumber" placeholder="Number" maxlength="10">
-                    <div class="modal-actions">
-                        <button id="cancelNewChatBtn">Cancel</button>
-                        <button id="createNewChatBtn" class="action-btn">Create</button>
-                    </div>
-                </div>
-            </div>
-            `;
-        programArea.appendChild(wrap);
-    
-        const sidebar = el('chatSidebar');
-        const messagesContainer = el('chatMessages');
-        const input = el('chatInput');
-        const sendBtn = el('chatSendBtn');
-        const newChatBtn = el('newChatBtn'); 
-        const newChatModal = el('newChatModal');
-        const cancelBtn = el('cancelNewChatBtn');
-        const createBtn = el('createNewChatBtn');
-        const contactNameInput = el('newContactName');
-        const contactNumberInput = el('newContactNumber');
-        
-        newChatBtn.addEventListener('click', () => {
-            newChatModal.classList.remove('hidden');
-            contactNameInput.focus();
-        });
-    
-        cancelBtn.addEventListener('click', () => {
-            newChatModal.classList.add('hidden');
-            contactNameInput.value = '';
-            contactNumberInput.value = '';
-        });
-    
-        createBtn.addEventListener('click', () => {
-            const name = contactNameInput.value.trim();
-            const number = contactNumberInput.value.trim();
-            
-            if (name && number) {
-                console.log(`Attempting to create new chat with: ${name} (${number})`);
-                const contactId = name.toLowerCase().replace(/\s+/g, '');
-                
-                state.nanochat.channels[contactId] = {
-                    name: name,
-                    messages: []
-                };
-                
-                state.nanochat.currentContact = contactId;
-                renderSidebar();
-                renderMessages();
-                
-                newChatModal.classList.add('hidden');
-                contactNameInput.value = '';
-                contactNumberInput.value = '';
-            } else {
-                alert('Please enter both a name and a number.');
-            }
-        });
-    
-        function renderSidebar() {
-            if (!sidebar) return;
-            sidebar.innerHTML = '';
-            for (const contactId in state.nanochat.channels) {
-                const channel = state.nanochat.channels[contactId];
-                const contactDiv = document.createElement('div');
-                contactDiv.classList.add('chat-contact');
-                contactDiv.textContent = channel.name;
-                contactDiv.dataset.contactId = contactId;
-                if (contactId === state.nanochat.currentContact) {
-                    contactDiv.classList.add('active');
-                    if (input) input.placeholder = `Message ${channel.name}...`;
-                }
-                contactDiv.addEventListener('click', () => {
-                    state.nanochat.currentContact = contactId;
-                    renderSidebar();
-                    renderMessages();
-                });
-                sidebar.appendChild(contactDiv);
-            }
-        }
-    
-        function renderMessages() {
-            if (!messagesContainer) return;
-            messagesContainer.innerHTML = '';
-            const messages = state.nanochat.channels[state.nanochat.currentContact].messages || [];
-            messages.forEach(msg => {
-                const row = document.createElement('div');
-                row.className = 'message-row ' + msg.type;
-                row.innerHTML = `<div class="message-bubble ${msg.type}">${msg.text}</div>`;
-                messagesContainer.appendChild(row);
-            });
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-    
-        function sendMessage() {
-            if (!input) return;
-            const text = input.value.trim();
-            if (text) {
-                state.nanochat.channels[state.nanochat.currentContact].messages.push({
-                    sender: state.id, 
-                    text: text,
-                    type: "sent"
-                });
-                input.value = '';
-                renderMessages();
-                
-                const currentContactName = state.nanochat.channels[state.nanochat.currentContact].name;
-                if (nanoChatTriggers) {
-                    nanoChatTriggers.checkAndTrigger(currentContactName, text);
-                    markPuzzleComplete('secret_chat');
-                }
-            }
-        }
-    
-        if (sendBtn) sendBtn.addEventListener('click', sendMessage);
-        if (input) input.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(); });
-    
-        renderSidebar();
-        renderMessages();
-    }
         
     function renderTerminal() {
         const programArea = document.getElementById('programArea');
@@ -1177,8 +1176,7 @@ function applyNewHash(newHash) {
         powerOn = el('powerOn');
         programArea = el('programArea');
         programTitleMini = el('programTitleMini');
-        nanochatModal = el('nanochatModal');
-        closeNanochatModal = el('closeNanochatModal'); 
+         
         ringtoneRow = el('ringtoneRow');
         ringtoneModal = el('ringtoneModal');
         closeRingtoneModal = el('closeRingtoneModal');
@@ -1188,8 +1186,9 @@ function applyNewHash(newHash) {
         backPanel = document.querySelector('.pda-back-panel'); 
         newsModule = createNewsModule(state, el, showView, ringtoneModal);
         secretHandler = createSecretHandler(el, showView, ringtoneModal);
+
         nanoChatTriggers = createNanoChatTriggers();
-        
+       
         restoreGameProgress();
         renderPrograms();
         showView('home');
@@ -1201,18 +1200,15 @@ function applyNewHash(newHash) {
         const flipTriggerBtn = el('btn-flip-trigger');
         const flipBackBtn = el('btn-flip-back');       
     
-        changelogModal = el('changelogModal');
-        changelogList = el('changelogList');
+        
+        
         osCopyModal = el('hash-modal');
         osModalDisplay = el('osModalDisplay');
         osPasteInput = el('osPasteInput');
         pasteFeedback = el('pasteFeedback');
         applyOsBtn = el('applyOsBtn');
 
-        // Close Button Logic for new modals
-        el('closeChangelogModal')?.addEventListener('click', () => changelogModal.classList.add('hidden'));
-        el('closeChangelogBtn')?.addEventListener('click', () => changelogModal.classList.add('hidden'));
-
+        
         el('closeOsModal')?.addEventListener('click', () => osCopyModal.classList.add('hidden'));
         
         el('copyOsBtn')?.addEventListener('click', () => {
