@@ -1,0 +1,231 @@
+/* BOOK */
+.book-widget {
+   display: flex;
+   flex-direction: column;
+   width: var(--book-width);
+   height: var(--book-height);
+   max-width: calc(100vw - 80px);
+   max-height: calc(100vh - 100px);
+   border-radius: 2px;
+   padding: 2px;
+   position: relative; 
+   z-index: 2;
+}
+
+.book-page {
+   flex-grow: 1;
+   position: relative; 
+   display: block; 
+   overflow: visible; 
+   transform-style: preserve-3d;
+   cursor: grab;
+}
+
+.my-page {
+  width: 100%;
+  height: 100%;
+  background-color: var(--pda-bg);
+  border: none;
+  overflow: hidden;
+  padding: 0;
+}
+.my-page::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  }
+
+/* 1. Page Content Wrapper */
+.page-content {
+  width: 100%;
+  height: 100%;
+  display: flex; 
+  justify-content: center;
+  align-items: center;
+  padding: 0; 
+}
+.my-page.inner-cover-front::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.001);
+  pointer-events: none;
+  z-index: 2;
+  box-shadow: inset -20px 0 40px -7px rgba(67, 16, 16, 0.9);
+}
+.my-page.inner-cover-back::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.001);
+  pointer-events: none;
+  z-index: 2;
+  box-shadow: inset 20px 0 40px -7px rgba(67, 16, 16, 0.9);
+}
+.my-page.p1::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.001);
+  pointer-events: none;
+  z-index: 2;
+  box-shadow: inset 3px 0 15px -3px rgba(0, 0, 0, 0.5),inset 10px 0 25px -7px rgba(109, 83, 59, 0.7);
+}
+
+/* 2. Page Image (Your img tags) */
+.my-page img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; 
+  margin: 0;
+}
+
+/* 3. Cover Overrides (Based on st.pageflip's hard/cover styles) */
+.my-page.page-cover {
+  background-color: #333336;
+}
+
+.my-page.page-cover-top {
+  box-shadow: inset 0px 0 35px 0px rgba(0, 0, 0, 0.9), -5px 0 10px 2px rgba(0, 0, 0, 0.7);
+}
+
+.my-page.page-cover-bottom {
+  box-shadow: inset 0px 0 35px 0px rgba(0, 0, 0, 0.9), 10px 0 10px 0px rgba(0, 0, 0, 0.7);
+}
+
+/* Paper Page Shadows*/
+.my-page.page-left::before {
+    box-shadow: inset -7px 0 25px -7px rgba(109, 83, 59, 0.7);
+    box-shadow: inset -3px 0 20px -3px rgba(0, 0, 0, 0.5);
+    box-shadow: inset -1px 0 20px -3px rgba(0, 0, 0, 0.7);
+}
+
+.my-page.page-right::before {
+    box-shadow: inset 7px 0 25px -7px rgba(109, 83, 59, 0.7);
+    box-shadow: inset 3px 0 20px -3px rgba(0, 0, 0, 0.5);
+    box-shadow: inset 1px 0 20px -3px rgba(0, 0, 0, 0.7);
+}
+
+/* --- END BOOK STYLES --- */
+
+
+/* --- Book Notes Styling --- */
+/* Sticky notes on book pages */
+.book-note {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    left: 20px; 
+    top: 20px;
+    transform: none;
+    background: linear-gradient(135deg, #fffacd 0%, #ffffe0 100%);
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    padding: 8px;
+    font-size: 18px;
+    color: #333;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    cursor: grab;
+    user-select: none;
+    transition: opacity 0.2s; 
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: pre-wrap;
+    word-break: break-word;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-family: 'Caveat';
+    font-weight: 700;
+    z-index: 10;
+}
+
+.book-note:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.book-note.dragging {
+    cursor: grabbing;
+    opacity: 0.7;
+}
+
+/* Floating notes container - holds notes dragged out of the book */
+.floating-notes-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 500;
+}
+
+/* Floating notes that have been dragged out */
+.floating-note {
+    position: fixed; /* Changed from absolute to fixed for easier coordinate math */
+    z-index: 9999;   /* Above everything */
+    width: 90px;
+    height: 90px;
+    background: linear-gradient(135deg, #fffacd 0%, #ffffe0 100%);
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    padding: 8px;
+    color: #333;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.4); /* Bigger shadow when floating */
+    cursor: grab;
+    transform: scale(1.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-family: 'Caveat';
+    font-size: 18px;
+    font-weight: 700;
+    user-select: none;
+    box-sizing: border-box;
+    transform: scale(1.1); /* Pop effect */
+}
+
+.floating-note:active {
+    cursor: grabbing;
+}
+
+.floating-note:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.floating-note.dragging {
+    cursor: grabbing;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Close button for floating notes */
+.floating-note-close {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: transparent;
+    border: none;
+    color: #333;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.floating-note-close:hover {
+    opacity: 1;
+    color: #d9534f;
+}

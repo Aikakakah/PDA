@@ -177,3 +177,27 @@
   pointer-events: none;
   cursor: default;
 }
+
+.chat-contact.active {
+  background: var(--accent);
+  color: #fff;
+  border-left: 3px solid var(--text);
+  /* Allow height to grow for the number */
+  height: auto; 
+  padding: 6px 10px;
+}
+
+/* Add styles for the specific text elements */
+.contact-name {
+  font-weight: bold;
+  display: block;
+}
+
+.contact-number {
+  font-size: 0.75em;
+  opacity: 0.85;
+  font-weight: normal;
+  display: block;
+  margin-top: 2px;
+  letter-spacing: 1px;
+}

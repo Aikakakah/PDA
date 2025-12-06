@@ -1,0 +1,25 @@
+.terminal-header {
+    margin-top: 12px;       /* Space before a new block starts */
+    margin-bottom: 2px;
+    font-weight: bold;
+    /* border-bottom: 1px dashed rgba(255, 255, 255, 0.2); */
+    padding-bottom: 2px;
+    display: inline-block;
+    width: 100%;
+}
+
+/* Specific colors for headers */
+.terminal-header.system { 
+    color: #00ccff; /* Blue for incoming/system */
+}
+
+.terminal-header.muted, 
+.terminal-header.standard { 
+    color: #f2d54a; /* Yellow/Gold for PDA outgoing */
+}
+
+/* Ensure lines inside a group are tight */
+.terminal-line {
+    padding-left: 0; /* Keep aligned left */
+    line-height: 1.3;
+}

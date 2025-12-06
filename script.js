@@ -83,17 +83,50 @@ function rotatePersistentHash() {
     return current;
 }
 
-function applyNewHash(newHash) {
-    if (!newHash || newHash.trim() === '') return false;
-    const hashPattern = /^[0-9A-Fx-]+$/i; 
-    if (!hashPattern.test(newHash.trim())) {
-        return false;
+function applyNewHash(input) {
+    if (!input) return false;
+    input = input.trim();
+
+    // --- ATTEMPT 1: Transfer Token (Base64) ---
+    try {
+        // Attempt to decode Base64
+        const jsonStr = atob(input); 
+        const data = JSON.parse(jsonStr);
+
+        // Verify it has the essential data
+        if (data.hash && data.nanochat) {
+            localStorage.setItem('pda_global_hash', data.hash);
+
+            // Construct a save file from the token
+            const newSaveState = {
+                unlockedFeatures: data.unlocked || state.unlockedFeatures,
+                puzzles: data.puzzles || [],
+                slots: data.slots || {},
+                poweredOn: data.powered !== undefined ? data.powered : state.poweredOn,
+                nanochat: data.nanochat,
+                notes: data.notes || []
+            };
+
+            localStorage.setItem('pda_game_state', JSON.stringify(newSaveState));
+            location.reload();
+            return true;
+        }
+    } catch (e) {
+        // Not a valid transfer token, ignore and try legacy hash
     }
-    localStorage.setItem('pda_global_hash', newHash.trim().toUpperCase());
-    localStorage.removeItem('pda_game_state');
-    localStorage.removeItem('pda_user_identity');
-    location.reload();
-    return true;
+
+    // --- ATTEMPT 2: Legacy Hex Hash ---
+    const hashPattern = /^[0-9A-Fx-]+$/i; 
+    if (hashPattern.test(input)) {
+        localStorage.setItem('pda_global_hash', input.toUpperCase());
+        // Standard hash change resets progress (New Game+)
+        localStorage.removeItem('pda_game_state');
+        localStorage.removeItem('pda_user_identity');
+        location.reload();
+        return true;
+    }
+
+    return false;
 }
 
 (async () => {
@@ -151,6 +184,7 @@ function applyNewHash(newHash) {
             channels: {
                 sam: {
                     name: "Sam Nighteyes",
+                    number: "555-0199",
                     messages: [
                         { sender: "Sam", text: "Alert: Unauthorized access detected at Cargo Bay 3. Security on site. Standby for updates.", type: "received" },
                         { sender: "Ramona", text: "Understood. Maintaining distance from the area.", type: "sent" }
@@ -158,6 +192,7 @@ function applyNewHash(newHash) {
                 },
                 batbayar: {
                     name: "Batbayar Levinstruck",
+                    number: "555-2342",
                     messages: [
                         { sender: "Batbayar", text: "Hey Ramona, saw you in the lab. Still working on that warp core analysis?", type: "received" }
                     ]
@@ -192,6 +227,7 @@ function applyNewHash(newHash) {
     document.body.insertAdjacentHTML('beforeend', createRingtoneModalMarkup(state.settings.ringtone));
     
     document.body.insertAdjacentHTML('beforeend', createOSModalMarkup(state.systemHash));
+    document.body.insertAdjacentHTML('beforeend', createIdentityModalMarkup());
     
 
     // --- Variables ---
@@ -345,8 +381,10 @@ function applyNewHash(newHash) {
                 
                 state.nanochat.channels[contactId] = {
                     name: name,
+                    number: number, // STORE THE NUMBER HERE
                     messages: []
                 };
+                saveGameProgress();
                 
                 state.nanochat.currentContact = contactId;
                 renderSidebar();
@@ -367,12 +405,24 @@ function applyNewHash(newHash) {
                 const channel = state.nanochat.channels[contactId];
                 const contactDiv = document.createElement('div');
                 contactDiv.classList.add('chat-contact');
-                contactDiv.textContent = channel.name;
-                contactDiv.dataset.contactId = contactId;
+                
+                // Check if active to display number
                 if (contactId === state.nanochat.currentContact) {
                     contactDiv.classList.add('active');
                     if (input) input.placeholder = `Message ${channel.name}`;
+                    
+                    // Render Name AND Number for active contact
+                    contactDiv.innerHTML = `
+                        <div class="contact-name">${channel.name}</div>
+                        <div class="contact-number">${channel.number || 'Unknown'}</div>
+                    `;
+                } else {
+                    // Render only Name for inactive contacts
+                    contactDiv.textContent = channel.name;
                 }
+        
+                contactDiv.dataset.contactId = contactId;
+                
                 contactDiv.addEventListener('click', () => {
                     state.nanochat.currentContact = contactId;
                     renderSidebar();
@@ -404,6 +454,7 @@ function applyNewHash(newHash) {
                     text: text,
                     type: "sent"
                 });
+                saveGameProgress();
                 input.value = '';
                 renderMessages();
                 
@@ -446,12 +497,36 @@ function applyNewHash(newHash) {
             unlockedFeatures: state.unlockedFeatures,
             puzzles: Array.from(state.puzzles),
             slots: slots,
-            poweredOn: state.poweredOn
+            poweredOn: state.poweredOn,
+            nanochat: state.nanochat, 
+            notes: state.notes
         };
 
         localStorage.setItem('pda_game_state', JSON.stringify(saveData));
     }
-    
+    function getTransferToken() {
+        // 1. Scrape current board state (identical to save logic)
+        const currentSlots = {};
+        document.querySelectorAll('.resistor-slot').forEach(slot => {
+            if (slot.children.length > 0) {
+                currentSlots[slot.id] = slot.children[0].dataset.ohms;
+            }
+        });
+
+        // 2. Bundle relevant data
+        const payload = {
+            hash: state.systemHash,
+            notes: state.notes,
+            nanochat: state.nanochat,
+            slots: currentSlots,
+            puzzles: Array.from(state.puzzles),
+            unlocked: state.unlockedFeatures,
+            powered: state.poweredOn
+        };
+
+        // 3. Encode to Base64
+        return btoa(JSON.stringify(payload));
+    }
     function createResistorDOM(ohms) {
         const visuals = resistorVisuals[ohms] || resistorVisuals['100'];
         const el = document.createElement('div');
@@ -485,6 +560,8 @@ function applyNewHash(newHash) {
             if (data.unlockedFeatures) state.unlockedFeatures = data.unlockedFeatures;
             if (data.puzzles) state.puzzles = new Set(data.puzzles);
             if (data.poweredOn !== undefined) state.poweredOn = data.poweredOn;
+            if (data.nanochat) state.nanochat = data.nanochat;
+            if (data.notes) state.notes = data.notes;
 
             // 2. Restore Physical Resistors
             if (data.slots) {
@@ -630,6 +707,7 @@ function applyNewHash(newHash) {
         const secretsDone = secretIds.filter(id => state.puzzles.has(id)).length;
         const totalDone = state.puzzles.size;
         const percent = Math.min(100, Math.round((totalDone / state.totalPuzzles) * 100));
+        const hashPart = statusOS.querySelector('.os-hash-part');
 
         if (progressBar) progressBar.style.width = `${percent}%`;
         if (percentageText) percentageText.textContent = `${percent}%`;
@@ -677,10 +755,12 @@ function applyNewHash(newHash) {
 
             hashPart.addEventListener('click', (e) => {
                 e.stopPropagation();
-                copyToClipboard(state.systemHash);
+                
+                // CHANGE: Use getTransferToken()
+                copyToClipboard(getTransferToken());
 
                 const originalText = hashPart.textContent;
-                hashPart.textContent = "COPIED!";
+                hashPart.textContent = "COPIED DATA!"; // Visual feedback
                 hashPart.style.color = "#fff";
                 setTimeout(() => {
                     hashPart.textContent = originalText;
@@ -787,6 +867,7 @@ function applyNewHash(newHash) {
                 div.innerHTML = `<span>${n}</span><button>×</button>`;
                 div.querySelector('button').addEventListener('click', () => {
                     state.notes = state.notes.filter(x => x !== n);
+                    saveGameProgress();
                     refreshNotes();
                 });
                 notesWrap.appendChild(div);
@@ -794,7 +875,7 @@ function applyNewHash(newHash) {
         }
         addBtn.onclick = () => {
             const v = noteInput.value.trim();
-            if (v) { state.notes.push(v); noteInput.value = ''; refreshNotes(); }
+            if (v) { state.notes.push(v); noteInput.value = ''; saveGameProgress(); refreshNotes(); }
         };
         noteInput.onkeydown = e => { if (e.key === 'Enter') addBtn.click(); };
         refreshNotes();
@@ -1116,10 +1197,10 @@ function applyNewHash(newHash) {
     function setupHashModal() {
         const pdaScreen = document.querySelector('.PDA-screen');
 
-        if (!pdaScreen || document.getElementById('hash-modal')) return;
+        if (!pdaScreen || document.getElementById('osCopyModal')) return;
         
         // Bind Global Variables
-        osCopyModal = document.getElementById('hash-modal');
+        osCopyModal = document.getElementById('osCopyModal');
         osModalDisplay = document.getElementById('osModalDisplay');
         osPasteInput = document.getElementById('osPasteInput');
         pasteFeedback = document.getElementById('pasteFeedback');
@@ -1132,7 +1213,7 @@ function applyNewHash(newHash) {
         });
     
         document.getElementById('copyOsBtn')?.addEventListener('click', () => {
-            copyToClipboard(state.systemHash);
+            copyToClipboard(getTransferToken());
             const btn = document.getElementById('copyOsBtn');
             const originalText = btn.textContent;
             btn.textContent = "Copied!";
@@ -1202,7 +1283,7 @@ function applyNewHash(newHash) {
     
         
         
-        osCopyModal = el('hash-modal');
+        osCopyModal = el('osCopyModal');
         osModalDisplay = el('osModalDisplay');
         osPasteInput = el('osPasteInput');
         pasteFeedback = el('pasteFeedback');

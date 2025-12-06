@@ -1,8 +1,8 @@
-export const SYSTEM_VERSION = "Ver 4.2.1"; // <--- Update this manually here
+export const SYSTEM_VERSION = "Ver 4.2.2"; // <--- Update this manually here
 
 export const CHANGELOG_CONTENT = [
     {
-        version: "4.2.1",
+        version: "4.2.2",
         date: "2655-10-27",
         changes: [
             "Implemented Persistent OS Hashing algorithm.",
@@ -11,12 +11,23 @@ export const CHANGELOG_CONTENT = [
         ]
     },
     {
-        version: "4.2.0",
+        version: "4.2.1",
         date: "2655-10-26",
         changes: [
-            "Initial Boot Sequence restored.",
-            "NanoChat module linked to resistor array R2.",
-            "Kernel panic resolved."
+            "fix drawer highlight",
+            "fix save from hash - should not ask for new ID",
+            "chats and notes dont carry over",
+            "check discord bot, wasnt sending back",
+            "eject button should eject ID/popup id menu. name change should not reset progress, but have other button to reset"
+        ]
+    },
+    {
+        version: "0.0.1",
+        date: "2655-12-06",
+        changes: [
+            "Finished changelog",
+            "Finished Nanochat",
+            "Notes and chats save on reload"
         ]
     }
 ];
