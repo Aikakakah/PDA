@@ -25,7 +25,7 @@
     align-items: center;
 }
 
-.pan-button.top-right-drawer {
+.drawer-button.top-right-drawer {
     position: absolute;
     /* Hangs well below the drawer panel */
     bottom: -60px; 

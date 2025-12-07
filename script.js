@@ -319,7 +319,7 @@ const state = {
     /* --- ID CARD --- */
     let closeIdentityModal = null;
     closeIdentityModal = document.getElementById('closeIdentityModal');
-    
+
     closeIdentityModal?.addEventListener('click', () => {
         identityModal?.classList.add('closing');
         setTimeout(() => {
@@ -1654,7 +1654,7 @@ const state = {
         }
     
         (function() {
-            const drawerButtons = document.querySelectorAll('.pan-button.top-right-drawer');
+            const drawerButtons = document.querySelectorAll('.drawer-button.top-right-drawer');
             if (!drawerButtons || drawerButtons.length === 0) return;
     
             let drawerPanel = document.querySelector('.top-right-drawer-panel');
