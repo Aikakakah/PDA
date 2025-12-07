@@ -1,26 +1,6 @@
 // modal.js
 
-/**
- * Generates the HTML for the Identity/Security Check modal.
- */
-export function createIdentityModalMarkup() {
-    return `
-        <div class="modal identity-modal hidden" id="identityModal">
-            <div class="modal-content identity-box">
-                <div class="identity-header">
-                    <i class="fas fa-shield-alt"></i> SECURITY CHECK
-                    <button class="modal-close" id="closeIdentityModal" style="margin-left:auto;">✕</button>
-                </div>
-                <div class="identity-content">
-                    <p>Biometric scan failed. Manual override required.</p>
-                    <p>Please enter personnel identifier to initialize Robust#OS™.</p>
-                    <input type="text" id="identityInput" placeholder="Enter Name / Callsign" maxlength="20" autocomplete="off">
-                    <button id="identitySubmitBtn">INITIALIZE</button>
-                </div>
-            </div>
-        </div>
-    `;
-}
+
 
 /**
  * Generates the HTML for the OS Hash / System Interface modal.
@@ -92,10 +72,8 @@ export function createRingtoneModalMarkup(currentRingtone) {
 }
 
 /* --- Embedded Modals --- */
-/**
- * Generates the HTML for the NanoChat "New Contact" modal.
- */
-       
+
+/* --- NANOCHAT --- */
 
 export function createNanoChatNewContactModal() {
     return `
@@ -126,6 +104,26 @@ export function createChangelogModalMarkup(systemVersion) {
                     <div class="modal-title">System Patch Notes</div>
                 </div>
                 <div class="changelog-list" id="changelogList"></div>
+            </div>
+        </div>
+    `;
+}
+
+/* --- ID CARD --- */
+export function createIdentityModalMarkup() {
+    return `
+        <div class="modal identity-modal hidden" id="identityModal">
+            <div class="modal-content identity-box">
+                <div class="identity-header">
+                    <i class="fas fa-shield-alt"></i> SECURITY CHECK
+                    <button class="modal-close" id="closeIdentityModal" style="margin-left:auto;">✕</button>
+                </div>
+                <div class="identity-content">
+                    <p>Biometric scan failed. Manual override required.</p>
+                    <p>Please enter personnel identifier to initialize Robust#OS™.</p>
+                    <input type="text" id="identityInput" placeholder="Enter Name / Callsign" maxlength="20" autocomplete="off">
+                    <button id="identitySubmitBtn">INITIALIZE</button>
+                </div>
             </div>
         </div>
     `;

@@ -315,6 +315,18 @@ const state = {
         `).join('');
         changelogModal.classList.remove('hidden'); 
     }
+    
+    /* --- ID CARD --- */
+    let closeIdentityModal = null;
+    closeIdentityModal = document.getElementById('closeIdentityModal');
+    
+    closeIdentityModal?.addEventListener('click', () => {
+        identityModal?.classList.add('closing');
+        setTimeout(() => {
+            identityModal?.classList.remove('closing');
+            identityModal?.classList.add('hidden');
+        }, 250);
+    });
 
     /* --- NANOCHAT --- */
     let nanoChatTriggers = null; 
@@ -721,9 +733,12 @@ const state = {
         const statusSecrets = el('statusSecrets');
         const statusVersion = el('statusVersion');
         const statusOS = el('statusOS');
+        
+        // Define puzzle completion logic
         const hardwareIds = ['fix_power', 'fix_nanochat', 'fix_notekeeper', 'fix_news', 'fix_terminal'];
         const secretIds = ['secret_ringtone', 'secret_chat'];
         const hardwareDone = hardwareIds.filter(id => state.puzzles.has(id)).length;
+        // We calculate secrets using state.puzzles (the correct way), not state.secrets
         const secretsDone = secretIds.filter(id => state.puzzles.has(id)).length;
         const totalDone = state.puzzles.size;
         const percent = Math.min(100, Math.round((totalDone / state.totalPuzzles) * 100));
@@ -741,11 +756,17 @@ const state = {
             statusSoftware.style.color = percent === 100 ? "var(--ok)" : "var(--danger)";
         }
         
+        // --- THIS SECTION KEEPS THE SECRETS CLICKABLE ---
         if (statusSecrets) {
             statusSecrets.textContent = `${secretsDone} FOUND`;
             statusSecrets.style.color = secretsDone > 0 ? "var(--accent)" : "var(--muted)";
+            
+            // This click handler opens the File View where the SandyStars file is located
+            statusSecrets.onclick = () => {
+                if (secretHandler) secretHandler.openFilesView(); 
+            };
         }
-
+    
         if (statusVersion) {
             statusVersion.textContent = state.systemVersion;
             statusVersion.classList.add('clickable-status');
@@ -757,7 +778,7 @@ const state = {
                 openChangelog();
             });
         }
-
+    
         if (statusOS) {
             statusOS.innerHTML = `
                 <span class="os-name-part" title="Click for details">${state.systemOSName}</span> 
@@ -766,18 +787,17 @@ const state = {
             
             const namePart = statusOS.querySelector('.os-name-part');
             const hashPart = statusOS.querySelector('.os-hash-part');
-
+    
             namePart.addEventListener('click', (e) => {
                 e.stopPropagation();
                 openOSModal();
             });
-
+    
             hashPart.addEventListener('click', (e) => {
                 e.stopPropagation();
                 
-                // USE GETTRANSFERTOKEN TO ENSURE ALL DATA IS COPIED
                 copyToClipboard(getTransferToken());
-
+    
                 const originalText = hashPart.textContent;
                 hashPart.textContent = "COPIED DATA!"; 
                 hashPart.style.color = "#fff";
@@ -787,6 +807,7 @@ const state = {
                 }, 1000);
             });
         }
+        // The broken duplicate block that was here has been removed.
     }
 
     
@@ -1264,7 +1285,8 @@ const state = {
             home: el('view-home'),
             programs: el('view-programs'),
             settings: el('view-settings'),
-            program: el('view-program')
+            program: el('view-program'),
+            files: el('view-files')
         };
         tabs = document.querySelectorAll('.nav-btn');
         programGrid = el('programGrid');
@@ -1285,9 +1307,9 @@ const state = {
         setRingtoneBtn = el('setRingtoneBtn');
         backPanel = document.querySelector('.pda-back-panel'); 
         newsModule = createNewsModule(state, el, showView, ringtoneModal);
-        secretHandler = createSecretHandler(el, showView, ringtoneModal);
+        secretHandler = createSecretHandler(state, el, showView, ringtoneModal);
 
-        nanoChatTriggers = createNanoChatTriggers();
+        nanoChatTriggers = createNanoChatTriggers(secretHandler);
        
         restoreGameProgress();
         renderPrograms();
@@ -1559,9 +1581,22 @@ const state = {
             turnOffScreen();
         }
 
+        // if (btnEject) {
+        //     btnEject.addEventListener('click', () => {
+        //         turnOffScreen();
+        //     });
+        // }
         if (btnEject) {
             btnEject.addEventListener('click', () => {
-                turnOffScreen();
+                if (identityModal) {
+                    identityModal.classList.remove('hidden');
+                    identityModal.style.display = ''; 
+                    
+                    if(identityInput) {
+                        identityInput.value = state.id; 
+                        identityInput.focus();
+                    }
+                }
             });
         }
 

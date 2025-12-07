@@ -15,10 +15,10 @@ export const CHANGELOG_CONTENT = [
         date: "2655-10-26",
         changes: [
             "fix drawer highlight",
-            "fix save from hash - should not ask for new ID",
-            "chats and notes dont carry over",
-            "check discord bot, wasnt sending back",
-            "eject button should eject ID/popup id menu. name change should not reset progress, but have other button to reset"
+            "eject button should eject ID/popup id menu. name change should not reset progress, but have other button to reset",
+            "fix sandystars, add better glitching, story",
+            "move book over a bit, add zoom",
+            "pen flashlight, book page overlay from light to reveal"
         ]
     },
     {
@@ -27,7 +27,10 @@ export const CHANGELOG_CONTENT = [
         changes: [
             "Finished changelog",
             "Finished Nanochat",
-            "Notes and chats save on reload"
+            "Notes and chats save on reload",
+            "Fixed hash saving",
+            "Fixed bot"
+
         ]
     }
 ];
