@@ -1,0 +1,203 @@
+:root {
+    --pda-bg: #1a1a1a;
+    --inner: #222222;
+    --panel: #333333;
+    --text: #ffffff;
+    --muted: #aaaaaa;
+    --accent: #9b59b6; 
+    --danger: #e74c3c; 
+    --ok: #6ad07a; 
+    --radius: 4px;
+}
+
+/* Full Screen/Base Styles for context */
+body {
+    background-color: var(--pda-bg);
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    /* body is still flex to keep things centered if needed, but not essential for this setup */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text);
+}
+
+.modal.hidden {
+    display: none !important;
+}
+
+/* --- Modal Base Styles --- */
+.modal {
+    background-color: rgba(0, 0, 0, 0.85);
+    z-index: 2000;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    animation: modalFadeIn 0.2s ease-in forwards;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* The close button inside the modal content */
+.modal-close {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: .75em;
+    cursor: pointer;
+    padding: 0 1px;
+    line-height: 1;
+    transition: color 0.1s;
+    position: absolute;
+    top: 3%;
+    right: 3%;
+}
+
+.modal-close:hover {
+    color: var(--danger);
+}
+
+/* --- Identity Modal Specific Styles (USING GRID) --- */
+.identity-modal {
+    position: absolute; /* Kept for full-screen sizing */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 3000;
+    backdrop-filter: blur(5px);
+    
+    /* 1. CSS Grid for Centering and Stacking */
+    display: grid;
+    place-items: center; /* Centers items horizontally and vertically */
+    grid-template-areas: "modal-group"; /* All children use this same grid area */
+}
+
+/* 2. Place both handle and box into the same grid area */
+.identity-handle,
+.identity-box {
+    grid-area: modal-group;
+    /* Ensures items are positioned correctly within the centered cell */
+    justify-self: center; 
+    align-self: center;
+    width: 300px; /* Set width here for consistent centering */
+}
+
+/* --- Handle Styling --- */
+.identity-handle {
+    /* 3. Shift the handle up by its height to be above the box */
+    transform: translateY(-45px); 
+    z-index: 3001; /* Ensure handle is above the modal content (z-index 3000) */
+    
+    /* Handle Visual Styles */
+    width: 340px; /* Slightly wider than the box (300px) */
+    height: 45px;
+    background: transparent;
+    border: 10px solid #8a7856;
+    border-bottom: none;
+    border-radius: 40px 40px 0 0;
+    box-shadow: 
+        0 8px 15px rgba(0, 0, 0, 0.3),
+        0 -8px 10px rgba(0, 0, 0, 0.3),
+        inset 0 -10px 10px rgba(0, 0, 0, 0.2),
+        inset 0 15px 20px -10px rgba(0, 0, 0, 0.4),
+        0 1px 0 rgba(0,0,0,0.8);
+    cursor: pointer;
+}
+
+/* --- Box Styling --- */
+.modal-content {
+    /* Base modal-content styles (overridden by identity-box) */
+    max-width: 320px;
+    color: var(--text);
+    box-sizing: border-box;
+}
+
+.identity-box {
+    /* 4. Shift the box down to make visual room for the handle */
+    transform: translateY(45px);
+    
+    /* Identity Box Visual Overrides */
+    background: #1a1a1b;
+    border: 2px solid var(--danger); 
+    box-shadow: 0 0 20px rgba(94, 43, 99, 0.5);
+    width: 300px;
+    border-radius: 8px;
+    overflow: hidden;
+    animation: fadeIn 0.5s ease-out;
+    padding: 0;
+}
+
+.identity-header {
+    background: #2a1a1a; 
+    padding: 12px;
+    border-bottom: 1px solid var(--danger);
+    font-weight: bold;
+    color: var(--danger);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 1px;
+}
+
+.identity-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+}
+
+.identity-content p {
+    margin: 0;
+    font-size: 0.9em;
+    color: var(--muted);
+    line-height: 1.4;
+}
+
+.identity-content input {
+    background: #000;
+    border: 1px solid var(--danger);
+    padding: 10px;
+    color: var(--ok);
+    font-family: inherit;
+    text-align: center;
+    font-size: 1.2em;
+    border-radius: 4px;
+    outline: none;
+    text-transform: uppercase;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.identity-content input:focus {
+    border-color: var(--ok);
+    box-shadow: 0 0 8px rgba(106, 208, 122, 0.3);
+}
+
+.identity-content button {
+    background: var(--danger);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: background 0.2s;
+}
+
+.identity-content button:hover {
+    background: #c0392b;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}

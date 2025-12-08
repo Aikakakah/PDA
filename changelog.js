@@ -5,10 +5,12 @@ export const CHANGELOG_CONTENT = [
         version: "4.2.2",
         date: "2655-10-27",
         changes: [
-            "eject button should eject ID/popup id menu. name change should not reset progress, but have other button to reset",
+            "name change should not reset progress, but have other button to reset",
             "fix sandystars, add better glitching, story",
             "move book over a bit, add zoom",
-            "pen flashlight, book page overlay from light to reveal"
+            "pen flashlight, book page overlay from light to reveal",
+            "should add glint when hovering over drawer handle",
+            "add glitching to station name, small puzzle tied to the station -### can be revealed in terminal"
         ]
     },
     {
@@ -18,6 +20,7 @@ export const CHANGELOG_CONTENT = [
             "Fixed drawer highlight",
             "Eject button brings up ID menu",
             "Fix sandystars clicking",
+            "Added proper ID for identity modal"
         ]
     },
     {

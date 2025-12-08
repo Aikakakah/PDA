@@ -114,15 +114,13 @@ export function createIdentityModalMarkup() {
     return `
         <div class="modal identity-modal hidden" id="identityModal">
             <div class="modal-content identity-box">
-                <div class="identity-header">
-                    <i class="fas fa-shield-alt"></i> SECURITY CHECK
+                <div class="identity-background">
                     <button class="modal-close" id="closeIdentityModal" style="margin-left:auto;">✕</button>
-                </div>
                 <div class="identity-content">
-                    <p>Biometric scan failed. Manual override required.</p>
-                    <p>Please enter personnel identifier to initialize Robust#OS™.</p>
+                    <p>Please enter your name below.</p>
+                    <p1>Cookies are saved. If you don't want to save them, you can copy the code in the settings-status menu.</p1>
                     <input type="text" id="identityInput" placeholder="Enter Name / Callsign" maxlength="20" autocomplete="off">
-                    <button id="identitySubmitBtn">INITIALIZE</button>
+                    <button id="identitySubmitBtn" title="Good luck!">INITIALIZE</button>
                 </div>
             </div>
         </div>

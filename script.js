@@ -137,7 +137,7 @@ const defaultOwner = "Ramona Orthall";
 const state = {
     owner: defaultOwner,
     id: savedIdentity || "Unknown", 
-    job: "Scientist",
+    job: "Passenger",
     station: "NTTD Manta Station PR-960",
     alert: "Green",
     instructions: "Don't stray far.",

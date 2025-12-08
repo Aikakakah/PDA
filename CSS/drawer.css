@@ -37,11 +37,11 @@
     height: 45px;
     
     /* SHAPE: Use borders to create the "Rod" look */
-    background: transparent; /* Hollow center */
+    background: transparent;
     
     /* The "Metal" - Thick borders for the handle thickness */
-    border: 10px solid #8a7856; /* Base Bronze Color */
-    border-top: none; /* Open at the top where it enters the drawer */
+    border: 10px solid #8a7856;
+    border-top: none;
     
     /* CURVE: Deep radius on bottom corners to create the arch */
     border-radius: 0 0 40px 40px; 
@@ -68,7 +68,7 @@
 
     /* Layout for the icon */
     display: flex;
-    align-items: flex-start; /* Align icon to top (empty space) */
+    align-items: flex-start;
     justify-content: center;
     cursor: pointer;
     transition: transform 0.2s, border-color 0.2s;
