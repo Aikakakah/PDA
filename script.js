@@ -43,7 +43,74 @@ async function loadCircuitMarkup(containerId, filePath) {
     }
     return false;
 }
-    
+
+// --- Glitch Effect Class ---
+const GLITCH_CHARS = "☺Σ×Π#-_¯—→↓↑←0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZ";
+
+class GlitchController {
+    constructor(element) {
+        this.selector = element;
+        this.originalText = element.textContent;
+        this.isGlitched = false;
+        this.timeouts = [];
+    }
+
+    start() {
+        if (this.isGlitched) return;
+        this.isGlitched = true;
+        this.loop();
+    }
+
+    stop() {
+        this.isGlitched = false;
+        this.timeouts.forEach(t => clearTimeout(t));
+        this.timeouts = [];
+        this.selector.textContent = this.originalText;
+    }
+
+    loop() {
+        if (!this.isGlitched) return;
+
+        // Randomize settings per cycle to mimic the original effect
+        const randLetterNumber = 2 + Math.floor(Math.random() * 8);
+        const randGlitchPauseTime = 100 + Math.floor(Math.random() * 2500);
+        
+        // Prepare indices to glitch
+        const charArray = this.originalText.split("");
+        const indices = [];
+        for(let i=0; i < randLetterNumber; i++) {
+            indices.push(Math.floor(Math.random() * charArray.length));
+        }
+
+        // Run the fast flicker effect
+        let count = 0;
+        const maxCount = Math.floor(200 / 65); // derived from original 200ms duration / 65ms per letter
+
+        const flicker = () => {
+            if (!this.isGlitched) return;
+            
+            if (count >= maxCount) {
+                // End of this glitch cycle, wait then loop
+                this.selector.textContent = this.originalText;
+                this.timeouts.push(setTimeout(() => this.loop(), randGlitchPauseTime));
+            } else {
+                // Randomize characters
+                let tempString = [...charArray];
+                for(let i=0; i < indices.length; i++) {
+                    const randChar = GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)];
+                    const idx = indices[i];
+                    if (tempString[idx] !== ' ') tempString[idx] = randChar;
+                }
+                this.selector.textContent = tempString.join("");
+                count++;
+                this.timeouts.push(setTimeout(flicker, 65));
+            }
+        };
+
+        flicker();
+    }
+}
+
 function formatSolTimestamp() {
     const now = new Date();
     const month = String(now.getUTCMonth() + 1).padStart(2, '0');
@@ -265,6 +332,8 @@ const state = {
     let osPasteInput = null;
     let pasteFeedback = null;
     let applyOsBtn = null;
+
+    let stationGlitch = null;
    
     // --- MODAL ASSIGNMENT AND HANDLERS ---
     ringtoneModal = document.getElementById('ringtoneModal');
@@ -696,7 +765,7 @@ const state = {
     function updateHome() {
         if (el('owner')) el('owner').textContent = state.owner; 
         if (el('idline')) el('idline').innerHTML = `${state.id}, <span id="job" class="job">${state.job}</span>`; 
-        if (el('station')) el('station').textContent = state.station;
+        // if (el('station')) el('station').textContent = state.station;
         if (el('instructions')) el('instructions').textContent = state.instructions;
         if (el('date')) el('date').textContent = state.currentDate.toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' });
 
@@ -1111,6 +1180,17 @@ const state = {
                     renderHistory();
                     setTimeout(() => location.reload(), 1000);
                     return;
+                
+                case 'pandora':
+                    if (stationGlitch) {
+                        stationGlitch.stop(); // Stop animation
+                        state.terminalHistory.push({ text: "Global system stabilization command accepted.", type: "system" });
+                        state.terminalHistory.push({ text: "Visual artifacts purged.", type: "system" });
+                        markPuzzleComplete('fix_station_glitch'); // Save progress
+                    } else {
+                        state.terminalHistory.push({ text: "System is already stable.", type: "standard" });
+                    }
+                    break;
     
                 default:
                     state.terminalHistory.push({ text: `Command not found: ${command}`, type: "error" });
@@ -1632,6 +1712,19 @@ const state = {
             ringtoneModal.classList.add('hidden');
             playRingtone();
         });
+
+        const stationEl = el('station');
+        if (stationEl) {
+            // Initialize the text content immediately
+            stationEl.textContent = state.station; 
+            
+            stationGlitch = new GlitchController(stationEl);
+            
+            // Only start glitching if we haven't solved the puzzle yet
+            if (!state.puzzles.has('fix_station_glitch')) {
+                stationGlitch.start();
+            }
+        }
     
         initializeBookSystem(el);
         initializeShineEffect();
