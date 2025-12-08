@@ -10,7 +10,7 @@ export const CHANGELOG_CONTENT = [
             "move book over a bit, add zoom",
             "pen flashlight, book page overlay from light to reveal",
             "should add glint when hovering over drawer handle",
-            "add glitching to station name, small puzzle tied to the station -### can be revealed in terminal"
+            "fix manifest department header glitching"
         ]
     },
     {
@@ -20,7 +20,9 @@ export const CHANGELOG_CONTENT = [
             "Fixed drawer highlight",
             "Eject button brings up ID menu",
             "Fix sandystars clicking",
-            "Added proper ID for identity modal"
+            "Added proper ID for identity modal",
+            "Added manifest glitching. Names reset when messaged",
+            "Added station name glitching. Message 'Pandora' to terminal to fix"
         ]
     },
     {

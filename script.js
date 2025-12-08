@@ -227,6 +227,7 @@ const state = {
     systemOSName: "Robust#OS",
     systemHash: getPersistentHash(),
     adminOverride: false,
+    messagedCrew: new Set(),
 
     programs: [
         { uid: 1, name: "Crew manifest", icon: "CM", type: "manifest" },
@@ -334,6 +335,7 @@ const state = {
     let applyOsBtn = null;
 
     let stationGlitch = null;
+    let manifestGlitches = [];
    
     // --- MODAL ASSIGNMENT AND HANDLERS ---
     ringtoneModal = document.getElementById('ringtoneModal');
@@ -526,15 +528,19 @@ const state = {
                     text: text,
                     type: "sent"
                 });
-                saveGameProgress();
-                input.value = '';
-                renderMessages();
-                
                 const currentContactName = state.nanochat.channels[state.nanochat.currentContact].name;
+                if (!state.messagedCrew.has(currentContactName)) {
+                    state.messagedCrew.add(currentContactName);
+                }
                 if (nanoChatTriggers) {
                     nanoChatTriggers.checkAndTrigger(currentContactName, text);
                     markPuzzleComplete('secret_chat');
                 }
+
+                saveGameProgress();
+                input.value = '';
+                renderMessages();
+                
             }
         }
     
@@ -564,7 +570,8 @@ const state = {
             slots: slots,
             poweredOn: state.poweredOn,
             nanochat: state.nanochat, 
-            notes: state.notes
+            notes: state.notes,
+            messagedCrew: Array.from(state.messagedCrew)
         };
 
         localStorage.setItem('pda_game_state', JSON.stringify(saveData));
@@ -629,6 +636,7 @@ const state = {
             if (data.poweredOn !== undefined) state.poweredOn = data.poweredOn;
             if (data.nanochat) state.nanochat = data.nanochat;
             if (data.notes) state.notes = data.notes;
+            if (data.messagedCrew) state.messagedCrew = new Set(data.messagedCrew);
 
             // 2. Restore Physical Resistors
             if (data.slots) {
@@ -930,6 +938,11 @@ const state = {
     function openProgram(p) {
         const programArea = el('programArea'); 
         if (!programArea) return;
+        if (manifestGlitches.length > 0) {
+            manifestGlitches.forEach(g => g.stop());
+            manifestGlitches = [];
+        }
+
         showView('program');
         programArea.innerHTML = '';
 
@@ -990,35 +1003,62 @@ const state = {
     }
     
     function renderManifest() {
+        // 1. Cleanup previous glitches if any
+        manifestGlitches.forEach(g => g.stop());
+        manifestGlitches = [];
+    
         const wrap = document.createElement('div');
         wrap.className = 'crew-manifest';
         wrap.innerHTML = `<div class="cartridge-header">${state.station} Crew Manifest</div><div class="manifest-list" id="manifestList"></div>`;
         programArea.appendChild(wrap);
         const manifestList = wrap.querySelector('#manifestList');
-
+    
         const groupedCrew = state.crew.reduce((acc, member) => {
             acc[member.rank] = acc[member.rank] || [];
             acc[member.rank].push(member);
             return acc;
         }, {});
-
+    
         for (const rank in groupedCrew) {
             const rankHeader = document.createElement('h4');
             rankHeader.textContent = rank;
+            rankHeader.setAttribute('title', rank); //glitched manifest headers
             manifestList.appendChild(rankHeader);
-
+    
             groupedCrew[rank].forEach(member => {
                 const entry = document.createElement('div');
                 entry.className = 'manifest-entry';
-                entry.innerHTML = `
-                    <div class="name">${member.name}</div>
-                    <div class="role"><span class="rank">${member.rank}</span>: ${member.role}</div>
-                `;
+                
+                // Create elements manually so we can reference them
+                const nameEl = document.createElement('div');
+                nameEl.className = 'name';
+                nameEl.textContent = member.name;
+    
+                const roleEl = document.createElement('div');
+                roleEl.className = 'role';
+                roleEl.innerHTML = `<span class="rank">${member.rank}</span>: ${member.role}`;
+    
+                // --- GLITCH LOGIC ---
+                // If we haven't messaged them, start the glitch
+                if (!state.messagedCrew.has(member.name)) {
+                    const glitch = new GlitchController(nameEl);
+                    glitch.start();
+                    manifestGlitches.push(glitch);
+                    
+                    // Optional: Also glitch the role for extra obscurity
+                    const roleGlitch = new GlitchController(roleEl);
+                    roleGlitch.start();
+                    manifestGlitches.push(roleGlitch);
+                }
+                // --------------------
+    
+                entry.appendChild(nameEl);
+                entry.appendChild(roleEl);
                 manifestList.appendChild(entry);
             });
         }
     }
-    
+
     function renderTerminal() {
         const programArea = document.getElementById('programArea');
         const serialNum = document.getElementById('serial') ? document.getElementById('serial').textContent : "AE-239A";
