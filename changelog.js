@@ -10,7 +10,9 @@ export const CHANGELOG_CONTENT = [
             "move book over a bit, add zoom",
             "pen flashlight, book page overlay from light to reveal",
             "should add glint when hovering over drawer handle",
-            "fix manifest department header glitching"
+            "fix manifest department header glitching",
+            "double resistor (terminal) lights up around the single resistor when correct one is placed",
+            "mobile support needs scaling"
         ]
     },
     {
