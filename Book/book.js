@@ -4,6 +4,11 @@ export function initializeBookSystem(el) {
     let bookPrev = el('bookPrev');
     let bookNext = el('bookNext');
     let pageNumberDisplay = el('pageNumber');
+    
+    // NEW: Maximize Elements
+    let bookMaximizeBtn = el('bookMaximizeBtn');
+    let bookWidget = document.querySelector('.book-widget'); // Use querySelector for safety
+    let isMaximized = false;
 
     // --- PageFlip Logic ---
     const updatePageControls = (pageFlip) => {
@@ -95,6 +100,64 @@ export function initializeBookSystem(el) {
             updatePageControls(pageFlipInstance);
         }
     };
+
+    // --- NEW: Maximize Logic (Fixed) ---
+    function toggleMaximize() {
+        // Ensure we have the widget
+        if(!bookWidget) bookWidget = document.querySelector('.book-widget');
+        if(!bookWidget) return;
+
+        isMaximized = !isMaximized;
+
+        if (isMaximized) {
+            // Enter Maximize Mode
+            document.body.classList.add('book-is-maximized');
+            if(bookMaximizeBtn) {
+                bookMaximizeBtn.innerHTML = '<i class="fas fa-compress"></i>';
+                bookMaximizeBtn.title = "Exit Fullscreen";
+            }
+            
+            // 1. Get exact current pixel size of the book
+            const baseW = bookWidget.offsetWidth;
+            const baseH = bookWidget.offsetHeight;
+
+            // 2. Define target size (90% of screen)
+            const targetW = window.innerWidth * 0.90;
+            const targetH = window.innerHeight * 0.90;
+
+            // 3. Calculate how much to scale
+            // If the book hasn't loaded fully yet, prevent division by zero
+            if (baseW > 0 && baseH > 0) {
+                const scaleW = targetW / baseW;
+                const scaleH = targetH / baseH;
+                const finalScale = Math.min(scaleW, scaleH);
+                
+                // 4. Apply Transform
+                // translate(-50%, -50%) centers it. scale(...) makes it big.
+                bookWidget.style.transform = `translate(-50%, -50%) scale(${finalScale})`;
+            }
+            
+        } else {
+            // Exit Maximize Mode
+            document.body.classList.remove('book-is-maximized');
+            if(bookMaximizeBtn) {
+                bookMaximizeBtn.innerHTML = '<i class="fas fa-expand"></i>';
+                bookMaximizeBtn.title = "Toggle Fullscreen Book";
+            }
+            
+            // Reset Transform
+            bookWidget.style.transform = '';
+        }
+    }
+
+    if (bookMaximizeBtn) {
+        bookMaximizeBtn.addEventListener('click', toggleMaximize);
+    }
+    
+    // Listen for Escape key to close
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isMaximized) toggleMaximize();
+    });
 
     // --- FLOATING NOTES SYSTEM ---
     const floatingNotes = new Map();
@@ -220,7 +283,6 @@ export function initializeBookSystem(el) {
 
             const container = el('floatingNotesContainer');
             if (container) container.appendChild(floatingNote);
-            // Fallback if container not found
             else document.body.appendChild(floatingNote);
 
             floatingNotes.set(noteId, floatingNote);
@@ -231,12 +293,16 @@ export function initializeBookSystem(el) {
         }
 
         if (bookWidget) {
-            const bookRect = bookWidget.getBoundingClientRect();
-            const relX = e.clientX - bookRect.left - dragOffsetX;
-            const relY = e.clientY - bookRect.top - dragOffsetY;
-
-            floatingNote.style.left = relX + 'px';
-            floatingNote.style.top = relY + 'px';
+             let currentScale = 1;
+             // Extract scale if present to correct mouse speed
+            if(bookWidget.style.transform && bookWidget.style.transform.includes('scale')) {
+                const match = bookWidget.style.transform.match(/scale\(([^)]+)\)/);
+                if(match) currentScale = parseFloat(match[1]);
+            }
+            
+            // Standard Drag
+            floatingNote.style.left = (e.clientX - dragOffsetX) + 'px';
+            floatingNote.style.top = (e.clientY - dragOffsetY) + 'px';
         } else {
             floatingNote.style.left = (e.clientX - dragOffsetX) + 'px';
             floatingNote.style.top = (e.clientY - dragOffsetY) + 'px';
