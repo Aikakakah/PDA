@@ -1596,26 +1596,92 @@ const state = {
             });
         }
 
-        if (btnStylus) {
-            btnStylus.addEventListener('click', () => {
-                state.stylus = !state.stylus;
-                btnStylus.setAttribute('aria-pressed', String(state.stylus));
-                document.body.classList.toggle('stylus-active', state.stylus);
-            });
-        }
+        /* --- GLOBAL MOUSE TRACKING --- */
+let mouseX = 0;
+let mouseY = 0;
 
-        document.addEventListener('contextmenu', (e) => {
+document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    if (state.stylus) requestAnimationFrame(updateStylusPosition);
+});
+
+function updateStylusPosition() {
+    const stylusProp = document.getElementById('stylusProp');
+    if (stylusProp && state.stylus) {
+        // Pivot around the tip with a slight natural tilt
+        stylusProp.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) rotate(15deg)`;
+    }
+}
+
+/* --- UPDATE STYLUS BUTTON LISTENER --- */
+if (btnStylus) {
+    btnStylus.addEventListener('click', () => {
+        state.stylus = !state.stylus;
+        
+        // UI Updates
+        btnStylus.setAttribute('aria-pressed', String(state.stylus));
+        document.body.classList.toggle('stylus-active', state.stylus);
+        
+        const stylusProp = document.getElementById('stylusProp');
+        const pdaFront = document.querySelector('.pda-front'); // The original container
+        
+        if (stylusProp && pdaFront) {
             if (state.stylus) {
-                e.preventDefault(); // Prevent the browser context menu
+                // --- ACTIVATE ---
+                // 1. Move element to BODY to escape PDA transforms
+                document.body.appendChild(stylusProp);
+                
+                // 2. Add classes for visual state
+                stylusProp.classList.add('tracking');
+                stylusProp.classList.add('ejected');
+                
+                // 3. Sync position immediately
+                updateStylusPosition();
+                
+                // Audio
+                const audio = new Audio('/Audio/click_fast.ogg');
+                audio.volume = 0.5;
+                audio.play().catch(()=>{}); 
+                
+            } else {
+                // --- DEACTIVATE ---
                 state.stylus = false;
-                
-                // Update Button UI
-                if (btnStylus) btnStylus.setAttribute('aria-pressed', 'false');
-                
-                // Update Visuals
                 document.body.classList.remove('stylus-active');
+                
+                if (stylusProp && pdaFront) {
+                    stylusProp.classList.remove('tracking');
+                    stylusProp.classList.remove('ejected');
+                    stylusProp.style.transform = ''; 
+                    
+                    // CHANGE THIS LINE: Use prepend instead of appendChild
+                    pdaFront.prepend(stylusProp); 
+                }
             }
-        });
+        }
+    });
+}
+
+// Ensure context menu cancellation puts it back correctly
+document.addEventListener('contextmenu', (e) => {
+    if (state.stylus) {
+        e.preventDefault(); 
+        state.stylus = false; // Reset state
+        
+        if (btnStylus) btnStylus.setAttribute('aria-pressed', 'false');
+        document.body.classList.remove('stylus-active');
+        
+        const stylusProp = document.getElementById('stylusProp');
+        const pdaFront = document.querySelector('.pda-front');
+        
+        if (stylusProp && pdaFront) {
+            stylusProp.classList.remove('tracking');
+            stylusProp.classList.remove('ejected');
+            stylusProp.style.transform = '';
+            pdaFront.appendChild(stylusProp); // Put it back home
+        }
+    }
+});
 
         if (btnFull && pda) {
             btnFull.addEventListener('click', () => {
