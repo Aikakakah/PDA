@@ -320,4 +320,35 @@
     /* The Mask: Transparent everywhere except the circle at X,Y */
     -webkit-mask-image: radial-gradient(circle var(--size) at var(--x) var(--y), black 100%, transparent 100%);
     mask-image: radial-gradient(circle var(--size) at var(--x) var(--y), black 100%, transparent 100%);
+
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+body.stylus-active .flashlight-container:hover .layer-reveal {
+  opacity: 1;
+  cursor: crosshair; /* Optional: Adds a target cursor to indicate interaction */
+}
+
+
+/* --- STYLUS MODE: DISABLE FLIPPING --- */
+
+/* 1. When stylus is active, ignore mouse interaction on the book pages.
+   This prevents the library from detecting hovers (curling corners) or clicks (flipping). */
+body.stylus-active .book-page,
+body.stylus-active .my-page {
+    pointer-events: none !important;
+}
+
+/* 2. Re-enable interaction specifically for the Flashlight layer 
+   so the mousemove effect still works. */
+body.stylus-active .flashlight-container {
+    pointer-events: auto !important;
+}
+
+/* 3. Re-enable interaction for Notes so they can still be dragged/closed 
+   if the user wants to reorganize while in Stylus mode. */
+body.stylus-active .book-note,
+body.stylus-active .floating-note {
+    pointer-events: auto !important;
 }

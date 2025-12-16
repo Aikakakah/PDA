@@ -1600,6 +1600,7 @@ const state = {
             btnStylus.addEventListener('click', () => {
                 state.stylus = !state.stylus;
                 btnStylus.setAttribute('aria-pressed', String(state.stylus));
+                document.body.classList.toggle('stylus-active', state.stylus);
             });
         }
 
