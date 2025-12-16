@@ -283,3 +283,41 @@
      opacity: 1;
      color: #d9534f;
  }
+
+
+ /* --- Flashlight/Reveal Effect for Page 2 --- */
+.flashlight-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* The bottom image (Blank/Dark) */
+.flashlight-container .layer-base {
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    display: block;
+}
+
+/* The top image (Light) - Masked */
+.flashlight-container .layer-reveal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    pointer-events: none; /* Allows clicks to pass through to the page/notes */
+    
+    /* CSS Variables for mouse position (updated by JS) */
+    --x: 50%;
+    --y: 50%;
+    --size: 120px; /* Size of the flashlight circle */
+
+    /* The Mask: Transparent everywhere except the circle at X,Y */
+    -webkit-mask-image: radial-gradient(circle var(--size) at var(--x) var(--y), black 100%, transparent 100%);
+    mask-image: radial-gradient(circle var(--size) at var(--x) var(--y), black 100%, transparent 100%);
+}

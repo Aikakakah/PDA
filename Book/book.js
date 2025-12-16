@@ -373,7 +373,28 @@ export function initializeBookSystem(el) {
         draggedNoteId = null;
     }
 
+    function initFlashlight() {
+        const pageContainer = document.getElementById('flashlightPage');
+        if (!pageContainer) return;
+    
+        const revealLayer = pageContainer.querySelector('.layer-reveal');
+    
+        pageContainer.addEventListener('mousemove', (e) => {
+            // Get the position of the page relative to the viewport
+            const rect = pageContainer.getBoundingClientRect();
+    
+            // Calculate mouse X and Y relative to the page
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+    
+            // Update CSS variables
+            revealLayer.style.setProperty('--x', `${x}px`);
+            revealLayer.style.setProperty('--y', `${y}px`);
+        });
+    }
+
     // Initialize Logic
     initializePageFlip();
     initializeBookNotes();
+    initFlashlight();
 }
