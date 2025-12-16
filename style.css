@@ -548,6 +548,24 @@ body.stylus-active * {
     cursor: none !important;
 }
 
+body.stylus-active {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 2. Disable all mouse events on the UI when the light is ON */
+/* We target everything (*) but ensure the stylus itself isn't affected 
+ so it can still track the mouse move. */
+body.stylus-active.light-on * {
+  pointer-events: none !important;
+}
+
+/* 3. Re-enable pointer events for the stylus specifically 
+    (though it should already have them handled) */
+#stylusProp {
+  pointer-events: none; /* The physical prop never intercepts clicks */
+}
+
 .physical-stylus.tracking {
   position: fixed;
   top: 0;
@@ -562,3 +580,33 @@ body.stylus-active * {
   transform-origin: bottom center;
   will-change: transform;
 }
+
+/* The Light Beam Effect */
+.stylus-beam {
+    position: absolute;
+    bottom: -10px; /* Positioned right at the tip */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;  /* Size of the light splash */
+    height: 300px;
+    
+    /* A soft blue/white radial glow */
+    background: radial-gradient(
+        circle, 
+        rgba(173, 216, 230, 0.4) 0%, 
+        rgba(173, 216, 230, 0.1) 40%, 
+        transparent 70%
+    );
+    
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    mix-blend-mode: screen; /* Makes it glow against the background */
+    z-index: -1; /* Sits behind the pen but above the screen */
+}
+
+/* Show beam when the 'lighting' class is added to the stylus */
+.physical-stylus.lighting .stylus-beam {
+    opacity: 1;
+}
+

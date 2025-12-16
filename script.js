@@ -1662,6 +1662,41 @@ if (btnStylus) {
     });
 }
 
+document.addEventListener('dragstart', (e) => {
+    if (state.stylus) {
+        e.preventDefault();
+        return false;
+    }
+});
+
+document.addEventListener('mousedown', (e) => {
+    if (state.stylus && e.button === 0) {
+        // Prevent the browser from starting a selection or drag
+        e.preventDefault(); 
+        
+        const stylusProp = document.getElementById('stylusProp');
+        if (stylusProp) {
+            stylusProp.classList.add('lighting');
+            document.body.classList.add('light-on');
+            
+            // Audio feedback
+            const audio = new Audio('/Audio/shutter.ogg');
+            audio.volume = 0.2;
+            audio.play().catch(()=>{});
+        }
+    }
+}, { passive: false });
+
+
+document.addEventListener('mouseup', () => {
+    const stylusProp = document.getElementById('stylusProp');
+    if (stylusProp) {
+        stylusProp.classList.remove('lighting');
+    }
+    // NEW: Remove class from body to restore interaction
+    document.body.classList.remove('light-on');
+});
+
 // Ensure context menu cancellation puts it back correctly
 document.addEventListener('contextmenu', (e) => {
     if (state.stylus) {
@@ -1680,6 +1715,8 @@ document.addEventListener('contextmenu', (e) => {
             stylusProp.style.transform = '';
             pdaFront.appendChild(stylusProp); // Put it back home
         }
+        document.body.classList.remove('light-on'); // Safety cleanup
+        if (stylusProp) stylusProp.classList.remove('lighting');
     }
 });
 
