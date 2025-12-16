@@ -41,6 +41,21 @@ export function initializeBookSystem(el) {
     const initializePageFlip = () => {
         const bookEl = el('book');
         if (!bookEl) return;
+        
+        const handleInteractionBlock = (e) => {
+            if (document.body.classList.contains('stylus-active')) {
+                if (e.target.closest('.book-note') || 
+                    e.target.closest('.floating-note') || 
+                    e.target.closest('button') ||
+                    e.target.closest('input')) {
+                    return; 
+                }
+                e.stopPropagation();
+            }
+        };
+
+        bookEl.addEventListener('mousedown', handleInteractionBlock, true);
+        bookEl.addEventListener('touchstart', handleInteractionBlock, true);
 
         const rootStyle = getComputedStyle(document.documentElement);
         const bookWidth = parseFloat(rootStyle.getPropertyValue('--book-width'));
@@ -69,7 +84,10 @@ export function initializeBookSystem(el) {
                 drawShadow: true,
                 maxShadowOpacity: 0.5,
                 showCover: true,
-                flippingTime: 700
+                flippingTime: 700,
+                cornerSize: 15,
+                swipeDistance: 10,
+                disableFlipByClick: true
             });
         } else {
             pageFlip = new St.PageFlip(bookEl, {
@@ -80,7 +98,9 @@ export function initializeBookSystem(el) {
                 drawShadow: true,
                 maxShadowOpacity: 0.35,
                 showCover: true,
-                flippingTime: 700
+                flippingTime: 700,
+                cornerSize: 15,
+                disableFlipByClick: true
             });
         }
 
