@@ -1604,6 +1604,19 @@ const state = {
             });
         }
 
+        document.addEventListener('contextmenu', (e) => {
+            if (state.stylus) {
+                e.preventDefault(); // Prevent the browser context menu
+                state.stylus = false;
+                
+                // Update Button UI
+                if (btnStylus) btnStylus.setAttribute('aria-pressed', 'false');
+                
+                // Update Visuals
+                document.body.classList.remove('stylus-active');
+            }
+        });
+
         if (btnFull && pda) {
             btnFull.addEventListener('click', () => {
                 if (!document.fullscreenElement) {
