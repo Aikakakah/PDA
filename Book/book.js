@@ -27,6 +27,14 @@ export function initializeBookSystem(el) {
         const currentPageIndex = pageFlip.getCurrentPageIndex ? pageFlip.getCurrentPageIndex() : 0;
         const pageCount = pageFlip.getPageCount ? pageFlip.getPageCount() : 0;
 
+        if (bookWidget) {
+            if (currentPageIndex === 0) {
+                bookWidget.classList.add('on-cover');
+            } else {
+                bookWidget.classList.remove('on-cover');
+            }
+        }
+        
         if (pageNumberDisplay) {
             if (currentPageIndex === 0) {
                 pageNumberDisplay.textContent = 'Cover';
@@ -121,52 +129,101 @@ export function initializeBookSystem(el) {
         }
     };
 
-    // --- NEW: Maximize Logic (Fixed) ---
+    // --- Maximize book ---
     function toggleMaximize() {
-        // Ensure we have the widget
         if(!bookWidget) bookWidget = document.querySelector('.book-widget');
         if(!bookWidget) return;
 
         isMaximized = !isMaximized;
 
         if (isMaximized) {
-            // Enter Maximize Mode
+            const startRect = bookWidget.getBoundingClientRect();
+            
+            let spacer = document.getElementById('book-spacer');
+            if(!spacer) {
+                spacer = document.createElement('div');
+                spacer.id = 'book-spacer';
+                
+                // --- FIX: Copy layout styles so the landing spot is accurate ---
+                const computed = window.getComputedStyle(bookWidget);
+                spacer.style.width = computed.width;
+                spacer.style.height = computed.height;
+                spacer.style.left = computed.left;
+                spacer.style.top = computed.top;
+                spacer.style.position = computed.position;
+                spacer.style.margin = computed.margin;
+                spacer.style.display = computed.display;
+                spacer.style.flexDirection = computed.flexDirection;
+                // -----------------------------------------------------------
+
+                bookWidget.parentNode.insertBefore(spacer, bookWidget);
+            }
+
             document.body.classList.add('book-is-maximized');
+            
+            const screenCenterX = window.innerWidth / 2;
+            const screenCenterY = window.innerHeight / 2;
+            const startCenterX = startRect.left + (startRect.width / 2);
+            const startCenterY = startRect.top + (startRect.height / 2);
+            
+            const initialX = startCenterX - screenCenterX;
+            const initialY = startCenterY - screenCenterY;
+            
+            const originalTransition = getComputedStyle(bookWidget).transition;
+            bookWidget.style.transition = 'none';
+            bookWidget.style.transform = `translate(calc(-50% + ${initialX}px), calc(-50% + ${initialY}px)) scale(1)`;
+            
+            bookWidget.offsetHeight; 
+            bookWidget.style.transition = originalTransition;
+            
             if(bookMaximizeBtn) {
                 bookMaximizeBtn.innerHTML = '<i class="fas fa-compress"></i>';
-                bookMaximizeBtn.title = "Exit Fullscreen";
             }
             
-            // 1. Get exact current pixel size of the book
-            const baseW = bookWidget.offsetWidth;
-            const baseH = bookWidget.offsetHeight;
-
-            // 2. Define target size (90% of screen)
             const targetW = window.innerWidth * 0.90;
             const targetH = window.innerHeight * 0.90;
-
-            // 3. Calculate how much to scale
-            // If the book hasn't loaded fully yet, prevent division by zero
-            if (baseW > 0 && baseH > 0) {
-                const scaleW = targetW / baseW;
-                const scaleH = targetH / baseH;
-                const finalScale = Math.min(scaleW, scaleH);
-                
-                // 4. Apply Transform
-                // translate(-50%, -50%) centers it. scale(...) makes it big.
-                bookWidget.style.transform = `translate(-50%, -50%) scale(${finalScale})`;
-            }
+            const scaleW = targetW / bookWidget.offsetWidth;
+            const scaleH = targetH / bookWidget.offsetHeight;
+            const finalScale = Math.min(scaleW, scaleH);
+            
+            bookWidget.style.transform = `translate(-50%, -50%) scale(${finalScale})`;
             
         } else {
-            // Exit Maximize Mode
-            document.body.classList.remove('book-is-maximized');
-            if(bookMaximizeBtn) {
-                bookMaximizeBtn.innerHTML = '<i class="fas fa-expand"></i>';
-                bookMaximizeBtn.title = "Toggle Fullscreen Book";
+            // --- SHRINK LOGIC ---
+            const spacer = document.getElementById('book-spacer');
+            if (!spacer) {
+                document.body.classList.remove('book-is-maximized');
+                bookWidget.style.transform = '';
+                return;
             }
+
+            // Now the spacer is correctly offset by 50px, so this measurement is accurate
+            const targetRect = spacer.getBoundingClientRect();
+            const screenCenterX = window.innerWidth / 2;
+            const screenCenterY = window.innerHeight / 2;
+            const targetCenterX = targetRect.left + (targetRect.width / 2);
+            const targetCenterY = targetRect.top + (targetRect.height / 2);
             
-            // Reset Transform
-            bookWidget.style.transform = '';
+            const finalX = targetCenterX - screenCenterX;
+            const finalY = targetCenterY - screenCenterY;
+            
+            bookWidget.style.transform = `translate(calc(-50% + ${finalX}px), calc(-50% + ${finalY}px)) scale(1)`;
+            
+            setTimeout(() => {
+                if (!isMaximized) {
+                    bookWidget.style.transition = 'none';
+                    document.body.classList.remove('book-is-maximized');
+                    bookWidget.style.transform = '';
+                    spacer.remove();
+
+                    void bookWidget.offsetHeight; 
+                    bookWidget.style.transition = ''; 
+                    
+                    if(bookMaximizeBtn) {
+                        bookMaximizeBtn.innerHTML = '<i class="fas fa-expand"></i>';
+                    }
+                }
+            }, 400); 
         }
     }
 

@@ -6,16 +6,21 @@
     flex-direction: column;
     width: var(--book-width);
     height: var(--book-height);
-    /* Remove max-width/height constraints here to allow free scaling via transform */
-    /* max-width: calc(100vw - 80px); */
-    /* max-height: calc(100vh - 100px); */
+    left: 50px;
     border-radius: 2px;
     padding: 2px;
     position: relative; 
     z-index: 2;
-    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* Smooth Zoom */
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), clip-path 0.4s ease;;
     transform-origin: center center;
  }
+
+ .book-widget.on-cover {
+  clip-path: inset(0 0 0 50%);
+}
+.book-widget.on-back-cover {
+  clip-path: inset(0 50% 0 0);
+}
 
  /* --- NEW: Maximize Button Styling --- */
  .book-max-btn {
@@ -48,9 +53,8 @@
      position: fixed !important;
      top: 50% !important;
      left: 50% !important;
-     /* Transform is handled by JS for precise calc, but we ensure overrides here */
      z-index: 9999 !important;
-     box-shadow: 0 0 50px rgba(0,0,0,0.8);
+     /* box-shadow: 0 0 50px rgba(0,0,0,0.8); */
  }
 
  body.book-is-maximized::after {
