@@ -49,11 +49,24 @@
  }
 
  /* --- NEW: Maximized State (Applied to Body or Parent) --- */
+ .book-widget.maximized {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) scale(1) translateZ(1000px) !important; /* Force to front */
+  width: 95vw !important;
+  height: 95vh !important;
+  z-index: 99999 !important;
+  transition: all 0.5s ease-in-out;
+}
+.book-widget.maximized .book-page {
+  pointer-events: auto !important;
+}
  body.book-is-maximized .book-widget {
      position: fixed !important;
      top: 50% !important;
      left: 50% !important;
-     z-index: 9999 !important;
+     z-index: 10000 !important;
      /* box-shadow: 0 0 50px rgba(0,0,0,0.8); */
  }
 
@@ -63,9 +76,18 @@
      inset: 0;
      background: rgba(0,0,0,0.85);
      backdrop-filter: blur(5px);
-     z-index: 9990;
+     z-index: 9000 !important;
      animation: fadeIn 0.3s ease;
  }
+ body.book-is-maximized #cubeWrapper {
+  z-index: 9500 !important;
+}
+body.book-is-maximized .book-widget {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  z-index: 10000 !important;
+}
  
  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 

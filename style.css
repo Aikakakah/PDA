@@ -70,7 +70,7 @@ body {
   position: absolute;
   width: 100%;
   height: 100%;
-  backface-visibility: hidden;
+  /* backface-visibility: hidden; */
   
   display: flex;
   justify-content: center;
@@ -79,7 +79,18 @@ body {
   gap: 60px;
   transform: rotateX(0deg) translateZ(-50vh); 
 }
+/* When the book is fullscreen, we need to make sure parents don't clip it */
+/* body.book-is-maximized .transition-wrapper,
+body.book-is-maximized .second-page-container {
+    overflow: visible !important;
+    clip-path: none !important;
+    z-index: 9999; 
+} */
 
+/* Prevent the pan-up animation from interfering with the fullscreen view */
+/* body.book-is-maximized .main-content-face {
+    visibility: hidden;
+} */
 .main-content-face,
 .second-page-container,
 .pan-button {
