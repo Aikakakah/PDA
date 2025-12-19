@@ -7,12 +7,22 @@ export const CHANGELOG_CONTENT = [
         changes: [
             "name change should not reset progress, but have other button to reset",
             "fix sandystars, add better glitching, story",
-            "move book over a bit, add zoom",
-            "pen flashlight, book page overlay from light to reveal",
+            "move book over a bit",
+            "constantly sending requests to server, should only trigger when terminal command is sent",
             "should add glint when hovering over drawer handle",
             "fix manifest department header glitching",
             "double resistor (terminal) lights up around the single resistor when correct one is placed",
-            "mobile support needs scaling"
+            "mobile support needs scaling",
+            "add textures to pda",
+            "constrain shine"
+        ]
+    },
+    {
+        version: "0.0.3",
+        date: "2655-12-19",
+        changes: [
+            "Added working stylus with light",
+            "Added book zoom",
         ]
     },
     {

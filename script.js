@@ -306,10 +306,10 @@ const state = {
     let views = {};
     let tabs = null;
     let programGrid = null;
-    let btnLight = null;
+    let btnEject = null;
     let btnStylus = null;
     let btnFull = null;
-    let btnEject = null;
+    let btnPower = null;
     let powerOverlay = null;
     let powerOn = null;
     let programArea = null;
@@ -1410,10 +1410,10 @@ const state = {
         };
         tabs = document.querySelectorAll('.nav-btn');
         programGrid = el('programGrid');
-        btnLight = el('btn-light');
+        btnEject = el('btn-eject');
         btnStylus = el('btn-stylus');
         btnFull = el('btn-full');
-        btnEject = el('btn-eject');
+        btnPower = el('btn-power');
         powerOverlay = el('powerOverlay');
         powerOn = el('powerOn');
         programArea = el('programArea');
@@ -1597,129 +1597,125 @@ const state = {
         }
 
         /* --- GLOBAL MOUSE TRACKING --- */
-let mouseX = 0;
-let mouseY = 0;
+        let mouseX = 0;
+        let mouseY = 0;
 
-document.addEventListener('mousemove', (e) => {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
-    if (state.stylus) requestAnimationFrame(updateStylusPosition);
-});
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            if (state.stylus) requestAnimationFrame(updateStylusPosition);
+        });
 
-function updateStylusPosition() {
-    const stylusProp = document.getElementById('stylusProp');
-    if (stylusProp && state.stylus) {
-        // Pivot around the tip with a slight natural tilt
-        stylusProp.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) rotate(15deg)`;
-    }
-}
+        function updateStylusPosition() {
+            const stylusProp = document.getElementById('stylusProp');
+            if (stylusProp && state.stylus) {
+                stylusProp.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) rotate(15deg)`;
+            }
+        }
 
-/* --- UPDATE STYLUS BUTTON LISTENER --- */
-if (btnStylus) {
-    btnStylus.addEventListener('click', () => {
-        state.stylus = !state.stylus;
-        
-        // UI Updates
-        btnStylus.setAttribute('aria-pressed', String(state.stylus));
-        document.body.classList.toggle('stylus-active', state.stylus);
-        
-        const stylusProp = document.getElementById('stylusProp');
-        const pdaFront = document.querySelector('.pda-front'); // The original container
-        
-        if (stylusProp && pdaFront) {
+        /* --- UPDATE STYLUS BUTTON LISTENER --- */
+        if (btnStylus) {
+            btnStylus.addEventListener('click', () => {
+                state.stylus = !state.stylus;
+                
+                // UI Updates
+                btnStylus.setAttribute('aria-pressed', String(state.stylus));
+                document.body.classList.toggle('stylus-active', state.stylus);
+                
+                const stylusProp = document.getElementById('stylusProp');
+                const pdaFront = document.querySelector('.pda-front'); // The original container
+                
+                if (stylusProp && pdaFront) {
+                    if (state.stylus) {
+                        // --- ACTIVATE ---
+                        // 1. Move element to BODY to escape PDA transforms
+                        document.body.appendChild(stylusProp);
+                        
+                        // 2. Add classes for visual state
+                        stylusProp.classList.add('tracking');
+                        stylusProp.classList.add('ejected');
+                        
+                        // 3. Sync position immediately
+                        updateStylusPosition();
+                        
+                        // Audio
+                        const audio = new Audio('/Audio/click_fast.ogg');
+                        audio.volume = 0.5;
+                        audio.play().catch(()=>{}); 
+                        
+                    } else {
+                        // --- DEACTIVATE ---
+                        state.stylus = false;
+                        document.body.classList.remove('stylus-active');
+                        
+                        if (stylusProp && pdaFront) {
+                            stylusProp.classList.remove('tracking');
+                            stylusProp.classList.remove('ejected');
+                            stylusProp.style.transform = ''; 
+                            pdaFront.prepend(stylusProp); 
+                        }
+                    }
+                }
+            });
+        }
+
+        document.addEventListener('dragstart', (e) => {
             if (state.stylus) {
-                // --- ACTIVATE ---
-                // 1. Move element to BODY to escape PDA transforms
-                document.body.appendChild(stylusProp);
-                
-                // 2. Add classes for visual state
-                stylusProp.classList.add('tracking');
-                stylusProp.classList.add('ejected');
-                
-                // 3. Sync position immediately
-                updateStylusPosition();
-                
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        window.addEventListener('mousedown', (e) => {
+            if (state.stylus && e.button === 0) {
+                const stylusProp = document.getElementById('stylusProp');
+                if (stylusProp) {
+                    stylusProp.classList.add('lighting');
+                    document.body.classList.add('light-on');
+                }
+                if (e.target.closest('.book-widget')) {
+                    e.preventDefault();
+                }
                 // Audio
-                const audio = new Audio('/Audio/click_fast.ogg');
-                audio.volume = 0.5;
-                audio.play().catch(()=>{}); 
-                
-            } else {
-                // --- DEACTIVATE ---
+                const audio = new Audio('/Audio/shutter.ogg');
+                audio.volume = 0.2;
+                audio.play().catch(()=>{});
+            }
+        }, true);
+
+
+        document.addEventListener('mouseup', () => {
+            const stylusProp = document.getElementById('stylusProp');
+            if (stylusProp) {
+                stylusProp.classList.remove('lighting');
+            }
+            document.body.classList.remove('light-on');
+        });
+
+        // Ensure context menu cancellation puts it back correctly
+        document.addEventListener('contextmenu', (e) => {
+            if (state.stylus) {
+                e.preventDefault(); 
                 state.stylus = false;
+                
+                if (btnStylus) btnStylus.setAttribute('aria-pressed', 'false');
                 document.body.classList.remove('stylus-active');
+                
+                const stylusProp = document.getElementById('stylusProp');
+                const pdaFront = document.querySelector('.pda-front');
                 
                 if (stylusProp && pdaFront) {
                     stylusProp.classList.remove('tracking');
                     stylusProp.classList.remove('ejected');
-                    stylusProp.style.transform = ''; 
-                    
-                    // CHANGE THIS LINE: Use prepend instead of appendChild
-                    pdaFront.prepend(stylusProp); 
+                    stylusProp.style.transform = '';
+                    pdaFront.prepend(stylusProp);
                 }
+                document.body.classList.remove('light-on');
+                if (stylusProp) stylusProp.classList.remove('lighting');
             }
-        }
-    });
-}
+        });
 
-document.addEventListener('dragstart', (e) => {
-    if (state.stylus) {
-        e.preventDefault();
-        return false;
-    }
-});
-
-document.addEventListener('mousedown', (e) => {
-    if (state.stylus && e.button === 0) {
-        // Prevent the browser from starting a selection or drag
-        e.preventDefault(); 
-        
-        const stylusProp = document.getElementById('stylusProp');
-        if (stylusProp) {
-            stylusProp.classList.add('lighting');
-            document.body.classList.add('light-on');
-            
-            // Audio feedback
-            const audio = new Audio('/Audio/shutter.ogg');
-            audio.volume = 0.2;
-            audio.play().catch(()=>{});
-        }
-    }
-}, { passive: false });
-
-
-document.addEventListener('mouseup', () => {
-    const stylusProp = document.getElementById('stylusProp');
-    if (stylusProp) {
-        stylusProp.classList.remove('lighting');
-    }
-    // NEW: Remove class from body to restore interaction
-    document.body.classList.remove('light-on');
-});
-
-// Ensure context menu cancellation puts it back correctly
-document.addEventListener('contextmenu', (e) => {
-    if (state.stylus) {
-        e.preventDefault(); 
-        state.stylus = false; // Reset state
-        
-        if (btnStylus) btnStylus.setAttribute('aria-pressed', 'false');
-        document.body.classList.remove('stylus-active');
-        
-        const stylusProp = document.getElementById('stylusProp');
-        const pdaFront = document.querySelector('.pda-front');
-        
-        if (stylusProp && pdaFront) {
-            stylusProp.classList.remove('tracking');
-            stylusProp.classList.remove('ejected');
-            stylusProp.style.transform = '';
-            pdaFront.appendChild(stylusProp); // Put it back home
-        }
-        document.body.classList.remove('light-on'); // Safety cleanup
-        if (stylusProp) stylusProp.classList.remove('lighting');
-    }
-});
-
+        /* --- FULLSCREEN BUTTON --- */
         if (btnFull && pda) {
             btnFull.addEventListener('click', () => {
                 if (!document.fullscreenElement) {
@@ -1818,11 +1814,12 @@ document.addEventListener('contextmenu', (e) => {
             turnOffScreen();
         }
 
-        // if (btnEject) {
-        //     btnEject.addEventListener('click', () => {
-        //         turnOffScreen();
-        //     });
-        // }
+        if (btnPower) {
+            btnPower.addEventListener('click', () => {
+                turnOffScreen();
+            });
+        }
+
         if (btnEject) {
             btnEject.addEventListener('click', () => {
                 if (identityModal) {

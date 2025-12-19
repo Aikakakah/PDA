@@ -290,6 +290,7 @@
 
  /* --- Flashlight/Reveal Effect for Page 2 --- */
 .flashlight-container {
+    pointer-events: auto !important;
     position: relative;
     width: 100%;
     height: 100%;
@@ -306,28 +307,43 @@
 
 /* The top image (Light) - Masked */
 .flashlight-container .layer-reveal {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    pointer-events: none;
-    --x: 50%;
-    --y: 50%;
-    --size: 120px;
-    -webkit-mask-image: radial-gradient(circle var(--size) at var(--x) var(--y), black 100%, transparent 100%);
-    mask-image: radial-gradient(circle var(--size) at var(--x) var(--y), black 100%, transparent 100%);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  --x: 50%;
+  --y: 50%;
+  --size: 120px;
+  pointer-events: none !important;
+  /* Standard mask settings */
+  -webkit-mask-image: radial-gradient(circle var(--size) at var(--x) var(--y), black 0%, black 40%, transparent 70%);
+  mask-image: radial-gradient(circle var(--size) at var(--x) var(--y), black 0%, black 40%, transparent 70%);
 
-    opacity: 0;
-    transition: opacity 0.2s ease;
+  opacity: 0;
+  /* mix-blend-mode: screen; */
+  transition: opacity 0.1s ease;
 }
 
-body.stylus-active .flashlight-container:hover .layer-reveal {
+body.stylus-active.light-on .flashlight-container:hover .layer-reveal {
   opacity: 1;
-  cursor: crosshair; /* Optional: Adds a target cursor to indicate interaction */
+  cursor: none;
 }
+body.stylus-active.light-on .flashlight-container {
+  pointer-events: auto !important;
+}
+
+.flashlight-container img, 
+.flashlight-container .layer-base {
+    pointer-events: none !important;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+
 
 
 /* --- STYLUS MODE: DISABLE FLIPPING --- */
