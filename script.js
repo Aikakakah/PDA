@@ -200,6 +200,9 @@ function applyNewHash(input) {
 // Global State Declaration
 const savedIdentity = localStorage.getItem('pda_user_identity');
 const defaultOwner = "Ramona Orthall";
+const cubeWrapper = document.getElementById('cubeWrapper');
+const panUpBtn = document.getElementById('panUpBtn');
+const panDownBtn = document.getElementById('panDownBtn');
 
 const state = {
     owner: defaultOwner,
@@ -1395,7 +1398,7 @@ const state = {
             }
         });
     }
-    
+
     document.addEventListener('DOMContentLoaded', async () => {
         await loadBookMarkup('book-injection-point', './Book/book.html');
         await loadCircuitMarkup('circuit-injection-point', './Circuit/circuit.html');
@@ -1883,22 +1886,6 @@ const state = {
         initializeBookSystem(el);
         initializeShineEffect();
         initializeDraggableItems();
-
-        const panDownBtn = el('panDownBtn');
-        const panDownButtons = document.querySelectorAll('.pan-down');
-        const panUpBtn = el('panUpBtn');
-        const secondPageContainer = el('secondPageContainer');
-    
-        if (panDownButtons && panDownButtons.length) {
-            panDownButtons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    if (secondPageContainer) {
-                        secondPageContainer.classList.remove('hidden');
-                        secondPageContainer.classList.add('active');
-                    }
-                });
-            });
-        }
     
         (function() {
             const drawerButtons = document.querySelectorAll('.drawer-button.top-right-drawer');
@@ -2239,5 +2226,18 @@ const state = {
                 document.addEventListener('mouseup', onMouseUp);
             });
         });
+
+        // This logic connects the buttons to the CSS transitions
+        if (panUpBtn && panDownBtn && cubeWrapper) {
+            // Button on the Main Face: Rotate DOWN to show the second page
+            panUpBtn.addEventListener('click', () => {
+                cubeWrapper.classList.add('pan-up');
+            });
+
+            // Button on the Second Page: Rotate back UP to the main face
+            panDownBtn.addEventListener('click', () => {
+                cubeWrapper.classList.remove('pan-up');
+            });
+        }
     }
 })();

@@ -14,7 +14,8 @@ export const CHANGELOG_CONTENT = [
             "mobile support needs scaling",
             "add textures to pda",
             "ID card flickers out, fix this glitch",
-            "fix ringtone modal"
+            "fix ringtone modal",
+            "add corkboard to upper desk for discarded notes"
         ]
     },
     {
@@ -26,6 +27,7 @@ export const CHANGELOG_CONTENT = [
             "Constrained shine effect",
             "Fixed book zoom",
             "Moved book over a bit",
+            "Added panning"
         ]
     },
     {
