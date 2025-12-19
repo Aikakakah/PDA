@@ -14,7 +14,7 @@ export const CHANGELOG_CONTENT = [
             "double resistor (terminal) lights up around the single resistor when correct one is placed",
             "mobile support needs scaling",
             "add textures to pda",
-            "constrain shine"
+            "ID card flickers out, fix this glitch"
         ]
     },
     {
@@ -23,6 +23,7 @@ export const CHANGELOG_CONTENT = [
         changes: [
             "Added working stylus with light",
             "Added book zoom",
+            "Constrained shine effect"
         ]
     },
     {
