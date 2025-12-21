@@ -98,7 +98,6 @@ body.book-is-maximized .book-widget {
      transition: opacity 0.3s;
  }
 
- /* EXISTING STYLES BELOW... */
  .book-page {
     flex-grow: 1;
     position: relative; 
@@ -200,6 +199,7 @@ body.book-is-maximized .book-widget {
  /* --- Book Notes Styling --- */
  .book-note {
      position: absolute;
+     z-index: 10;
      width: 80px;
      height: 80px;
      left: 20px; 
@@ -209,23 +209,24 @@ body.book-is-maximized .book-widget {
      border: 1px solid #ddd;
      border-radius: 2px;
      padding: 8px;
-     font-size: 12px;
      color: #333;
      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
      cursor: grab;
      user-select: none;
      transition: opacity 0.2s; 
      overflow: hidden;
-     text-overflow: ellipsis;
-     white-space: pre-wrap;
-     word-break: break-word;
      display: flex;
      align-items: center;
      justify-content: center;
+
+     text-overflow: ellipsis;
+     white-space: pre-wrap;
+     word-break: break-word;
+
      text-align: center;
-     font-family: 'Comic Sans MS', cursive;
-     font-weight: bold;
-     z-index: 10;
+     font-family: 'Caveat';
+     font-weight: 500;
+     font-size: 18px;
  }
  
  .book-note:hover {
@@ -256,23 +257,26 @@ body.book-is-maximized .book-widget {
      height: 80px;
      transform: none;
      background: linear-gradient(135deg, #fffacd 0%, #ffffe0 100%);
-     /* border: 2px solid #f0c674; */
      border: 1px solid #ddd;
      border-radius: 2px;
      padding: 8px;
-     font-size: 12px;
      color: #333;
      box-shadow: 0 15px 30px rgba(0,0,0,0.4); 
      cursor: grab;
-     /* transform: scale(1.1); */
+     user-select: none;
+     overflow: hidden;
      display: flex;
      align-items: center;
      justify-content: center;
+
+     text-overflow: ellipsis;
+     white-space: pre-wrap;
+     word-break: break-word;
+
      text-align: center;
-     font-family: 'Comic Sans MS', cursive;
-     font-weight: bold;
-     user-select: none;
-     /* box-sizing: border-box; */
+     font-family: 'Caveat';
+     font-weight: 500;
+     font-size: 18px;
  }
  
  .floating-note:active {
@@ -319,7 +323,7 @@ body.book-is-maximized .book-widget {
   right: 2px;
   width: 18px;
   height: 18px;
-  background: rgba(0,0,0,0.05);
+  background: transparent;
   border: none;
   border-radius: 3px;
   cursor: pointer;
@@ -339,7 +343,7 @@ body.book-is-maximized .book-widget {
 
 .flying-to-board {
   pointer-events: none;
-  z-index: 20000; /* Above everything */
+  z-index: 20000;
 }
 .flying-to-book {
   pointer-events: none;
@@ -351,45 +355,34 @@ body.book-is-maximized .book-widget {
 /* --- Pinned Note on Corkboard --- */
 .pinned-note {
   position: absolute;
-  width: 100px;
-  min-height: 100px;
+  width: 80px;
+  height: 80px;
   background: linear-gradient(135deg, #fffacd 0%, #fdf5e6 100%);
-  box-shadow: 2px 5px 15px rgba(0,0,0,0.3);
-  padding: 15px 10px 10px 10px;
-  font-family: 'Comic Sans MS', cursive;
-  font-size: 13px;
+  border: 1px solid #ddd;
+  border-radius: 2px;
+  padding: 8px;
   color: #333;
+  box-shadow: 2px 5px 15px rgba(0,0,0,0.3);
   display: flex;
   align-items: center;
   justify-content: center;
+  user-select: none;
+
+  text-overflow: ellipsis;
+  white-space: pre-wrap;
+  word-break: break-word;
+
   text-align: center;
-  border-bottom-right-radius: 15px 3px; 
+  font-family: 'Caveat';
+  font-weight: 500;
+  font-size: 18px;
+
   animation: pinDrop 0.3s ease-out;
 }
 
 @keyframes pinDrop {
   from { transform: scale(2) rotate(0deg); opacity: 0; }
   to { opacity: 1; }
-}
-
-/* The visual push-pin icon */
-.pinned-note {
-  position: absolute;
-  width: 100px;
-  min-height: 100px;
-  background: linear-gradient(135deg, #fffacd 0%, #fdf5e6 100%);
-  box-shadow: 2px 5px 15px rgba(0,0,0,0.3);
-  padding: 15px 10px 10px 10px;
-  font-family: 'Comic Sans MS', cursive;
-  font-size: 13px;
-  color: #333;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  border-bottom-right-radius: 15px 3px; 
-  cursor: default;
-  user-select: none;
 }
 
 /* The visual push-pin icon - NOW DRAGGABLE */
