@@ -14,8 +14,7 @@ export const CHANGELOG_CONTENT = [
             "mobile support needs scaling",
             "add textures to pda",
             "ID card flickers out, fix this glitch",
-            "fix ringtone modal",
-            "add corkboard to upper desk for discarded notes"
+            "fix ringtone modal"
         ]
     },
     {
@@ -23,6 +22,7 @@ export const CHANGELOG_CONTENT = [
         date: "2655-12-21",
         changes: [
             "Added corkboard (CHANGE IMAGE)",
+            "Added pinnable notes"
         ]
     },
     {

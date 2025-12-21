@@ -242,230 +242,196 @@ export function initializeBookSystem(el) {
     let dragOffsetX = 0;
     let dragOffsetY = 0;
 
-  
+    function initializeBookNotes() {
+        const bookNotes = document.querySelectorAll('.book-note');
+        bookNotes.forEach(note => {
+            if (!note.querySelector('.note-pin-btn')) {
+                addPinButtonToNote(note);
+            }
 
-// Inside initializeBookSystem(el) in book.js
-
-function initializeBookNotes() {
-    const bookNotes = document.querySelectorAll('.book-note');
-
-    bookNotes.forEach(note => {
-        if (!note.querySelector('.note-pin-btn')) {
-            const pinBtn = document.createElement('button');
-            pinBtn.className = 'note-pin-btn';
-            pinBtn.innerHTML = '✕';
-            pinBtn.title = "Pin to corkboard";
-            
-            pinBtn.addEventListener('click', (e) => {
+            note.addEventListener('mousedown', (e) => {
+                if (e.button !== 0 || e.target.classList.contains('note-pin-btn')) return;
                 e.preventDefault();
                 e.stopPropagation();
-                animateNoteToCorkboard(note);
+                createFloatingNoteFrom(note, e.clientX, e.clientY);
             });
-            note.appendChild(pinBtn);
-        }
-
-        note.addEventListener('mousedown', (e) => {
-            if (e.button !== 0 || e.target.classList.contains('note-pin-btn')) return;
+        });
+    }
+    function getCleanNoteText(noteEl) {
+        const clone = noteEl.cloneNode(true);
+        const pinBtn = clone.querySelector('.note-pin-btn');
+        if (pinBtn) pinBtn.remove();
+        return clone.textContent.trim();
+    }
+    
+    function addPinButtonToNote(noteEl) {
+        if (noteEl.querySelector('.note-pin-btn')) return;
+        const pinBtn = document.createElement('button');
+        pinBtn.className = 'note-pin-btn';
+        pinBtn.innerHTML = '✕';
+        pinBtn.title = "Pin to corkboard";
+        
+        pinBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            createFloatingNoteFrom(note, e.clientX, e.clientY);
+            animateNoteToCorkboard(noteEl);
         });
-    });
-}
+        noteEl.appendChild(pinBtn);
+    }
 
-function animateNoteToCorkboard(note) {
-    const corkboard = document.querySelector('.corkboard');
-    const cubeWrapper = document.getElementById('cubeWrapper');
-    if (!corkboard || !cubeWrapper) return;
-
-    const rect = note.getBoundingClientRect();
-    
-    // Create "Flying" clone
-    const flyer = document.createElement('div');
-    flyer.className = 'floating-note flying-to-board';
-    flyer.textContent = note.childNodes[0].textContent; 
-    flyer.style.left = rect.left + 'px';
-    flyer.style.top = rect.top + 'px';
-    flyer.style.width = rect.width + 'px';
-    flyer.style.height = rect.height + 'px';
-    document.body.appendChild(flyer);
-
-    // Hide original note in book
-    note.style.visibility = 'hidden';
-
-    // Pan Up
-    cubeWrapper.classList.add('pan-up');
-
-    requestAnimationFrame(() => {
-        flyer.style.transition = 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
-        flyer.style.top = '-200px'; 
-        flyer.style.opacity = '0';
-        flyer.style.transform = 'scale(1.5) rotate(15deg)';
-    });
-
-    setTimeout(() => {
-        const pinned = document.createElement('div');
-        pinned.className = 'pinned-note';
-        pinned.textContent = flyer.textContent;
-
-        const pinHead = document.createElement('div');
-        pinHead.className = 'push-pin';
-        pinHead.title = "Double-click to return to book"; // Tooltip hint
-        pinned.appendChild(pinHead);
-
-        // Random starting position
-        const randomX = Math.random() * 60 + 20; 
-        const randomY = Math.random() * 60 + 20;
-        const randomRot = (Math.random() - 0.5) * 15;
-
-        pinned.style.left = `${randomX}%`;
-        pinned.style.top = `${randomY}%`;
-        pinned.style.transform = `rotate(${randomRot}deg)`;
-
-        corkboard.appendChild(pinned);
-        
-        // --- PASS THE ORIGINAL NOTE REFERENCE HERE ---
-        makePinnedNoteDraggable(pinned, pinHead, note);
-        
-        flyer.remove();
-    }, 700);
-}
-
-function makePinnedNoteDraggable(pinnedNote, pinHead, originalNote) {
-    let isDragging = false;
-    let startX, startY, initialLeft, initialTop;
-
-    // --- DOUBLE CLICK TO RETURN ---
-    pinHead.addEventListener('dblclick', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        animateNoteBackToBook(pinnedNote, originalNote);
-    });
-
-    pinHead.addEventListener('mousedown', (e) => {
-        isDragging = true;
-        pinnedNote.style.zIndex = '1000'; 
-        
-        const rect = pinnedNote.getBoundingClientRect();
-        const corkRect = pinnedNote.offsetParent.getBoundingClientRect();
-        
-        startX = e.clientX;
-        startY = e.clientY;
-        initialLeft = rect.left - corkRect.left;
-        initialTop = rect.top - corkRect.top;
-
-        e.preventDefault();
-        e.stopPropagation();
-    });
-
-    document.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-
-        const corkboard = pinnedNote.offsetParent;
-        const maxX = corkboard.clientWidth - pinnedNote.offsetWidth;
-        const maxY = corkboard.clientHeight - pinnedNote.offsetHeight;
-
-        let newLeft = initialLeft + dx;
-        let newTop = initialTop + dy;
-
-        newLeft = Math.max(0, Math.min(newLeft, maxX));
-        newTop = Math.max(0, Math.min(newTop, maxY));
-
-        pinnedNote.style.left = `${newLeft}px`;
-        pinnedNote.style.top = `${newTop}px`;
-    });
-
-    document.addEventListener('mouseup', () => {
-        if (isDragging) {
-            isDragging = false;
-            pinnedNote.style.zIndex = '';
-        }
-    });
-}
-
-function animateNoteBackToBook(pinnedNote, originalNote) {
-    const cubeWrapper = document.getElementById('cubeWrapper');
-    if (!cubeWrapper) return;
-
-    const rect = pinnedNote.getBoundingClientRect();
-    
-    // Create a flyer for the return journey
-    const flyer = document.createElement('div');
-    flyer.className = 'floating-note flying-to-book';
-    flyer.textContent = pinnedNote.textContent; 
-    flyer.style.left = rect.left + 'px';
-    flyer.style.top = rect.top + 'px';
-    flyer.style.width = rect.width + 'px';
-    flyer.style.height = rect.height + 'px';
-    document.body.appendChild(flyer);
-
-    // Remove the pinned version immediately
-    pinnedNote.remove();
-
-    // Pan back down to the book
-    cubeWrapper.classList.remove('pan-up');
-
-    // Animate the flyer "falling" back into the book
-    requestAnimationFrame(() => {
-        flyer.style.transition = 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
-        flyer.style.top = '120%'; // Fly down towards the book's area
-        flyer.style.opacity = '0';
-        flyer.style.transform = 'scale(0.5) rotate(-15deg)';
-    });
-
-    // Restore the original note once the pan is nearly done
-    setTimeout(() => {
-        originalNote.style.visibility = 'visible';
-        flyer.remove();
-    }, 700);
-}
-    
-    function pinNoteToCorkboard(originalNote) {
+    function animateNoteToCorkboard(note) {
         const corkboard = document.querySelector('.corkboard');
-        if (!corkboard) return;
-    
-        // Create the pinned version
-        const pinned = document.createElement('div');
-        pinned.className = 'pinned-note';
-        
-        // Get text only (excluding the 'X' button text)
-        const noteText = originalNote.childNodes[0].textContent;
-        pinned.textContent = noteText;
-    
-        // Add a visual pin head
-        const pinHead = document.createElement('div');
-        pinHead.className = 'push-pin';
-        pinned.appendChild(pinHead);
-    
-        // Randomize position and rotation for the corkboard look
-        const randomX = Math.random() * 80 + 5; // 5% to 85%
-        const randomY = Math.random() * 80 + 5;
-        const randomRot = (Math.random() - 0.5) * 15; // -7.5 to 7.5 degrees
-    
-        pinned.style.left = `${randomX}%`;
-        pinned.style.top = `${randomY}%`;
-        pinned.style.transform = `rotate(${randomRot}deg)`;
-    
-        corkboard.appendChild(pinned);
-    
-        // Hide the original note in the book
-        originalNote.style.display = 'none';
+        const cubeWrapper = document.getElementById('cubeWrapper');
+        if (!corkboard || !cubeWrapper) return;
+
+        const rect = note.getBoundingClientRect();
+        const isFloating = note.classList.contains('floating-note');
+        // Capture IDs before any elements are removed from DOM
+        const originalId = note.dataset.originalId || note.dataset.noteId;
+        const noteText = getCleanNoteText(note);
+
+        // Create "Flying" clone
+        const flyer = document.createElement('div');
+        flyer.className = 'floating-note flying-to-board';
+        flyer.textContent = noteText; 
+        flyer.style.left = rect.left + 'px';
+        flyer.style.top = rect.top + 'px';
+        flyer.style.width = rect.width + 'px';
+        flyer.style.height = rect.height + 'px';
+        document.body.appendChild(flyer);
+
+        // Standardize hiding: use visibility and opacity
+        if (isFloating) {
+            note.remove(); // Remove the floating clone
+        } else {
+            note.style.visibility = 'hidden';
+            note.style.opacity = '0';
+        }
+
+        cubeWrapper.classList.add('pan-up');
+
+        requestAnimationFrame(() => {
+            flyer.style.transition = 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+            flyer.style.top = '-200px'; 
+            flyer.style.opacity = '0';
+            flyer.style.transform = 'scale(1.5) rotate(15deg)';
+        });
+
+        setTimeout(() => {
+            const pinned = document.createElement('div');
+            pinned.className = 'pinned-note';
+            pinned.textContent = noteText;
+
+            const pinHead = document.createElement('div');
+            pinHead.className = 'push-pin';
+            pinHead.title = "Double-click to return to book";
+            pinned.appendChild(pinHead);
+
+            const randomX = Math.random() * 60 + 20; 
+            const randomY = Math.random() * 60 + 20;
+            const randomRot = (Math.random() - 0.5) * 15;
+
+            pinned.style.left = `${randomX}%`;
+            pinned.style.top = `${randomY}%`;
+            pinned.style.transform = `rotate(${randomRot}deg)`;
+
+            corkboard.appendChild(pinned);
+            
+            // Find the physical book note to return to later
+            const originalInBookNote = document.querySelector(`.book-note[data-note-id="${originalId}"]`);
+            makePinnedNoteDraggable(pinned, pinHead, originalInBookNote);
+            
+            flyer.remove();
+        }, 700);
+    }
+
+    function makePinnedNoteDraggable(pinnedNote, pinHead, originalNote) {
+        let isDragging = false;
+        let startX, startY, initialLeft, initialTop;
+
+        pinHead.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            animateNoteBackToBook(pinnedNote, originalNote);
+        });
+
+        pinHead.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            pinnedNote.style.zIndex = '1000'; 
+            const rect = pinnedNote.getBoundingClientRect();
+            const corkRect = pinnedNote.offsetParent.getBoundingClientRect();
+            startX = e.clientX;
+            startY = e.clientY;
+            initialLeft = rect.left - corkRect.left;
+            initialTop = rect.top - corkRect.top;
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            const corkboard = pinnedNote.offsetParent;
+            let newLeft = Math.max(0, Math.min(initialLeft + dx, corkboard.clientWidth - pinnedNote.offsetWidth));
+            let newTop = Math.max(0, Math.min(initialTop + dy, corkboard.clientHeight - pinnedNote.offsetHeight));
+            pinnedNote.style.left = `${newLeft}px`;
+            pinnedNote.style.top = `${newTop}px`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                pinnedNote.style.zIndex = '';
+            }
+        });
+    }
+
+    function animateNoteBackToBook(pinnedNote, originalNote) {
+        const cubeWrapper = document.getElementById('cubeWrapper');
+        if (!cubeWrapper) return;
+
+        const rect = pinnedNote.getBoundingClientRect();
+        const flyer = document.createElement('div');
+        flyer.className = 'floating-note flying-to-book';
+        flyer.textContent = pinnedNote.textContent; 
+        flyer.style.left = rect.left + 'px';
+        flyer.style.top = rect.top + 'px';
+        flyer.style.width = rect.width + 'px';
+        flyer.style.height = rect.height + 'px';
+        document.body.appendChild(flyer);
+
+        pinnedNote.remove();
+        cubeWrapper.classList.remove('pan-up');
+
+        requestAnimationFrame(() => {
+            flyer.style.transition = 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+            flyer.style.top = '120%'; 
+            flyer.style.opacity = '0';
+            flyer.style.transform = 'scale(0.5) rotate(-15deg)';
+        });
+
+        setTimeout(() => {
+            if (originalNote) {
+                originalNote.style.visibility = 'visible';
+                originalNote.style.opacity = '1';
+                originalNote.style.display = '';
+            }
+            flyer.remove();
+        }, 700);
     }
 
     function createFloatingNoteFrom(originalNote, startX, startY) {
         const rect = originalNote.getBoundingClientRect();
-
         const clone = document.createElement('div');
         clone.classList.add('floating-note');
-        clone.textContent = originalNote.textContent;
+        clone.textContent = getCleanNoteText(originalNote);
         clone.dataset.originalId = originalNote.dataset.noteId;
+
+        addPinButtonToNote(clone);
 
         clone.style.left = rect.left + 'px';
         clone.style.top = rect.top + 'px';
-
         document.body.appendChild(clone);
 
         originalNote.style.visibility = 'hidden';
@@ -473,7 +439,6 @@ function animateNoteBackToBook(pinnedNote, originalNote) {
 
         const offsetX = startX - rect.left;
         const offsetY = startY - rect.top;
-
         startDraggingFloatingNote(clone, originalNote, offsetX, offsetY);
     }
 
@@ -496,52 +461,36 @@ function animateNoteBackToBook(pinnedNote, originalNote) {
             if (targetPage) {
                 const pageRect = targetPage.getBoundingClientRect();
                 const cloneRect = clone.getBoundingClientRect();
-
-                const noteWidth = cloneRect.width;
-                const noteHeight = cloneRect.height;
-                const pageWidth = pageRect.width;
-                const pageHeight = pageRect.height;
                 const padding = 5;
 
-                let relativeLeft = cloneRect.left - pageRect.left;
-                let relativeTop = cloneRect.top - pageRect.top;
-
-                relativeLeft = Math.max(padding, Math.min(relativeLeft, pageWidth - noteWidth - padding));
-                relativeTop = Math.max(padding, Math.min(relativeTop, pageHeight - noteHeight - padding));
+                let relativeLeft = Math.max(padding, Math.min(cloneRect.left - pageRect.left, pageRect.width - cloneRect.width - padding));
+                let relativeTop = Math.max(padding, Math.min(cloneRect.top - pageRect.top, pageRect.height - cloneRect.height - padding));
 
                 originalNote.style.left = relativeLeft + 'px';
                 originalNote.style.top = relativeTop + 'px';
-
                 originalNote.style.transform = 'none';
-
                 targetPage.appendChild(originalNote);
-
                 originalNote.style.visibility = 'visible';
                 originalNote.style.opacity = '1';
-
                 clone.remove();
-
             } else {
                 clone.style.pointerEvents = 'auto';
                 clone.onmousedown = (evt) => {
-                    if (evt.button !== 0) return;
+                    if (evt.button !== 0 || evt.target.classList.contains('note-pin-btn')) return;
                     evt.preventDefault();
                     const newRect = clone.getBoundingClientRect();
                     startDraggingFloatingNote(clone, originalNote, evt.clientX - newRect.left, evt.clientY - newRect.top);
                 };
             }
         };
-
         document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('mouseup', onMouseUp);
     }
 
     function handleNoteDrag(e) {
         if (!draggedNoteId) return;
-
         const noteId = draggedNoteId;
         let floatingNote = floatingNotes.get(noteId);
-        const bookWidget = document.querySelector('.book-widget');
 
         if (!floatingNote) {
             const bookNote = document.querySelector(`[data-note-id="${noteId}"]`);
@@ -549,128 +498,79 @@ function animateNoteBackToBook(pinnedNote, originalNote) {
 
             floatingNote = document.createElement('div');
             floatingNote.className = 'floating-note dragging';
-            floatingNote.textContent = bookNote.textContent;
+            floatingNote.textContent = getCleanNoteText(bookNote);
             floatingNote.dataset.noteId = noteId;
 
-            const closeBtn = document.createElement('button');
-            closeBtn.className = 'floating-note-close';
-            closeBtn.innerHTML = '✕';
-            closeBtn.addEventListener('click', () => removeFloatingNote(noteId));
-            floatingNote.appendChild(closeBtn);
+            addPinButtonToNote(floatingNote);
 
             const container = el('floatingNotesContainer');
             if (container) container.appendChild(floatingNote);
             else document.body.appendChild(floatingNote);
 
             floatingNotes.set(noteId, floatingNote);
-
-            bookNote.style.display = 'none';
-
+            bookNote.style.visibility = 'hidden';
             floatingNote.addEventListener('mousedown', handleFloatingNoteMouseDown);
         }
 
-        if (bookWidget) {
-             let currentScale = 1;
-             // Extract scale if present to correct mouse speed
-            if(bookWidget.style.transform && bookWidget.style.transform.includes('scale')) {
-                const match = bookWidget.style.transform.match(/scale\(([^)]+)\)/);
-                if(match) currentScale = parseFloat(match[1]);
-            }
-            
-            // Standard Drag
-            floatingNote.style.left = (e.clientX - dragOffsetX) + 'px';
-            floatingNote.style.top = (e.clientY - dragOffsetY) + 'px';
-        } else {
-            floatingNote.style.left = (e.clientX - dragOffsetX) + 'px';
-            floatingNote.style.top = (e.clientY - dragOffsetY) + 'px';
-        }
+        floatingNote.style.left = (e.clientX - dragOffsetX) + 'px';
+        floatingNote.style.top = (e.clientY - dragOffsetY) + 'px';
         e.preventDefault();
     }
 
     function handleFloatingNoteMouseDown(e) {
-        if (e.button !== 0) return;
-        if (e.target.classList.contains('floating-note-close')) return;
-
-        const noteId = this.dataset.noteId;
+        if (e.button !== 0 || e.target.classList.contains('note-pin-btn')) return;
         const rect = this.getBoundingClientRect();
-
         dragOffsetX = e.clientX - rect.left;
         dragOffsetY = e.clientY - rect.top;
-
-        draggedNoteId = noteId;
+        draggedNoteId = this.dataset.noteId;
         this.classList.add('dragging');
         document.addEventListener('mousemove', handleNoteDrag);
         document.addEventListener('mouseup', handleNoteMouseUp);
-
         e.preventDefault();
     }
 
     function removeFloatingNote(noteId) {
         const floatingNote = floatingNotes.get(noteId);
         const bookNote = document.querySelector(`[data-note-id="${noteId}"]`);
-
         if (floatingNote) {
             floatingNote.remove();
             floatingNotes.delete(noteId);
         }
-
         if (bookNote) {
-            bookNote.style.display = '';
+            bookNote.style.visibility = 'visible';
+            bookNote.style.opacity = '1';
         }
     }
 
     function handleNoteMouseUp(e) {
         if (!draggedNoteId) return;
-
-        const noteId = draggedNoteId;
         const bookWidget = document.querySelector('.book-widget');
         const bookRect = bookWidget ? bookWidget.getBoundingClientRect() : { left: 0, right: 0, top: 0, bottom: 0 };
-
-        const isOverBook = (
-            e.clientX >= bookRect.left &&
-            e.clientX <= bookRect.right &&
-            e.clientY >= bookRect.top &&
-            e.clientY <= bookRect.bottom
-        );
+        const isOverBook = (e.clientX >= bookRect.left && e.clientX <= bookRect.right && e.clientY >= bookRect.top && e.clientY <= bookRect.bottom);
 
         if (isOverBook) {
-            removeFloatingNote(noteId);
-            draggedNoteId = null;
-            document.removeEventListener('mousemove', handleNoteDrag);
-            document.removeEventListener('mouseup', handleNoteMouseUp);
-            return;
+            removeFloatingNote(draggedNoteId);
+        } else {
+            const floatingNote = floatingNotes.get(draggedNoteId);
+            if (floatingNote) floatingNote.classList.remove('dragging');
         }
-
-        const floatingNote = floatingNotes.get(noteId);
-        if (floatingNote) floatingNote.classList.remove('dragging');
 
         document.removeEventListener('mousemove', handleNoteDrag);
         document.removeEventListener('mouseup', handleNoteMouseUp);
-
         draggedNoteId = null;
     }
 
     function initFlashlight() {
         const pageContainer = document.getElementById('flashlightPage');
         if (!pageContainer) return;
-    
         const revealLayer = pageContainer.querySelector('.layer-reveal');
-    
         pageContainer.addEventListener('mousemove', (e) => {
-            // Get the position of the page relative to the viewport
             const rect = pageContainer.getBoundingClientRect();
-    
-            // Calculate mouse X and Y relative to the page
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-    
-            // Update CSS variables
-            revealLayer.style.setProperty('--x', `${x}px`);
-            revealLayer.style.setProperty('--y', `${y}px`);
+            revealLayer.style.setProperty('--x', `${e.clientX - rect.left}px`);
+            revealLayer.style.setProperty('--y', `${e.clientY - rect.top}px`);
         });
     }
 
-    // Initialize Logic
     initializePageFlip();
     initializeBookNotes();
     initFlashlight();
