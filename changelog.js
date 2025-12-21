@@ -22,7 +22,8 @@ export const CHANGELOG_CONTENT = [
         date: "2655-12-21",
         changes: [
             "Added corkboard (CHANGE IMAGE)",
-            "Added pinnable notes"
+            "Added pinnable notes",
+            "Pinned notes saved on reload (not tied to ID change)",
         ]
     },
     {

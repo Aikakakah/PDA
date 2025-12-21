@@ -321,6 +321,7 @@ export function initializeBookSystem(el) {
             const pinned = document.createElement('div');
             pinned.className = 'pinned-note';
             pinned.textContent = noteText;
+            pinned.dataset.originalId = originalId;
 
             const pinHead = document.createElement('div');
             pinHead.className = 'push-pin';
@@ -341,6 +342,7 @@ export function initializeBookSystem(el) {
             const originalInBookNote = document.querySelector(`.book-note[data-note-id="${originalId}"]`);
             makePinnedNoteDraggable(pinned, pinHead, originalInBookNote);
             
+            savePinnedNotesState();
             flyer.remove();
         }, 700);
     }
@@ -383,6 +385,7 @@ export function initializeBookSystem(el) {
             if (isDragging) {
                 isDragging = false;
                 pinnedNote.style.zIndex = '';
+                savePinnedNotesState();
             }
         });
     }
@@ -402,6 +405,7 @@ export function initializeBookSystem(el) {
         document.body.appendChild(flyer);
 
         pinnedNote.remove();
+        savePinnedNotesState();
         cubeWrapper.classList.remove('pan-up');
 
         requestAnimationFrame(() => {
@@ -560,6 +564,54 @@ export function initializeBookSystem(el) {
         draggedNoteId = null;
     }
 
+    function savePinnedNotesState() {
+        const pinnedElements = document.querySelectorAll('.pinned-note');
+        const notesData = Array.from(pinnedElements).map(p => ({
+            originalId: p.dataset.originalId,
+            text: p.childNodes[0].textContent, // Gets text before the pin-head element
+            left: p.style.left,
+            top: p.style.top,
+            transform: p.style.transform
+        }));
+        localStorage.setItem('book_pinned_notes', JSON.stringify(notesData));
+    }
+
+    function loadPinnedNotesState() {
+        const savedData = localStorage.getItem('book_pinned_notes');
+        if (!savedData) return;
+        
+        const notes = JSON.parse(savedData);
+        const corkboard = document.querySelector('.corkboard');
+        if (!corkboard) return;
+
+        notes.forEach(data => {
+            const pinned = document.createElement('div');
+            pinned.className = 'pinned-note';
+            pinned.textContent = data.text;
+            pinned.dataset.originalId = data.originalId;
+
+            const pinHead = document.createElement('div');
+            pinHead.className = 'push-pin';
+            pinHead.title = "Double-click to return to book";
+            pinned.appendChild(pinHead);
+
+            pinned.style.left = data.left;
+            pinned.style.top = data.top;
+            pinned.style.transform = data.transform;
+
+            corkboard.appendChild(pinned);
+
+            // Hide the original note in the book
+            const originalNote = document.querySelector(`.book-note[data-note-id="${data.originalId}"]`);
+            if (originalNote) {
+                originalNote.style.visibility = 'hidden';
+                originalNote.style.opacity = '0';
+            }
+            
+            makePinnedNoteDraggable(pinned, pinHead, originalNote);
+        });
+    }
+
     function initFlashlight() {
         const pageContainer = document.getElementById('flashlightPage');
         if (!pageContainer) return;
@@ -574,4 +626,5 @@ export function initializeBookSystem(el) {
     initializePageFlip();
     initializeBookNotes();
     initFlashlight();
+    loadPinnedNotesState();
 }
