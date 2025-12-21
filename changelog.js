@@ -19,6 +19,13 @@ export const CHANGELOG_CONTENT = [
         ]
     },
     {
+        version: "0.0.4",
+        date: "2655-12-21",
+        changes: [
+            "Added corkboard (CHANGE IMAGE)",
+        ]
+    },
+    {
         version: "0.0.3",
         date: "2655-12-19",
         changes: [

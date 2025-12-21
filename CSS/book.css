@@ -60,7 +60,7 @@ body.book-is-maximized::after {
      opacity: 0;
      pointer-events: none;
      transition: opacity 0.3s;
- } */
+ } 
 
  .book-page {
     flex-grow: 1;

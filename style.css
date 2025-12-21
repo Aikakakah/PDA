@@ -79,18 +79,7 @@ body {
   gap: 60px;
   transform: rotateX(0deg) translateZ(-50vh); 
 }
-/* When the book is fullscreen, we need to make sure parents don't clip it */
-/* body.book-is-maximized .transition-wrapper,
-body.book-is-maximized .second-page-container {
-    overflow: visible !important;
-    clip-path: none !important;
-    z-index: 9999; 
-} */
 
-/* Prevent the pan-up animation from interfering with the fullscreen view */
-/* body.book-is-maximized .main-content-face {
-    visibility: hidden;
-} */
 .main-content-face,
 .second-page-container,
 .pan-button {
@@ -573,12 +562,16 @@ scrollbar-width: thin; /* "auto" or "thin" */
 }
 /* --- Page Panning End --- */
 
-.placeholder-square {
-    width: 400px;
+.corkboard {
+  position: absolute;
+    width: 600px;
     height: 400px;
-    background: linear-gradient(135deg, var(--panel) 0%, var(--inner) 100%);
-    border: 3px solid var(--accent);
-    border-radius: 8px;
+    top: 10%;
+    right: 30%;
+    /* background: linear-gradient(135deg, var(--panel) 0%, var(--inner) 100%); */
+    background-image: url(Images/cork.png);
+    border: 20px solid rgb(244, 205, 127);
+    border-radius: 4px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;

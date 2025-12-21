@@ -254,15 +254,17 @@ body.book-is-maximized .book-widget {
      z-index: 9999; 
      width: 80px;
      height: 80px;
+     transform: none;
      background: linear-gradient(135deg, #fffacd 0%, #ffffe0 100%);
-     border: 2px solid #f0c674;
-     border-radius: 4px;
-     padding: 10px;
-     font-size: 13px;
+     /* border: 2px solid #f0c674; */
+     border: 1px solid #ddd;
+     border-radius: 2px;
+     padding: 8px;
+     font-size: 12px;
      color: #333;
      box-shadow: 0 15px 30px rgba(0,0,0,0.4); 
      cursor: grab;
-     transform: scale(1.1);
+     /* transform: scale(1.1); */
      display: flex;
      align-items: center;
      justify-content: center;
@@ -270,7 +272,7 @@ body.book-is-maximized .book-widget {
      font-family: 'Comic Sans MS', cursive;
      font-weight: bold;
      user-select: none;
-     box-sizing: border-box;
+     /* box-sizing: border-box; */
  }
  
  .floating-note:active {
@@ -309,6 +311,120 @@ body.book-is-maximized .book-widget {
      opacity: 1;
      color: #d9534f;
  }
+
+
+ .note-pin-btn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  background: rgba(0,0,0,0.05);
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  transition: all 0.2s;
+  z-index: 20;
+}
+
+.note-pin-btn:hover {
+  background: #d9534f;
+  color: white;
+}
+
+.flying-to-board {
+  pointer-events: none;
+  z-index: 20000; /* Above everything */
+}
+.flying-to-book {
+  pointer-events: none;
+  z-index: 20000;
+  /* Optional: give it a slightly different look while falling */
+  filter: brightness(0.9);
+}
+
+/* --- Pinned Note on Corkboard --- */
+.pinned-note {
+  position: absolute;
+  width: 100px;
+  min-height: 100px;
+  background: linear-gradient(135deg, #fffacd 0%, #fdf5e6 100%);
+  box-shadow: 2px 5px 15px rgba(0,0,0,0.3);
+  padding: 15px 10px 10px 10px;
+  font-family: 'Comic Sans MS', cursive;
+  font-size: 13px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-bottom-right-radius: 15px 3px; 
+  animation: pinDrop 0.3s ease-out;
+}
+
+@keyframes pinDrop {
+  from { transform: scale(2) rotate(0deg); opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* The visual push-pin icon */
+.pinned-note {
+  position: absolute;
+  width: 100px;
+  min-height: 100px;
+  background: linear-gradient(135deg, #fffacd 0%, #fdf5e6 100%);
+  box-shadow: 2px 5px 15px rgba(0,0,0,0.3);
+  padding: 15px 10px 10px 10px;
+  font-family: 'Comic Sans MS', cursive;
+  font-size: 13px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-bottom-right-radius: 15px 3px; 
+  cursor: default;
+  user-select: none;
+}
+
+/* The visual push-pin icon - NOW DRAGGABLE */
+.push-pin {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 14px;
+  background: #cc0000;
+  border-radius: 50%;
+  box-shadow: 0 2px 2px rgba(0,0,0,0.4);
+  cursor: grab; /* Indicates it can be picked up */
+  z-index: 10;
+}
+
+.push-pin:active {
+  cursor: grabbing;
+}
+
+.push-pin::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 4px;
+  height: 4px;
+  background: rgba(255,255,255,0.4);
+  border-radius: 50%;
+}
+.push-pin:hover {
+  filter: brightness(1.2);
+  box-shadow: 0 0 5px rgba(255,0,0,0.5);
+}
 
 
 
