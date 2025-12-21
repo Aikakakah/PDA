@@ -1,0 +1,58 @@
+.terminal-console {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #0a0a0a;
+    color: #00ff33; /* Classic Terminal Green */
+    font-family: 'Courier New', Courier, monospace; /* Distinct font */
+    font-size: 14px;
+    padding: 10px;
+    box-sizing: border-box;
+    border-radius: 4px;
+    text-shadow: 0 0 2px rgba(0, 255, 51, 0.4);
+    overflow: hidden;
+}
+
+.terminal-output {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+    word-break: break-all;
+}
+
+.terminal-line {
+    line-height: 1.4;
+}
+
+/* Specific colors for specific output types */
+.terminal-line.error { color: #ff3333; }
+.terminal-line.system { color: #00ccff; }
+.terminal-line.muted { color: #555; }
+
+.terminal-input-area {
+    display: flex;
+    align-items: center;
+    border-top: 1px solid #333;
+    padding-top: 5px;
+    background: #0a0a0a;
+}
+
+.terminal-prompt {
+    margin-right: 8px;
+    font-weight: bold;
+    user-select: none;
+}
+
+.terminal-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #00ff33;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    outline: none;
+    caret-color: #00ff33; /* Blinking green cursor */
+}

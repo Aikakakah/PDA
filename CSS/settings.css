@@ -1,0 +1,7 @@
+.settings-list{display:flex;flex-direction:column;gap:8px}
+.setting-row{background:#2b2b2f;padding:10px;border-radius:6px;border:1px solid rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+.setting-row:hover{background:#3a3a3e}
+.setting-title{font-size:14px;color:var(--text)}
+.setting-desc{font-size:12px;color:var(--muted)}
+
+

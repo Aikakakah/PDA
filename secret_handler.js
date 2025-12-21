@@ -4,9 +4,7 @@
  * It manages the visual states (initial image, manic state with glitch, return to home).
  */
 
-export function createSecretHandler(el, showView, ringtoneModal) {
-    
-    // Paths to the images (Correctly pointing to /images/)
+export function createSecretHandler(state, el, showView, ringtoneModal) {
     const IMAGE_PATH = '/images/';
     const IMAGE_INITIAL = IMAGE_PATH + 'SandyStars.png';
     const IMAGE_MANIC = IMAGE_PATH + 'SandyStarsManic.png';
@@ -17,18 +15,26 @@ export function createSecretHandler(el, showView, ringtoneModal) {
     let isSecretScreenActive = false;
     let glitchInterval = null;
     let clickCount = 0; // Tracks clicks: 0 (Initial) -> 1 (Manic) -> 2 (Stay Manic) -> 3 (Hide)
+    let listenerAttached = false; 
 
-    // *** STATE ARRAY FOR GLITCHED ELEMENTS ***
+    // NEW HELPER FUNCTION: HTML structure for the persistent CRT effects
+    function getCrtOverlayHtml() {
+        return `
+            <div class="crt-scanlines"></div>
+            <p>This is my secret place.</p>
+            <div class="crt-noise-wrapper">
+                <div class="crt-noise"></div>
+                <div class="crt-noise crt-noise-moving"></div>
+            </div>
+        `;
+    }
+
     let originalGlitchStates = [];
     
     // Define all elements to be glitched and their replacement text (if any)
     const GLITCH_TARGETS = [
-        // Title: Changes text content
         { selector: '.title', glitchText: 'PDA Systems' }, 
-        // Footer Left: Uses existing text content ('Robust#OS™')
-        // We target the inner div, not the .footer wrapper.
         { selector: '.footer .left', glitchText: null }, 
-        // Footer Serial: Uses existing text content ('CLS-2282-0865')
         { selector: '.footer .right #serial', glitchText: null } 
     ];
 
@@ -37,96 +43,75 @@ export function createSecretHandler(el, showView, ringtoneModal) {
      */
     function getSecretScreenEl() {
         let screen = el('secretScreen');
+        
+        // 1. Create if missing (fallback)
         if (!screen) {
             screen = document.createElement('div');
             screen.id = 'secretScreen';
-            screen.className = 'secret-screen hidden'; 
-            
-            // Target the inner screen container: <div class="content">
+            screen.className = 'secret-screen hidden crt';
             const innerScreenContainer = document.querySelector('.content'); 
             
             if (innerScreenContainer) {
                 innerScreenContainer.appendChild(screen); 
             } else {
-                console.error("Inner PDA screen content div (.content) not found. Cannot create secret screen.");
                 el('pda')?.appendChild(screen); 
             }
+        }
 
-            // Core click listener logic: State 1 -> State 2 -> State 3 (Hide)
+        // 2. Attach listener regardless of whether we created it or found it
+        if (screen && !listenerAttached) {
             screen.addEventListener('click', (e) => {
                 e.stopPropagation();
-                
                 if (!isSecretScreenActive) return;
 
                 clickCount++; 
-
                 if (clickCount === 1) {
                     showManicState();
                 } else if (clickCount >= 3) {
                     hideSecretScreen();
                 }
             }, { once: false });
+            
+            listenerAttached = true;
         }
+
         return screen;
     }
     
-    // --- START: Glitch Helper Functions (New Unified Logic) ---
-
-    /**
-     * Finds all target elements, saves their original state, and applies the glitch effect.
-     */
     function startGlitchEffect() {
-        originalGlitchStates = []; // Reset state
-
+        originalGlitchStates = []; 
         GLITCH_TARGETS.forEach(target => {
             const el = document.querySelector(target.selector);
             if (el) {
                 const originalText = el.textContent;
-                const newText = target.glitchText || originalText; // Use glitchText if defined, otherwise use original text
+                const newText = target.glitchText || originalText; 
 
-                // 1. Save original state
                 originalGlitchStates.push({
                     el: el,
                     originalText: originalText,
-                    originalDisplay: el.style.display, // Save original inline display style
-                    originalWhiteSpace: el.style.whiteSpace // Save original inline white-space style
+                    originalDisplay: el.style.display, 
+                    originalWhiteSpace: el.style.whiteSpace 
                 });
 
-                // 2. Set new content and styles
                 el.textContent = newText;
                 el.setAttribute('data-text', newText);
                 el.classList.add('glitch');
-                
-                // *** FIX: Crucial properties for glitching text ***
-                // Ensure text stays on a single line and the element behaves correctly for clipping
                 el.style.display = 'inline-block';
                 el.style.whiteSpace = 'nowrap'; 
             }
         });
     }
 
-    /**
-     * Restores all glitched elements to their original state.
-     */
     function stopGlitchEffect() {
         originalGlitchStates.forEach(state => {
-            // 1. Restore original text
             state.el.textContent = state.originalText;
-            
-            // 2. Restore original styles
             state.el.style.display = state.originalDisplay;
             state.el.style.whiteSpace = state.originalWhiteSpace;
-            
-            // 3. Remove glitch classes and data-text
             state.el.removeAttribute('data-text');
             state.el.classList.remove('glitch');
-            
         });
-        originalGlitchStates = []; // Clear state
+        originalGlitchStates = []; 
     }
-
-    // --- END: Glitch Helper Functions ---
-
 
     /**
      * State 1: Shows the initial secret screen with SandyStars.png.
@@ -137,116 +122,189 @@ export function createSecretHandler(el, showView, ringtoneModal) {
         const screen = getSecretScreenEl();
         if (!screen) return;
         
+        screen.classList.add('crt');
         isSecretScreenActive = true;
         clickCount = 0; 
         
-        // Display the INITIAL image (SandyStars.png) as background
         screen.classList.remove('hidden');
         screen.style.display = 'block';
+        screen.classList.add('turn-on');
         screen.style.backgroundImage = `url(${IMAGE_INITIAL})`;
-        
-        // IMPORTANT: Insert a transparent element to ensure the full area is clickable
-        screen.innerHTML = '<div class="click-catcher"></div>'; 
+
+        // Play the static burst sound
+        const audio = new Audio('/Audio/Effects/static_burst.ogg');
+        audio.volume = 0.4;
+        audio.play().catch(() => {});
+
+        screen.innerHTML = `
+            ${getCrtOverlayHtml()}
+            <div class="initial-screen-content" style="z-index: 30; position: relative;">
+                <p>This is my secret place.</p>
+                <p>Don't click again.</p>
+            </div>
+            <div class="click-catcher" style="z-index: 100;"></div>
+        `;
         
         if (glitchInterval) {
             clearInterval(glitchInterval);
             glitchInterval = null;
         }
+        screen.addEventListener('animationend', () => {
+            screen.classList.remove('turn-on');
+        }, { once: true });
     }
 
-    /**
-     * State 2: Transitions to the manic state, changing the background and starting the glitch overlay.
-     */
     function showManicState() {
         const screen = getSecretScreenEl();
         if (!screen) return;
 
-        // 1. Set the fixed background image (SandyStarsManic.png)
         screen.style.backgroundImage = `url(${IMAGE_MANIC})`; 
         
-        // 2. Insert the glitch elements and the click catcher
         screen.innerHTML = `
-            <div id="manicGlitchContainer" class="manic-glitch-container">
-                <img id="glitchImage" class="glitch-image" src="${GLITCH_1}" alt="Glitch Overlay">
-            </div>
+        ${getCrtOverlayHtml()}
+            <img id="glitchImage" src="${GLITCH_1}" class="glitch-image" alt="Glitch"/>
             <div class="click-catcher"></div>
         `;
         
-        // 3. Start the image glitch effect
         startGlitchFlicker(screen); 
-        
-        // START: Start the unified text glitch for title and footer elements
-        startGlitchEffect(); 
+        startGlitchEffect();
     }
 
-    /**
-     * Starts the rapid image source switching for the glitch overlay.
-     */
     function startGlitchFlicker(overlay) {
         if (glitchInterval) clearInterval(glitchInterval);
-
         const glitchImageEl = document.getElementById('glitchImage');
         if (!glitchImageEl) return;
 
         let isGlitch1 = true;
         glitchInterval = setInterval(() => {
             const currentGlitch = isGlitch1 ? GLITCH_1 : GLITCH_2;
-            
             glitchImageEl.src = currentGlitch;
-            
             isGlitch1 = !isGlitch1;
-        }, 60); // 60ms for a rapid, unsettling flicker
+        }, 60); 
     }
 
-    /**
-     * State 3: Stops the glitch effect and hides the secret screen, returning to the program view.
-     */
     function hideSecretScreen() {
         const screen = getSecretScreenEl();
         if (!screen) return;
 
-        // Stop the image glitch effect
         if (glitchInterval) {
             clearInterval(glitchInterval);
             glitchInterval = null;
         }
 
-        // STOP: Stop the unified text glitch
         stopGlitchEffect();
-
         isSecretScreenActive = false;
-        clickCount = 0; // Reset click count
+        clickCount = 0; 
 
-        // Hide the screen
         screen.classList.add('hidden');
-        screen.style.backgroundImage = 'none'; // Clear background
-        screen.innerHTML = ''; // Clear all content including the glitch overlay
-        
-        // FIX: Force the element to be hidden immediately and not block the view 
+        screen.style.backgroundImage = 'none'; 
+        screen.innerHTML = ''; 
         screen.style.display = 'none'; 
 
-        // FIX: Explicitly call the main application's showView function to ensure 
-        // the default 'programs' screen is made visible again. 
         if (typeof showView === 'function') {
             showView('programs');
         }
     }
     
+    function renderFiles() {
+        const list = el('fileList');
+        if (!list) return;
+        list.innerHTML = '';
+
+        const files = [
+            { name: "Sys_Log_882.txt", type: "text" },
+            // The file that triggers the secret screen
+            { name: "Sol-131_arrivals.mp4", type: "video", special: true }, 
+            { name: "Corrupted_Data_001.dat", type: "bin", corrupt: true }
+        ];
+
+        // --- NEW: Check if Stardust is unlocked ---
+        if (state.unlockedFeatures && state.unlockedFeatures.stardust) {
+            // Add the MP3 file to the list
+            files.push({ name: "stardust.mp3", type: "audio" });
+        }
+
+        files.forEach(f => {
+            const row = document.createElement('div');
+            row.className = `file-row ${f.corrupt ? 'corrupt' : ''}`;
+            
+            let icon = '<i class="fas fa-file-alt"></i>';
+            if(f.type === 'video') icon = '<i class="fas fa-film"></i>';
+            if(f.type === 'bin') icon = '<i class="fas fa-binary"></i>';
+            if(f.type === 'audio') icon = '<i class="fas fa-music"></i>'; // New Icon
+
+            row.innerHTML = `
+                <div class="file-icon">${icon}</div>
+                <div class="file-name">${f.name}</div>
+            `;
+
+            row.addEventListener('click', () => {
+                if (f.corrupt) return; 
+
+                // Handle Audio Playback
+                if (f.type === 'audio') {
+                    const audio = new Audio('/Audio/stardust.mp3'); 
+                    audio.play().catch(e => console.log("Audio play error", e));
+                    return;
+                }
+
+                if (f.special && f.name === "Sol-131_arrivals.mp4") {
+                    showSecretScreen(); 
+                } else {
+                    alert("File viewer module offline. Only raw video playback supported.");
+                }
+            });
+
+            list.appendChild(row);
+        });
+    }
+
     /**
-     * Public method to check and handle the secret ringtone code.
+     * Public method to navigate to the files view and render the content.
      */
+    function openFilesView() {
+        showView('files');
+        renderFiles();
+        
+        const backBtn = el('btn-files-back');
+        if (backBtn) {
+            backBtn.onclick = null; 
+            backBtn.addEventListener('click', () => {
+                showView('settings');
+            }, { once: true });
+        }
+    }
+
     function handleSecretRingtone(code) {
-        // Case-insensitive comparison
         if (code.toUpperCase() === SECRET_CODE) { 
             showSecretScreen();
-            ringtoneModal.close(); // Assuming this function exists and should be called
+            ringtoneModal.classList.add('hidden'); 
             return true;
         }
         return false;
     }
 
-    // Public API
+    // --- NEW: Public Function to Unlock Stardust ---
+    function unlockStardust() {
+        // Ensure the flag exists
+        if (!state.unlockedFeatures.stardust) {
+            state.unlockedFeatures.stardust = true;
+            console.log("Stardust audio unlocked!");
+            
+            // If the user is currently looking at the files list, refresh it
+            if (document.getElementById('view-files')?.classList.contains('active')) {
+                renderFiles();
+            }
+            return true; // Return true so caller knows to save game state
+        }
+        return false;
+    }
+
+    // --- PUBLIC API ---
     return {
-        handleSecretRingtone: handleSecretRingtone
+        handleSecretRingtone: handleSecretRingtone,
+        trigger: showSecretScreen,
+        openFilesView: openFilesView,
+        unlockStardust: unlockStardust // Exposed here
     };
 }

@@ -1,0 +1,47 @@
+<div class="book-widget" id="bookWidget">
+    <button id="bookMaximizeBtn" class="book-max-btn" title="Toggle Fullscreen Book">
+        <i class="fas fa-expand"></i>
+    </button>
+
+    <div id="floatingNotesContainer" class="floating-notes-container"></div>
+
+    <div id="book" class="book-page">
+        <div class="my-page page-cover page-cover-top" data-density="hard">
+            <div class="page-content">
+                <img src="Pages/Page_Cover.png" alt="Page Cover" />
+            </div>
+        </div>
+        <div class="my-page inner-cover-front" data-density="hard">
+            <img src="Pages/Page_Cover.png" alt="Page Cover" />
+        </div>
+        <div class="my-page p1" id="flashlightPage" data-density="soft">
+            <div class="flashlight-container">
+                <img src="Pages/Blank-Page.png" class="layer-base" alt="Page two base" />
+                
+                <div class="layer-reveal" style="background-image: url('/Pages/Light-Page.png');"></div>
+            </div>
+            
+            <div class="book-note" data-note-id="1">📝 Take notes</div>
+        </div>
+        <div class="my-page page-left" data-density="soft">
+            <img src="Pages/Page_3.png" alt="Page three" />
+            <div class="book-note" data-note-id="2">📝 Remember</div>
+        </div>
+        <div class="my-page page-right">
+            <img src="Pages/Page_4.png" alt="Page four" />
+            <div class="book-note" data-note-id="3">📝 Note this</div>
+        </div>
+        <div class="my-page page-left">
+            <img src="Pages/Page_4.png" alt="Page four" />
+            <div class="book-note" data-note-id="4">📝 Sticky note</div>
+        </div>
+        <div class="my-page inner-cover-back">
+            <img src="Pages/Page_Cover.png" alt="Page Cover" />
+        </div>
+        <div class="my-page page-cover page-cover-bottom" data-density="hard">
+            <div class="page-content">
+                <img src="Pages/Page_Cover.png" alt="Last page" />
+            </div>
+        </div>
+    </div>
+</div>

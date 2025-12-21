@@ -1,52 +1,95 @@
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+@import url('Book/book.css');
+@import url('CSS/book.css');
+@import url('CSS/pdaflip.css');
+@import url('CSS/admin.css');
+@import url('CSS/settings.css');
+@import url('CSS/notekeeper.css');
+@import url('CSS/terminal.css');
+@import url('CSS/crew-manifest.css');
+@import url('CSS/nanochat.css');
+@import url('CSS/news.css');
+@import url('CSS/modals.css');
+@import url('CSS/secrets.css');
+@import url('CSS/drawer.css');
+@import url('CSS/status.css');
 
 :root{
    --bg: #461a1a;
    --pda-bg: #1f1f22;
    --panel: #242427;
    --inner: #2b2b2e;
-   --accent: #5e2b63; /* default purple-ish */
+   --accent: #5e2b63;
    --muted: #a9a9a9;
    --text: #e6e6e6;
    --danger: #e06c75;
    --ok: #6ad07a;
-   --info: #4ac7d0; /* Blue for roles */
+   --info: #4ac7d0;
    --width: 576px;
    --height: 450px;
    --radius: 10px;
-   /* 🚀 NEW: DEFINE YOUR SCALING FACTOR HERE (e.g., 25% = 0.25) */
   --scale-factor: 0.37; 
-  /* * CALCULATED BOOK SIZE (1104x1452 original image size)
-   * Single Page Width: 1104px * var(--scale-factor)
-   * Single Page Height: 1452px * var(--scale-factor)
-   */
-  /* **Full Book Width (2 pages):** 2 * 1104px * scale-factor */
   --book-width: calc(2 * 1104px * var(--scale-factor)); 
-  /* **Full Book Height (1 page):** 1452px * scale-factor */
   --book-height: calc(1452px * var(--scale-factor)); 
-   font-family: 'Share Tech Mono', ui-monospace, monospace;
-   --pda-depth: 26px; /* The thickness of the device */
+   --pda-depth: 26px;
    --half-depth: calc(var(--pda-depth) / 2);
+   font-family: 'Share Tech Mono', ui-monospace, monospace;
 }
 
-html,body{
-  height:100%;
+html, body {
+  height:100vh;
+  width: 100vw;
+  overflow: hidden;
   margin:0;
   background:var(--bg);
   color:var(--text);
-  -webkit-font-smoothing:antialiased}
-/* CHANGE: Use Flexbox to center and align the PDA and Book */
-body{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden; 
-  min-height: 100vh;
+  -webkit-font-smoothing:antialiased
+}
+
+body {
   margin: 0;
   padding: 0;
-  gap: 20px;
-  overflow-x: hidden; }
+  height: 100vh;
+  width: 100vw;
+  perspective: 1500px; /* High perspective for the 'Box' depth */
+  background-color: var(--bg);
+  overflow: hidden;
+}
 
+/* The Cube Wrapper */
+.transition-wrapper {
+  position: relative;
+  pointer-events: none;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+  transform: translateZ(50vh); 
+}
+.main-content-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  /* backface-visibility: hidden; */
+  
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+  gap: 60px;
+  transform: rotateX(0deg) translateZ(-50vh); 
+}
+
+.main-content-face,
+.second-page-container,
+.pan-button {
+    pointer-events: auto;
+}
+.main-content-face, 
+.second-page-container {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
 /* PDA window shell */
 .wrap {
     perspective: 800px;
@@ -88,504 +131,20 @@ body{
 .PDA-screen.screen-off .header,
 .PDA-screen.screen-off .footer {
     filter: brightness(0.1) grayscale(1);
-    opacity: 0.2; /* Make it look like a dead LCD */
-    pointer-events: none; /* Prevent clicking buttons when screen is off */
+    opacity: 0.2;
+    pointer-events: none;
 }
 
-/* Ensure the power overlay (the "System Error" screen) remains visible and bright */
 .power-overlay {
     z-index: 100;
-    /* Ensure the overlay isn't affected by the screen dimming if it sits inside .content */
     filter: none !important; 
     opacity: 1 !important;
 }
 
-.pda-inner {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    transition: transform 5s;
-    transform-style: preserve-3d; /* Critical for 3D effect */
-    transform-origin: 50% 50% calc(var(--pda-depth) / -2);
-}
 
-/* Class added by JS to trigger flip */
-.pda.flipped .pda-inner {
-    transform: rotateY(180deg);
-}
 
-/* 3. Common styles for Front and Back faces */
-.pda-front, .pda-back {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    border-radius: calc(var(--radius) + 6px);
-    box-shadow: 0 8px 28px rgba(0,0,0,.7), 0 0 10px rgba(0,0,0,.4);
-    background: linear-gradient(180deg, rgb(70, 22, 57) 0%, #250b1e 100%);
-    will-change: transform;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    padding: 8px;
-    -webkit-font-smoothing: antialiased;
-}
 
-/* 4. Specific Front Face Styles */
-.pda-front {
-    z-index: 2;
-    transform: rotateY(0deg); /* REMOVED translateZ */
-    background: linear-gradient(180deg, rgb(70, 22, 57) 0%, #250b1e 100%);
-    border: 1px solid #2a0d21;
-    /* Hint to browser to keep high-res */
-    will-change: transform;
-}
 
-/* 5. Specific Back Face Styles */
-.pda-back {
-    transform: rotateY(180deg) translateZ(var(--pda-depth));
-    background: linear-gradient(180deg, rgb(70, 22, 57) 0%, #250b1e 100%);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    border: 1px solid #1a0514;
-}
-.pda-wall {
-    position: absolute;
-    background: #180512;
-    border: 1px solid rgba(0,0,0,0.3);
-    backface-visibility: hidden;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
-}
-
-.pda-wall.right, .pda-wall.left {
-    width: var(--pda-depth);
-    height: calc(100% - 10px); /* Restored your flush height */
-    top: 5px;                 /* Restored your flush top */
-}
-.pda-wall.top, .pda-wall.bottom {
-    width: calc(100% - 10px); /* Restored your flush width */
-    height: var(--pda-depth);
-    left: 5px;                /* Centered (10px gap total = 5px left) */
-}
-
-/* RIGHT SIDE */
-.pda-wall.right {
-    right: calc(var(--pda-depth) / -2);
-    transform: translateZ(calc(var(--pda-depth) / -2)) rotateY(90deg);
-}
-
-.pda-wall.left {
-    left: calc(var(--pda-depth) / -2);
-    transform: translateZ(calc(var(--pda-depth) / -2)) rotateY(-90deg);
-}
-
-.pda-wall.top {
-    top: calc(var(--pda-depth) / -2);
-    transform: translateZ(calc(var(--pda-depth) / -2)) rotateX(90deg);
-}
-
-.pda-wall.bottom {
-    bottom: calc(var(--pda-depth) / -2);
-    transform: translateZ(calc(var(--pda-depth) / -2)) rotateX(-90deg);
-}
-/* --- Back Panel Details --- */
-
-.pda-back-panel {
-    position: absolute;
-    width: 50%;
-    height: 50%;
-    top: 48%;
-    background: #767687;
-    border: 2px solid #333;
-    border-radius: 8px;
-    box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
-    transition: transform 0.6s cubic-bezier(0.6, -0.28, 0.735, 0.045), opacity 0.6s;
-    z-index: 5;
-}
-.pda-back-panel.unlocked {
-    cursor: pointer; /* Let user know it's clickable */
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1), inset 0 0 20px rgba(0,0,0,0.8);
-    border-color: #555;
-}
-
-.pda-back-panel.unlocked:hover {
-    border-color: var(--accent);
-}
-
-/* 3. Panel Detached State */
-.pda-back-panel.detached {
-    /* Move down 300px and rotate */
-    transform: translateY(300px) rotate(15deg); 
-    opacity: 1; /* Keep visible so we see it "on the table" */
-    pointer-events: none;
-}
-
-.panel-screw-hole {
-    position: absolute;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #080808; /* Very dark grey/black */
-    
-    /* Inset shadow makes it look like a hole */
-    box-shadow: inset 1px 1px 2px rgba(0,0,0,1), 0 0 0 1px rgba(255,255,255,0.05);
-    z-index: 2;
-}
-
-.panel-screw-hole.tl { top: 10px; left: 10px; }
-.panel-screw-hole.tr { top: 10px; right: 10px; }
-.panel-screw-hole.bl { bottom: 10px; left: 10px; }
-.panel-screw-hole.br { bottom: 10px; right: 10px; }
-
-.pda-circuit-board {
-    position: absolute;
-    width: 48%;
-    height: 46%;
-    top: 50%;
-    /* Change the background color to match the SVG base */
-    background-color: #0e3c0e; 
-    
-    /* Load your new image */
-    background-image: url('Images/board.svg'); 
-    background-size: cover; /* Or 'contain' depending on preference */
-    
-    border: 2px solid #0a2a0a;
-    border-radius: 4px;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
-}
-.coin-cell {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #e6e6e6, #bdc3c7);
-    border: 3px solid #95a5a6;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    right: 38%;
-    top: -3%;
-}
-.coin-text { font-size: 6px; color: #7f8c8d; font-family: sans-serif; }
-/* 
-/* 5. Vias (Little drill holes) */
-.via {
-    position: absolute;
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: #0a2a0a; /* Dark hole */
-    border: 1px solid #b87333; /* Copper ring */
-}
-.via.v1 { top: 18%; left: 42%; }
-.via.v2 { bottom: 30%; right: 12%; }
-.via.v3 { top: 60%; left: 15%; }
-
-/* --- Existing Functional Styles (Keep these) --- */
-.coin-cell {
-    /* ... keep your existing coin-cell styles ... */
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #e6e6e6, #bdc3c7);
-    border: 3px solid #95a5a6;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
-    margin-bottom: 5px; /* Adjust margin */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    z-index: 2; /* Sit above traces */
-}
-
-.resistor-slot {
-    width: 10px;
-    height: 40px;
-    border: 1px dashed rgba(255,255,255,0.3);
-    background: rgba(0,0,0,0.2);
-    position: relative; /* Essential for absolute child positioning */
-    margin-top: 15px;
-    z-index: 2;
-    right: 34%;
-    top: -5%;
-}
-
-.pcb-label {
-    /* ... keep existing ... */
-    font-size: 6px;
-    color: #bdc3c7;
-    margin-top: 2px;
-    font-family: monospace;
-    z-index: 2;
-}
-.pcb-label {
-    font-size: 6px;
-    color: #bdc3c7;
-    margin-bottom: 2px;
-    font-family: monospace;
-}
-
-/* --- Resistor Visuals --- */
-.resistor-kit {
-    display: flex;
-    gap: 10px;
-}
-
-.resistor-prop {
-    width: 40px;
-    height: 10px;
-    position: relative;
-    cursor: grab;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* The wire line running through */
-.resistor-prop::before {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 2px;
-    background: #bdc3c7; /* Silver wire */
-    z-index: 0;
-}
-
-/* The main beige body */
-.resistor-body {
-    width: 24px;
-    height: 8px;
-    border-radius: 2px;
-    position: relative;
-    z-index: 1;
-    box-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-    
-    /* Define the 4-band pattern using a linear gradient */
-    /* Beige > Band1 > Beige > Band2 > Beige > Band3 > Beige > Band4 > Beige */
-    background: linear-gradient(to right,
-        #f5deb3 0%,   #f5deb3 15%, 
-        var(--b1) 15%, var(--b1) 25%,
-        #f5deb3 25%,  #f5deb3 35%,
-        var(--b2) 35%, var(--b2) 45%,
-        #f5deb3 45%,  #f5deb3 55%,
-        var(--b3) 55%, var(--b3) 65%,
-        #f5deb3 65%,  #f5deb3 80%,
-        var(--b4) 80%, var(--b4) 90%,
-        #f5deb3 90%,  #f5deb3 100%
-    );
-}
-
-/* The colored band (variable via CSS var) */
-.resistor-body::after {
-    display: none;
-}
-/* --- NEW: Resistor Rotation when placed in slot --- */
-.resistor-prop.placed {
-    position: absolute;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) rotate(90deg) !important;
-    
-    /* CHANGE: Allow pointer events so it can be removed */
-    pointer-events: auto; 
-    
-    transition: transform 0.3s ease-out;
-    box-shadow: 0 0 5px rgba(0,0,0,0.5);
-}
-/* Manufacturer Label on back */
-.pda-label {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #ccc;
-    color: #111;
-    padding: 10px 20px;
-    border-radius: 2px;
-    font-family: monospace;
-    font-size: 10px;
-    text-align: left;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    opacity: 0.8;
-}
-
-/* 1. Animation for the Parent .screw (Only handles the final drop and fade) */
-@keyframes unscrew-anim {
-    0% {
-        opacity: 1;
-    }
-    20% {
-        opacity: 1;
-    }
-    40% {
-    }
-    100% {
-        /* Move slightly off-screen UPWARD (negative Y) and fade */
-        transform: translateY(-50px); 
-        opacity: 0;
-    }
-}
-
-/* 2. Keyframe for Head Rotation AND Lift (Applied to .screw-head) */
-@keyframes head-spin-anim {
-    0% {
-        transform: translateZ(0) scale(1) rotate(var(--start-rot)); 
-    }
-    20% {
-        transform: rotate(var(--start-rot)); 
-    }
-    40% {
-        /* Start spinning from the current angle */
-        transform: rotate(calc(var(--start-rot) + 180deg)); 
-    }
-    100% {
-        /* Spin 2 full rotations + original angle */
-        transform: rotate(calc(var(--start-rot) + 720deg)); 
-    }
-}
-
-/* 3. Keyframe for Thread movement and fade (No change needed) */
-@keyframes unscrew-thread-lift {
-    0% { 
-        opacity: 0; 
-        /* Added translateZ(-1px) */
-        transform: translateX(-50%) translateY(0) translateZ(-1px); 
-    }
-    10% { 
-        opacity: 1; 
-    }
-    50% {
-        opacity: 1; 
-        /* Added translateZ(-1px) */
-        transform: translateX(-50%) translateY(-5px) translateZ(-1px); 
-    }
-    100% { 
-        opacity: 0; 
-        /* Added translateZ(-1px) */
-        transform: translateX(-50%) translateY(-10px) translateZ(-1px); 
-    }
-}
-/* ----------------------------------------------------------------- */
-
-/* 3. Base Screw (Parent) - Handles position and overall animation */
-.screw {
-    position: absolute;
-    width: 12px;
-    height: 12px;
-    /* REMOVED background, border-radius, box-shadow from here */
-    z-index: 10;
-    transform-style: preserve-3d;
-    perspective: 50px; 
-}
-
-/* Apply base rotation for positioning on the board (e.g., tl, tr, etc.) */
-.screw.tl { top: 10px; left: 10px; --start-rot: 45deg; }
-.screw.tr { top: 10px; right: 10px; --start-rot: 15deg; }
-.screw.bl { bottom: 10px; left: 10px; --start-rot: 90deg; }
-.screw.br { bottom: 10px; right: 10px; --start-rot: 30deg; }
-
-/* 4. Removed State - Targets the parent to start the final drop */
-.screw.removed {
-    animation: unscrew-anim 0.6s ease-in forwards;
-    pointer-events: none;
-}
-/* ----------------------------------------------------------------- */
-
-/* 5. NEW: Screw Head Class */
-.screw-head {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    /* MOVED Visuals Here: */
-    background: radial-gradient(circle, #bdc3c7 0%, #7f8c8d 100%);
-    border-radius: 50%;
-    box-shadow: 0 1px 1px rgba(0,0,0,0.5);
-    
-    z-index: 2; 
-    transform: rotate(var(--start-rot));
-    /* Important: Ensures the background covers the thread */
-    transform-style: preserve-3d; 
-}
-
-/* 7. Screw Head Cross Pattern (Using ::before & ::after on the new class) */
-.screw-head::after, .screw-head::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    background: #555;
-    transform: translate(-50%, -50%) rotate(45deg);
-}
-/* Cross Line 1 */
-.screw-head::after { 
-    width: 8px;   /* Changed from 8px */
-    height: 2px;  /* Changed from 2px */
-}
-/* Cross Line 2 */
-.screw-head::before { 
-    width: 2px;   /* Changed from 2px */
-    height: 8px;  /* Changed from 8px */
-}
-
-/* 8. NEW: Apply Head Rotation AND LIFT when parent is removed */
-.screw.removed .screw-head {
-    animation: head-spin-anim 0.6s ease-out forwards;
-}
-
-/* 9. Screw Thread Class */
-.screw-thread {
-    position: absolute;
-    top: 100%; 
-    left: 50%;
-    width: 5px; 
-    height: 15px;
-    background: repeating-linear-gradient(
-        180deg,
-        #7f8c8d, 
-        #7f8c8d 1px,
-        #555 1px, 
-        #555 2px
-    );
-    opacity: 0; 
-    z-index: 1; 
-    
-    /* Center it AND push it back 1 pixel in 3D space */
-    transform: translateX(-50%) translateZ(-1px);
-}
-
-/* 10. Threads Animation Targeting */
-.screw.removed .screw-thread {
-    animation: unscrew-thread-lift 0.6s ease-out forwards;
-}
-
-.screw-hole {
-    position: absolute;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #080808; /* Very dark grey/black */
-    
-    /* Inset shadow makes it look like a hole */
-    box-shadow: inset 1px 1px 2px rgba(0,0,0,1), 0 0 0 1px rgba(255,255,255,0.05);
-    z-index: 2;
-}
-
-/* Position holes (Relative to the Chassis Outline) */
-.screw-hole.tl { top: 10px; left: 10px; }
-.screw-hole.tr { top: 10px; right: 10px; }
-.screw-hole.bl { bottom: 10px; left: 10px; }
-.screw-hole.br { bottom: 10px; right: 10px; }
 
 .pda-chassis-outline {
     position: absolute;
@@ -594,154 +153,18 @@ body{
     top: 48%;
     left: 50%;
     transform: translateX(-50%);
-    
-    /* Visuals for the recessed area */
     border: 2px solid #1a0514; 
-    background: rgba(0, 0, 0, 0.3); /* Darkens the circuit board behind it */
+    background: rgba(0, 0, 0, 0.3);
     border-radius: 8px;
     box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
     
-    z-index: 1; /* Sits above circuit board, below panel */
-    pointer-events: none; /* Allows clicking resistors on the board through the frame */
+    z-index: 1;
+    pointer-events: none;
 }
-
-/* Flip Button (Invisible clickable area or specific button) */
-/* We'll reuse the existing UI buttons, but this class is for the back-to-front button */
-.flip-back-btn {
-    margin-top: 20px;
-    background: transparent;
-    border: 1px solid #555;
-    color: #888;
-    padding: 5px 10px;
-    cursor: pointer;
-    border-radius: 4px;
-}
-.flip-back-btn:hover { background: rgba(255,255,255,0.05); color: #ccc; }
-/* --- STPAGEFLIP BOOK WIDGET STYLES --- */
-.book-widget {
-   display: flex;
-   flex-direction: column;
-   width: var(--book-width);
-   height: var(--book-height);
-   max-width: calc(100vw - 80px);
-   max-height: calc(100vh - 100px);
-   /* background: #660009;  */
-   /* border: 3px solid var(--accent); */
-   border-radius: 2px;
-   /* box-shadow: 0 8px 20px rgba(0,0,0,.5); */
-   padding: 2px;
-   /* FIX: Ensure the book is on top and can receive click/drag events */
-   position: relative; 
-   z-index: 2;
-}
-
-.book-page {
-   flex-grow: 1;
-   position: relative; 
-   display: block; 
-   /* FIX: Remove 'overflow: hidden' which was clipping the 3D flip animation */
-   overflow: visible; 
-   /* ADD: Ensure the element is set up for 3D transforms */
-   transform-style: preserve-3d;
-   cursor: grab; /* Indicates drag interactivity */
-}
-
-/* STPAGEFLIP SPECIFIC PAGE AND IMAGE STYLES */
-/* .my-page is the container for each individual page in StPageFlip */
-.my-page {
-  width: 100%;
-  height: 100%;
-  background-color: var(--pda-bg); /* Use dark PDA background for inner pages */
-  border: none; /* Let the library handle the cover and page boundaries */
-  overflow: hidden;
-  padding: 0;
-}
-.my-page::before {
-  content: ""; /* Required for pseudo-elements to render */
-  position: absolute; /* Allows for precise placement */
-  top: 0;
-  bottom: 0;
-  /* The key here is to give it the dimensions of the whole page */
-  width: 100%;
-  height: 100%;
-  pointer-events: none; /* Allows clicks to pass through to the page */
-  }
-
-/* 1. Page Content Wrapper */
-.page-content {
-  width: 100%;
-  height: 100%;
-  display: flex; 
-  justify-content: center; /* Center the image horizontally */
-  align-items: center; /* Center the image vertically */
-  padding: 0; 
-}
-.my-page.inner-cover-front::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.001); /* not visible, but fixes inset rendering */
-  pointer-events: none;
-  z-index: 2;
-  box-shadow: inset -20px 0 40px -7px rgba(67, 16, 16, 0.9);
-}
-.my-page.inner-cover-back::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.001); /* not visible, but fixes inset rendering */
-  pointer-events: none;
-  z-index: 2;
-  box-shadow: inset 20px 0 40px -7px rgba(67, 16, 16, 0.9);
-}
-.my-page.p1::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.001); /* not visible, but fixes inset rendering */
-  pointer-events: none;
-  z-index: 2;
-  box-shadow: inset 3px 0 15px -3px rgba(0, 0, 0, 0.5),inset 10px 0 25px -7px rgba(109, 83, 59, 0.7);
-}
+/* RESISTORS,SCREWS AND CIRCUIT */
 
 
-/* 2. Page Image (Your img tags) */
-.my-page img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  /* 'cover' ensures the image fills the area without blank space, clipping as necessary */
-  object-fit: cover; 
-  margin: 0;
-}
 
-/* 3. Cover Overrides (Based on st.pageflip's hard/cover styles) */
-.my-page.page-cover {
-  background-color: #333336;
-}
-
-.my-page.page-cover-top {
-  box-shadow: inset 0px 0 35px 0px rgba(0, 0, 0, 0.9), -5px 0 10px 2px rgba(0, 0, 0, 0.7);
-}
-
-.my-page.page-cover-bottom {
-  box-shadow: inset 0px 0 35px 0px rgba(0, 0, 0, 0.9), 10px 0 10px 0px rgba(0, 0, 0, 0.7);
-}
-
-/* Paper Page Shadows*/
-.my-page.page-left::before {
-    box-shadow: inset -7px 0 25px -7px rgba(109, 83, 59, 0.7);
-    box-shadow: inset -3px 0 20px -3px rgba(0, 0, 0, 0.5);
-    box-shadow: inset -1px 0 20px -3px rgba(0, 0, 0, 0.7);
-}
-
-.my-page.page-right::before {
-    box-shadow: inset 7px 0 25px -7px rgba(109, 83, 59, 0.7);
-    box-shadow: inset 3px 0 20px -3px rgba(0, 0, 0, 0.5);
-    box-shadow: inset 1px 0 20px -3px rgba(0, 0, 0, 0.7);
-}
-
-/* --- END STPAGEFLIP BOOK WIDGET STYLES --- */
 
 
 /* inner container (display) */
@@ -761,41 +184,76 @@ body{
 }
 /* PDA Screen */
 .PDA-screen {
-  display: inline-block;   /* shrink-wrap to content */
-  background: rgb(18, 18, 18);
+  display: inline-block;
   border-radius: 8px;
   padding: 4px;
   margin: 0 auto;
-  /* border: 6px solid rgb(9, 255, 0); */
-  position: relative;      /* keep relative for overlays */
-  overflow: hidden;       /* allow elements to overflow */
+  position: relative;
+  overflow: hidden;
   box-shadow: inset 0 -6px 12px rgba(0,0,0,0.35);
   width: 535px;
   height: 380px;
   transform: translateZ(0); 
-    backface-visibility: hidden; /* Helps Webkit/Chrome sharpen text */
+    backface-visibility: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     will-change: transform;
+    text-shadow: 0 0 1px rgba(228, 255, 228, 0.4);
 }
 
 .PDA-screen::before {
   content: '';
   position: absolute;
-  width: 10%; /* Width of the shine */
+  width: 10%;
   height: 100%;
   right:-30%;
   background: rgba(255, 255, 255, 0.055);
-  /* background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0) 100%); */
-  transform: skewX(20deg); /* Optional: Adds a slanted look to the shine */
+  transform: skewX(20deg);
 }
 
-.PDA-screen.shine-active::before {
-  animation: slide 1.5s;
+.pda-mid-layer {
+  position: absolute;
+    top: 192.6px;
+    left: 271.4px;
+    transform: translate(-50%, -50%);
+    width: 534.6px;
+    height: 375px;
+    background: #161616;
+    border-radius: 6px;
+    z-index: 0;
+    pointer-events: none;
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
 }
+
+.header, .content, .footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* Begin Shine Effect */
+.pda-shine {
+  position: absolute;
+    top: 192.6px;
+    left: 271.4px;
+    transform: translate(-50%, -50%);
+    width: 534.6px;
+    height: 375px;
+    background: transparent;
+    border-radius: 6px;
+    z-index: 3;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.PDA-screen.shine-active .pda-shine::before {
+  animation: slide 1.5s;
+  z-index: 3;
+}
+
 @keyframes slide {
   0% {
     left: -10%;
@@ -804,30 +262,72 @@ body{
     left: 110%;
   }
 }
-.PDA-screen::before {
+
+.pda-shine::before {
+  content: '';
+  position: absolute;
+  width: 10%;
+  height: 100%;
+  right: initial;
+  left: -30%;
+  background: rgba(255, 255, 255, 0.055);
+  transform: skewX(20deg);
   animation: none;
 }
 
-/* header left nav */
+@keyframes slide {
+  0% {
+    left: -10%;
+  }
+  100% {
+    left: 110%;
+  }
+}
+
+.PDA-screen::before {
+  animation: none;
+}
+/* End Shine Effect */
+
+
+/* CRT Scanline Overlay */
+.PDA-screen.crt::after {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(
+        to bottom,
+        rgba(111, 111, 111, 0) 50%, 
+        rgba(0, 0, 0, 0.1) 50%
+    );
+    background-size: 100% 5px;
+    pointer-events: none;
+}
+
+
 .header .left{display:flex;gap:6px;align-items:center}
 .nav-btn{
    display:flex;align-items:center;justify-content:center;
    width:34px;height:34px;border-radius:6px;border:none;background:transparent;color:var(--text);cursor:pointer;
-   transition:background .12s, color .12s, transform .06s;
+   transition: background .12s, color .12s, transform .06s;
 }
 .nav-btn:hover{background:rgba(255,255,255,0.02)}
 .nav-btn[aria-pressed="true"]{background:var(--inner);border:1px solid var(--accent)}
 
-/* title center */
+
 .title{font-size:14px;opacity:0.95}
 
-/* header right icons */
+
 .header .right{display:flex;gap:6px;align-items:center}
 .icon{
    width:34px;height:34px;border-radius:6px;background:transparent;border:none;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;
 }
 .icon:active{transform:translateY(1px)}
-.icon[aria-pressed="true"]{color:var(--accent)} /* Toggle icon style */
+.icon[aria-pressed="true"]{color:var(--accent)}
 
 .small{background:transparent;border:none;color:var(--text);cursor:pointer;padding:6px 8px;border-radius:6px}
 
@@ -837,18 +337,21 @@ body{
 
 /* content area */
 .content{
-   background:linear-gradient(180deg,var(--inner),#232325);
-   border-radius:8px;
-   padding:12px;
-   height: 300px;
-   overflow:hidden;
-   border:2px solid rgba(0,0,0,0.3);
-   box-shadow: inset 0 -3px 6px rgba(0,0,0,0.35);
-   position: relative;
-   flex-grow: 1;
+  background: linear-gradient(180deg, var(--inner), #232325);
+  padding: 12px;
+  height: 300px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  /* border-image: linear-gradient(180deg, #eba407, #c41212) 3; */
+  /* background-origin: border-box; */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 -3px 6px rgba(0, 0, 0, 0.35), inset 0 -2px 0 rgba(0, 0, 0, 0.2), inset 0 2px 0 rgba(0, 0, 0, 0.2);
+  position: relative;
+  flex-grow: 1;
+  background-clip: padding-box;
 }
 
-/* view management */
 .view{
   display:none;
   height:100%;
@@ -857,16 +360,13 @@ body{
 .view.active{display:block}
 .inner{display:flex;flex-direction:column;gap:8px;padding-right:6px}
 
-/* info lines */
 .info-line{font-size:15px;color:var(--muted)}
 .info-line strong{color:var(--text);width:130px;display:inline-block}
 
-/* alert colors */
 .alert.green{color:var(--ok)}
 .alert.red{color:var(--danger)}
 .job{color:#f2d54a}
 
-/* program grid */
 .program-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .tile{
    background:#2b2b2f;border:1px solid rgba(255,255,255,0.03);padding:12px;border-radius:6px;display:flex;align-items:center;gap:10px;cursor:pointer;
@@ -876,14 +376,8 @@ body{
 .tile .label{font-size:15px;color:var(--text)}
 .tile:hover{background:linear-gradient(#333235,#3a3a3d)}
 
-/* settings list */
-.settings-list{display:flex;flex-direction:column;gap:8px}
-.setting-row{background:#2b2b2f;padding:10px;border-radius:6px;border:1px solid rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
-.setting-row:hover{background:#3a3a3e}
-.setting-title{font-size:14px;color:var(--text)}
-.setting-desc{font-size:12px;color:var(--muted)}
 
-/* program area (cartridge) */
+
 .program-area{
   height:100%;
   background:linear-gradient(180deg,#1e1e1f,#1a1a1b);
@@ -891,241 +385,33 @@ body{
   padding:5px;
   color:var(--text);overflow:auto
 }
-.program-area .cartridge-header{font-weight:700;margin-bottom:8px;font-size:1.2em;color:var(--accent)}
-
-/* Notekeeper UI specific */
-.notekeeper{display:flex;flex-direction:column;height:100%}
-.notes-wrap{flex:1;overflow:auto;padding:6px;display:flex;flex-direction:column;gap:6px}
-.note{background:#333336;padding:8px;border-radius:6px;display:flex;justify-content:space-between;align-items:center}
-.note button{border:none;background:transparent;color:#ff7777;font-weight:700;cursor:pointer}
-.note-input{margin-top:8px;display:flex;gap:6px}
-.note-input input{flex:1;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:#222;color:var(--text);outline:none;font-family:inherit;}
-/* STYLING FOR NOTEKEEPER ADD BUTTON */
-.note-input button {
-   padding: 8px 12px;
-   border-radius: 6px;
-   border: none;
-   background: var(--accent); /* Use accent color for button */
-   color: #fff;
-   cursor: pointer;
-   font-family: inherit;
-   font-weight: bold;
-   transition: background 0.1s;
-}
-.note-input button:hover {
-   background: #7a3c80; /* Slightly lighter on hover */
-}
-/* 1. Container setup: Flex column to stack elements vertically */
-.notekeeper-container {
-    display: flex;
-    flex-direction: column;
-    /* * The program area (#programArea) must have a defined height for 
-     * this to work (e.g., height: 100%;). 
-     */
-    height: 100%; 
-    padding: 0 10px 10px 10px; 
-    box-sizing: border-box;
-}
-
-/* 2. Scrollable Content: Takes up remaining space and handles overflow */
-.notekeeper-container .notes-wrap {
-    flex-grow: 1; /* Key: Makes this element fill all vertical space */
-    overflow-y: auto; /* Key: Enables scrolling */
-    margin-bottom: 5px; /* Add small space above the input bar */
-    padding-right: 5px; /* Space for scrollbar */
-}
-
-/* 3. Static Footer: Input bar styling */
-.notekeeper-container .note-input {
-    display: flex;
-    padding-top: 5px;
-    border-top: 1px solid var(--panel); /* Separation line */
-    flex-shrink: 0; /* Key: Prevents this element from shrinking */
-}
-
-.notekeeper-container .note-input input {
-    flex-grow: 1;
-    margin-right: 5px;
-}
-
-.notekeeper-container .note-input button {
-    flex-shrink: 0;
-    width: 50px; 
-}
+.program-area .cartridge-header{font-weight:700;margin-bottom:8px;font-size:1.2em;color:var(--accent);text-shadow: 0 0 1px rgb(93 50 97);}
 
 
-/* Crew Manifest UI specific */
-.crew-manifest{height:100%; display: flex; flex-direction: column;}
-.manifest-list{flex:1; overflow-y: auto; display:flex;flex-direction:column;gap:4px;font-size:0.9em;}
-.manifest-list h4{color:var(--info);margin:10px 0 2px;border-bottom:1px solid #333}
-.manifest-entry{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dotted #333;align-items:center;}
-.manifest-entry .name{font-weight:bold;color:var(--text);}
-.manifest-entry .role{color:var(--muted);font-size:0.85em;}
-.manifest-entry .rank{color:var(--info);font-weight:bold;}
 
-/* NanoChat UI specific */
-.nanochat{display:flex;flex-direction:column;height:100%;background:#1a1a1b;border-radius:6px;overflow:hidden;}
-.chat-header{
-  padding:8px;
-  background:#242427;
-  border-bottom:1px solid #333;
-  font-weight:bold;
-  color:var(--text);
-  display: flex;
-  justify-content: space-between; /* Pushes content to opposite ends */
-  align-items: center;
-}
-.chat-body{flex:1;display:flex;overflow:hidden;}
-.chat-sidebar{width:120px;background:#1e1e1f;border-right:1px solid #333;overflow-y:auto;}
-.chat-contact{padding:8px 10px;cursor:pointer;font-size:0.9em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.chat-contact:hover{background:#2b2b2e}
-.chat-contact.active{background:var(--accent);color:#fff;border-left:3px solid var(--text);}
-.chat-messages{flex:1;padding:10px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
-.message-row{display:flex;max-width:80%;}
-.message-row.sent{margin-left:auto;}
-.message-bubble{padding:6px 10px;border-radius:12px;font-size:0.9em;line-height:1.4;}
-.message-bubble.received{background:#333336;border-top-left-radius:2px;}
-.message-bubble.sent{background:var(--accent);color:#fff;border-top-right-radius:2px;}
-.chat-input-wrap{padding:8px;background:#242427;display:flex;gap:8px;border-top:1px solid #333;}
-.chat-input-wrap input{flex:1;border-radius:20px;padding:6px 12px;border:none;background:#333;color:var(--text);outline:none;}
-.chat-input-wrap button{background:var(--accent);border:none;border-radius:50%;width:30px;height:30px;color:#fff;cursor:pointer;font-weight:bold;font-size:1.1em;}
-/* NanoChat Styling */
 
-/* Make the header a flex container to align the title and button */
-.nanochat-container .chat-header {
-    display: flex;
-    justify-content: space-between; /* Pushes the title to the left and button to the right */
-    align-items: center;
-    font-weight: bold;
-    color: var(--text);
-    padding: 5px 3px 0 8px;
-    margin-bottom: 5px;
-    flex-shrink: 0;
-    border-bottom: 1px solid var(--panel);
-}
 
-/* Style the new chat button */
-.nanochat-container .new-chat-btn {
-  /* keep same sizing as other icon buttons */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 6px;
-  border: none;
-  background: #1e1e1f;
-  color: var(--text);
-  cursor: pointer;
-  transition: background .12s, color .12s, transform .06s;
-  padding: 0;
-  box-sizing: border-box;
-}
 
-.nanochat-container .new-chat-btn:hover {
-  background: rgba(255,255,255,0.02);
-}
 
-/* Make new-chat icon match other nav icons */
-.nanochat-container .new-chat-btn svg,
-.nanochat .new-chat-btn svg {
-    width: 18px;              /* slightly bigger than 18 to match nav icons visually */
-    height: 18px;
-    padding: 0;
-    box-sizing: border-box;
-    transform: scale(2);    /* scale up the vector if its path is drawn small */
-    transform-origin: center;
-}
 
-/* Ensure the path inherits the button color */
-.nanochat-container .new-chat-btn svg path,
-.nanochat .new-chat-btn svg path {
-    fill: currentColor !important;
-}
 
-/* --- New: NanoChat Modal Styling --- */
 
-/* Overlay: Covers the entire nanochat program area */
-.nanochat-modal {
-    /* Critical: Position absolutely relative to the .nanochat container */
-    position: absolute; 
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    
-    /* Semi-transparent dark overlay */
-    background-color: rgba(0, 0, 0, 0.7); 
-    z-index: 1000; 
-    
-    /* Centering with Flexbox */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
 
-/* Modal Box */
-.nanochat-modal .modal-content {
-    background: var(--inner); 
-    padding: 15px;
-    border-radius: var(--radius);
-    width: 90%; 
-    max-width: 280px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-    display: flex;
-    flex-direction: column;
-    gap: 10px; /* Space between elements */
-}
-
-.nanochat-modal .modal-title {
-    font-size: 1.1em;
-    font-weight: bold;
-    text-align: center;
-    color: var(--text);
-}
-
-.nanochat-modal input[type="text"] {
-    padding: 8px;
-    border: none;
-    border-radius: 5px;
-    background: var(--panel);
-    color: var(--text);
-}
-
-.nanochat-modal .modal-actions {
-    display: flex;
-    justify-content: flex-end; /* Align buttons to the right */
-    gap: 8px;
-    margin-top: 5px;
-}
-
-.nanochat-modal .modal-actions button {
-    padding: 6px 12px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 0.9em;
-}
-
-.nanochat-modal .modal-actions #cancelNewChatBtn {
-    background-color: #555; /* A subtle color for cancel */
-    color: var(--text);
-}
-
-.nanochat-modal .modal-actions #createNewChatBtn {
-    background-color: var(--accent);
-    color: #fff;
-}
-/* Station News UI specific */
-.station-news{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;}
-.news-title{font-size:1.5em;color:var(--accent);margin-bottom:10px;}
-.news-content{padding:20px;background:#333336;border-radius:6px;width:80%;margin-bottom:20px;font-size:0.9em;}
-.news-controls{display:flex;gap:20px;font-size:1.5em;}
-.news-controls button{background:transparent;border:none;color:var(--accent);cursor:pointer;}
 
 /* footer */
-.footer{height:34px;margin-top:0px;background:linear-gradient(180deg,#141414c2,#181818);border-radius:6px;padding:6px 10px;display:flex;justify-content:space-between;align-items:center;border:1px solid rgba(255,255,255,0.02);font-size:13px;color:var(--muted)}
+.footer {
+  height:34px;
+  margin-top:0px;
+  background:linear-gradient(180deg,#141414c2,#181818);
+  border-radius:6px;
+  padding:6px 10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border:1px solid rgba(0, 0, 0, 0.3);
+  border-top: 1px solid rgba(11, 11, 11, 0.4);
+  font-size:13px;
+  color:var(--muted)}
 
 /* chip */
 .chip{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:6px;font-size:13px;color:var(--text)}
@@ -1139,41 +425,8 @@ body{
 .power-text{color:var(--muted)}
 .power-btn{padding:8px 12px;border-radius:6px;border:none;background:var(--accent);color:#fff;cursor:pointer}
 
-/* Modal Styling (Ringtone) */
-.modal{
-   position:absolute;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;
-   z-index:100;
-}
-.modal-content{
-   background:var(--panel);padding:20px;border-radius:8px;border:2px solid var(--accent);
-   width:250px;display:flex;flex-direction:column;align-items:center;gap:15px;position:relative;
-}
-.modal-close{position:absolute;top:5px;right:5px;font-size:1.5em;color:var(--muted);transition:color 0.1s;}
-.modal-close:hover{color:var(--danger);}
-.modal-title{font-size:1.3em;color:var(--accent);font-weight:bold;}
-.ringtone-notes{display:flex;gap:8px;}
-.ringtone-notes span{background:#333;padding:5px 10px;border-radius:4px;color:var(--info);font-weight:bold;}
-.modal-actions{display:flex;gap:10px;}
-.action-btn{padding:8px 15px;border-radius:6px;border:none;background:var(--accent);color:#fff;cursor:pointer;}
-.action-btn:hover{background:#7a3c80;}
 
-.ringtone-note-input{
-   width: 25px; /* Fixed width for single character */
-   text-align: center;
-   background: #333;
-   padding: 5px 0; /* Padding adjustment due to fixed width */
-   border-radius: 4px;
-   color: var(--info);
-   font-weight: bold;
-   border: 1px solid #444; /* Small border */
-   outline: none;
-   font-family: 'Share Tech Mono', ui-monospace, monospace;
-   font-size: 1em;
-   text-transform: uppercase; /* Ensure note is uppercase for consistency */
-}
-.ringtone-note-input:focus {
-    border-color: var(--accent); /* Highlight on focus */
-}
+
 /* utility */
 .hidden{display:none}
 .program-mini{font-size:12px;color:var(--muted);margin-left:8px}
@@ -1219,376 +472,17 @@ body{
 }
 
 /* Hide scrollbar in Firefox for a cleaner look, but keep scrolling functional */
+scrollbar-width: thin; /* "auto" or "thin" */
+
 .view, .notes-wrap, .chat-messages, .manifest-list {
-   scrollbar-width: thin; /* "auto" or "thin" */
    scrollbar-color: #444448 var(--inner); /* thumb color track color */
 }
 
-.secret-screen {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden; 
-    background-color: var(--pda-bg); 
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    z-index: 999; /* Ensure it's on top of all programs */
-    background-size: cover; 
-    background-repeat: no-repeat;
-    background-position: center;
-}
 
-/* Base image style: covers the entire screen */
-.secret-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; 
-}
 
-/* Manic state image style: needs absolute positioning to be underneath the overlay */
-.secret-image.manic {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-}
 
-.manic-glitch-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    /* Ensures the glitch content is on a higher layer than the background image */
-    z-index: 10; 
-}
 
-/* The actual image element for the glitch */
-.glitch-image {
-    width: 100%;
-    height: 100%;
-    /* If the glitch image has transparent areas, this ensures the manic background shows through. */
-    object-fit: cover; 
-}
-
-/* Update the .secret-screen styles to allow the background image to show */
-.click-catcher {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 999; /* Must be high enough to catch clicks over all other elements */
-    cursor: pointer;
-}
-
-.secret-screen.hidden {
-    display: none !important; /* Forces the browser to not render the element at all */
-}
-
-/* ------------------------------------------------ */
-/* --- CRT/VHS Screen Overlays (No Rolling) --- */
-/* ------------------------------------------------ */
-
-/* 1. Base Class: Jitter + Filter */
-.secret-screen.vhs-jitter {
-    position: relative; 
-    overflow: hidden; 
-    
-    /* Jitter/Screen Shake */
-    animation: grain 1s steps(10) infinite;
-    
-    /* Subtle VCR/CRT color enhancement */
-    filter: brightness(1.2) contrast(1.1); 
-}
-
-/* 2. Scanline Overlay (::after) - Static Horizontal Lines */
-.secret-screen.vhs-jitter::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    
-    /* Creates static, dark horizontal lines (Scanlines) */
-    background: repeating-linear-gradient(
-        transparent 0,
-        rgba(0, 0, 0, 0.4) 1px, /* The dark line */
-        transparent 1.5px,
-        transparent 3px
-    );
-    z-index: 11; 
-    pointer-events: none; 
-    mix-blend-mode: overlay; 
-    
-    /* Subtle flicker animation on the scanlines */
-    animation: flicker 0.15s infinite; 
-}
-
-/* 3. Screen Flicker/Bloom (::before) - Simulates bloom and overall screen static */
-.secret-screen.vhs-jitter::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.1); /* Subtle dark overlay */
-    z-index: 12; 
-    pointer-events: none;
-    
-    /* Intense, random opacity flicker */
-    animation: intenseFlicker 0.1s steps(2, end) infinite;
-}
-
-/* --- Keyframe Animations --- */
-
-/* Jitter Animation (Retained) */
-@keyframes grain {
-  0%, 100% { transform: translate(0, 0); }
-  10% { transform: translate(-1%, -1%); }
-  20% { transform: translate(-1%, 1%); }
-  30% { transform: translate(1%, -1%); }
-  40% { transform: translate(1%, 1%); }
-  50% { transform: translate(-1%, -1%); }
-  60% { transform: translate(-1%, 1%); }
-  70% { transform: translate(1%, -1%); }
-  80% { transform: translate(1%, 1%); }
-  90% { transform: translate(-1%, -1%); }
-}
-
-/* Subtle Flicker for Scanlines */
-@keyframes flicker {
-    0% { opacity: 0.95; }
-    50% { opacity: 1; }
-    100% { opacity: 0.95; }
-}
-
-/* Intense Flicker for Screen Bloom */
-@keyframes intenseFlicker {
-    0% { opacity: 0.1; }
-    100% { opacity: 0.15; }
-}
-/* Glitch Class for PDA Title (Assumed to be .title) */
-/* ------------------------------------------------ */
-/* --- Glitch Effect (Generic) --- */
-/* ------------------------------------------------ */
-
-/* Base class applied to ALL glitched elements (.title, .footer .left, #serial) */
-.glitch {
-    position: relative;
-    /* Ensure the element can be clipped properly and prevent wrapping */
-    display: inline-block; 
-    white-space: nowrap; 
-    /* Use the PDA background color to hide the clipping text fragments */
-}
-
-/* Pseudo-elements applied to ANY element with .glitch */
-.glitch::before,
-.glitch::after {
-    animation-iteration-count: infinite;
-    animation-timing-function: linear;
-    animation-direction: alternate-reverse;
-    overflow: hidden;
-    position: absolute;
-    top: 0;
-    left: 0; /* Reset left position for generic elements */
-    clip: rect(0, 900px, 0, 0);
-    content: attr(data-text);
-    /* Ensure colors are inherited unless explicitly set by text-shadow */
-    color: inherit; 
-}
-
-/* --- Glitch Layers --- */
-
-.glitch::after {
-    animation-name: glitch-animation;
-    animation-duration: 4s;
-    left: 4px;
-    text-shadow: -1px 0 #ffa800; /* Orange shadow */
-}
-
-.glitch::before {
-    animation-name: glitch-animation-2;
-    animation-duration: 6s;
-    left: -4px;
-    text-shadow: 1px 0 #00d8ff; /* Cyan shadow */
-}
-
-/* --- Keyframe Animations (These remain the same) --- */
-
-/* @keyframes glitch-animation */
-@keyframes glitch-animation {
-    0% { clip: rect(42px, 9999px, 44px, 0); }
-    5% { clip: rect(12px, 9999px, 59px, 0); }
-    10% { clip: rect(48px, 9999px, 29px, 0); }
-    15.0% { clip: rect(42px, 9999px, 73px, 0); }
-    20% { clip: rect(63px, 9999px, 27px, 0); }
-    25% { clip: rect(34px, 9999px, 55px, 0); }
-    30.0% { clip: rect(86px, 9999px, 73px, 0); }
-    35% { clip: rect(20px, 9999px, 20px, 0); }
-    40% { clip: rect(26px, 9999px, 60px, 0); }
-    45% { clip: rect(25px, 9999px, 66px, 0); }
-    50% { clip: rect(57px, 9999px, 98px, 0); }
-    55.0% { clip: rect(5px, 9999px, 46px, 0); }
-    60.0% { clip: rect(82px, 9999px, 31px, 0); }
-    65% { clip: rect(54px, 9999px, 27px, 0); }
-    70% { clip: rect(28px, 9999px, 99px, 0); }
-    75% { clip: rect(45px, 9999px, 69px, 0); }
-    80% { clip: rect(23px, 9999px, 85px, 0); }
-    85.0% { clip: rect(54px, 9999px, 84px, 0); }
-    90% { clip: rect(45px, 9999px, 47px, 0); }
-    95% { clip: rect(37px, 9999px, 20px, 0); }
-    100% { clip: rect(4px, 9999px, 91px, 0); }
-}
-
-/* @keyframes glitch-animation-2 */
-@keyframes glitch-animation-2 {
-    0% { clip: rect(65px, 9999px, 100px, 0); }
-    5% { clip: rect(52px, 9999px, 74px, 0); }
-    10% { clip: rect(79px, 9999px, 85px, 0); }
-    15.0% { clip: rect(75px, 9999px, 5px, 0); }
-    20% { clip: rect(67px, 9999px, 61px, 0); }
-    25% { clip: rect(14px, 9999px, 79px, 0); }
-    30.0% { clip: rect(1px, 9999px, 66px, 0); }
-    35% { clip: rect(86px, 9999px, 30px, 0); }
-    40% { clip: rect(23px, 9999px, 98px, 0); }
-    45% { clip: rect(85px, 9999px, 72px, 0); }
-    50% { clip: rect(71px, 9999px, 75px, 0); }
-    55.0% { clip: rect(2px, 9999px, 48px, 0); }
-    60.0% { clip: rect(30px, 9999px, 16px, 0); }
-    65% { clip: rect(59px, 9999px, 50px, 0); }
-    70% { clip: rect(41px, 9999px, 62px, 0); }
-    75% { clip: rect(2px, 9999px, 82px, 0); }
-    80% { clip: rect(47px, 9999px, 73px, 0); }
-    85.0% { clip: rect(3px, 9999px, 27px, 0); }
-    90% { clip: rect(26px, 9999px, 55px, 0); }
-    95% { clip: rect(42px, 9999px, 97px, 0); }
-    100% { clip: rect(38px, 9999px, 49px, 0); }
-}
-
-/* --- Book Notes Styling --- */
-
-/* Sticky notes on book pages */
-.book-note {
-    position: absolute;
-    width: 80px;
-    height: 80px;
-    left: 20px; 
-    top: 20px;
-    transform: none;
-    background: linear-gradient(135deg, #fffacd 0%, #ffffe0 100%);
-    border: 1px solid #ddd;
-    border-radius: 2px;
-    padding: 8px;
-    font-size: 12px;
-    color: #333;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    cursor: grab;
-    user-select: none;
-    transition: opacity 0.2s; 
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: pre-wrap;
-    word-break: break-word;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    font-family: 'Comic Sans MS', cursive;
-    font-weight: bold;
-    z-index: 10;
-}
-
-.book-note:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-.book-note.dragging {
-    cursor: grabbing;
-    opacity: 0.7;
-}
-
-/* Floating notes container - holds notes dragged out of the book */
-.floating-notes-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 500;
-}
-
-/* Floating notes that have been dragged out */
-.floating-note {
-    position: fixed; /* Changed from absolute to fixed for easier coordinate math */
-    z-index: 9999;   /* Above everything */
-    width: 80px;
-    height: 80px;
-    background: linear-gradient(135deg, #fffacd 0%, #ffffe0 100%);
-    border: 2px solid #f0c674;
-    border-radius: 4px;
-    padding: 10px;
-    font-size: 13px;
-    color: #333;
-    box-shadow: 0 15px 30px rgba(0,0,0,0.4); /* Bigger shadow when floating */
-    cursor: grab;
-    transform: scale(1.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    font-family: 'Comic Sans MS', cursive;
-    font-weight: bold;
-    user-select: none;
-    box-sizing: border-box;
-    transform: scale(1.1); /* Pop effect */
-}
-
-.floating-note:active {
-    cursor: grabbing;
-}
-
-.floating-note:hover {
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-}
-
-.floating-note.dragging {
-    cursor: grabbing;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-}
-
-/* Close button for floating notes */
-.floating-note-close {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    background: transparent;
-    border: none;
-    color: #333;
-    font-size: 14px;
-    cursor: pointer;
-    padding: 0;
-    width: 16px;
-    height: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0.6;
-    transition: opacity 0.2s;
-}
-
-.floating-note-close:hover {
-    opacity: 1;
-    color: #d9534f;
-}
-
-/* --- Pan Button Styling --- */
+/* --- Page Panning Begin --- */
 .pan-button {
     position: absolute;
     background: rgba(94, 43, 99, 0.8);
@@ -1612,163 +506,72 @@ body{
   transform: translateX(-50%) scale(1.1);
 }
 
-.pan-button.pan-down {
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-}
-.pan-button.flip-external {
-    top: 20px;
-    left: 20px;
-    /* Ensure it sits above the book and PDA */
-    z-index: 2000; 
-}
-
-.top-right-drawer-panel {
-    position: fixed;
-    top: 0;
-    right: 4%;
-    background: var(--panel);
-    border: 15px solid var(--accent);
-    border-top: none;
-    border-radius: 0 0 8px 8px;
-    box-shadow: 
-        0 8px 24px rgba(0,0,0,0.6),
-        inset 0 1px 0 rgba(255,255,255,0.1),
-        inset 0 -8px 12px rgba(0,0,0,0.4),
-        inset -8px 0 12px rgba(0,0,0,0.4),
-        inset 8px 0 12px rgba(0,0,0,0.4);
-    overflow: visible;
-    width: 540px;
-    height: 20vh; /* about 25% of viewport */
-    transform: translateY(-100%); /* Start above viewport */
-    transition: transform 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
-    z-index: 10;
-    margin: -2px 8px 0 0;
-    perspective: 1000px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.pan-button.top-right-drawer {
-    position: absolute;
-    /* Hangs well below the drawer panel */
-    bottom: -60px; 
-    left: 50%;
-    transform: translateX(-50%);
-    
-    /* Size: Wider and taller to accommodate the curve */
-    width: 340px;
-    height: 45px;
-    
-    /* SHAPE: Use borders to create the "Rod" look */
-    background: transparent; /* Hollow center */
-    
-    /* The "Metal" - Thick borders for the handle thickness */
-    border: 10px solid #8a7856; /* Base Bronze Color */
-    border-top: none; /* Open at the top where it enters the drawer */
-    
-    /* CURVE: Deep radius on bottom corners to create the arch */
-    border-radius: 0 0 40px 40px; 
-    
-    /* TEXTURE & LIGHTING */
-    box-shadow: 
-        /* 1. Bottom Drop Shadow (downwards) */
-        0 8px 15px rgba(0, 0, 0, 0.3),
-        
-        /* 2. NEW: Top Drop Shadow (casting upwards onto the drawer) */
-        0 -8px 10px rgba(0, 0, 0, 0.3),
-
-        /* 3. Inner Shadow (Bottom depth) */
-        inset 0 -10px 10px rgba(0, 0, 0, 0.2),
-        
-        /* 4. NEW: Inner Top Shadow (Darkens the top legs slightly) */
-        inset 0 15px 20px -10px rgba(0, 0, 0, 0.4),
-
-        /* 5. Specular Highlight (The shine on the bottom curve) */
-        /* inset 0 5px 5px rgba(255, 255, 255, 0.25), */
-        
-        /* 6. Outer rim definition */
-        0 1px 0 rgba(0,0,0,0.8);
-
-    /* Layout for the icon */
-    display: flex;
-    align-items: flex-start; /* Align icon to top (empty space) */
-    justify-content: center;
-    cursor: pointer;
-    transition: transform 0.2s, border-color 0.2s;
-    z-index: 20;
-}
-
-/* When drawer is open, button moves with it (inherits transform from parent) */
-.top-right-drawer-panel.open{
-    transform: translateY(0); /* Slide all the way up, extending past top of screen */
-}
-
 .pan-button.pan-up {
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
+.pan-button.pan-down {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
 }
 
 /* --- Second Page Container --- */
 .second-page-container {
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background: var(--bg); /* Matches body background */
-    z-index: 1500;
-    
-    /* FLUID SLIDING LOGIC */
-    /* 1. Start completely pushed down off-screen */
-    transform: translateY(100%); 
-    
-    /* 2. Smooth transition for the slide effect */
-    transition: transform 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
-    
-    /* 3. Layout for content */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    
-    /* Visual polish */
-    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5); /* Shadow on top edge */
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backface-visibility: hidden;
+  background: var(--bg);
+  transform: rotateX(-90deg) translateZ(-50vh);
 }
 
-/* The active state - Slide it up to cover the screen */
+#cubeWrapper.pan-down {
+  transform: translateZ(50vh) rotateX(-90deg);
+}
+#cubeWrapper.pan-up {
+  transform: translateZ(50vh) rotateX(90deg);
+}
+
 .second-page-container.active {
     transform: translateY(0%);
 }
 
-/* Ensure the hidden class is removed or overridden if it still exists in HTML */
+/* body.pan-down .transition-wrapper {
+  transform: translateY(-100%) rotateX(90deg);
+} */
+
+.transition-wrapper.panned {
+  transform: translateY(-100vh); /* Move view up to show the bottom page */
+}
+
 .second-page-container.hidden {
-    /* We don't strictly need this anymore if we use .active, 
-       but keeping it just in case legacy JS adds it. */
     display: flex; 
     transform: translateY(100%); 
     opacity: 1;
     visibility: visible;
 }
+/* --- Page Panning End --- */
 
-/* Adjust the Close/Up button to sit at the top of the drawer */
-.pan-button.pan-up {
-    position: absolute;
-    top: 20px; /* Give it some space from the top edge */
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1501;
-}
-
-.placeholder-square {
-    width: 400px;
+.corkboard {
+  position: absolute;
+    width: 600px;
     height: 400px;
-    background: linear-gradient(135deg, var(--panel) 0%, var(--inner) 100%);
-    border: 3px solid var(--accent);
-    border-radius: 8px;
+    top: 10%;
+    right: 30%;
+    /* background: linear-gradient(135deg, var(--panel) 0%, var(--inner) 100%); */
+    background-image: url(Images/cork.png);
+    border: 20px solid rgb(244, 205, 127);
+    border-radius: 4px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
@@ -1778,60 +581,132 @@ body{
     font-weight: bold;
 }
 
-.drawer-inner {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
-    box-sizing: border-box;
-}
 
-/* Generic Draggable Item in Drawer */
-.drawer-item {
-    cursor: grab;
-    user-select: none;
-    position: relative; /* For positioning inside drawer if needed, but usually flex handles it */
-    transition: transform 0.1s;
-    z-index: 25; /* Higher than drawer background */
-}
 
-.drawer-item:active {
-    cursor: grabbing;
-}
-
-/* The Screwdriver Object (Visual Placeholder) */
-.screwdriver-prop {
-    width: 30px;
-    height: 120px;
-    /* Visual construction of a screwdriver using gradients */
-    background: linear-gradient(to bottom, 
-        #e74c3c 0%, #e74c3c 40%, /* Handle */
-        #95a5a6 40%, #95a5a6 100% /* Metal Shaft */
-    ); 
-    border: 2px solid #2c3e50;
-    border-radius: 4px;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-}
-
-/* Tip of the screwdriver */
-.screwdriver-prop::after {
-    content: '';
-    width: 100%;
+/* Stylus */
+.stylus-slot-hole {
+    position: absolute;
+    top: 0px;
+    right: 48px; 
+    width: 20px;
     height: 10px;
-    background: #2c3e50; /* Dark tip */
+    background: #5e2b63;
+    background-image: linear-gradient(#311a33 10%, rgba(0, 0, 0, 0.548));
+    /* border: .5px solid rgba(255, 0, 0, 0.2); */
+    border-radius: 1px 1px 6px 6px;
+    box-shadow: inset 0 0 5px rgb(0, 0, 0), 0px 0px 2px 1px rgba(0,0,0,0.3);
+    clip-path: inset(0px -10px -10px -10px);
+    z-index: 1; 
 }
 
-/* --- Floating State (When dragged out) --- */
-.drawer-item.floating {
-    position: fixed; /* Fixed to viewport so it stays put while scrolling/moving */
-    z-index: 9999; /* Above EVERYTHING (PDA, Book, Drawer) */
-    pointer-events: auto;
-    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.6));
-    transform: scale(1.1); /* Make it slightly larger when picked up */
+/* The Stylus Object */
+.physical-stylus {
+    position: absolute;
+    /* Center alignment: Hole Right (48) + (Hole Width (21) - Stylus Width (8)) / 2 */
+    right: 54.5px; 
+    top: 0px;
+    width: 8px;
+    height: 140px;
+    background: linear-gradient(90deg, #444 0%, #a0a0a0 40%, #666 100%);
+    border-radius: 0 0 4px 4px;
+    z-index: 2; 
+    clip-path: inset(-1px -21px 129.65px -21px);
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform-origin: bottom center;
+    box-shadow: none;
+    pointer-events: none;
 }
+
+.physical-stylus .stylus-cap {
+    position: absolute;
+    top: -0.5px;
+    right: -6.5px; 
+    width: 20px; 
+    height: 11px; 
+    z-index: 3;
+    background: #2b2b2e;
+    border-radius: 1px 1px 6px 6px; 
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3) inset; 
+}
+
+/* Decorative Grip lines */
+.physical-stylus .stylus-grip {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    width: 100%;
+    height: 30px;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.1),
+        rgba(0,0,0,0.1) 2px,
+        transparent 2px,
+        transparent 4px
+    );
+}
+
+.physical-stylus.ejected {
+    z-index: 200;
+    box-shadow: 4px 4px 10px rgba(0,0,0,0.4);
+    clip-path: none; 
+    transform: translateY(-130px) rotate(15deg);
+}
+
+.physical-stylus.tracking {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: auto;
+  bottom: auto;
+  z-index: 99999;
+  pointer-events: none;
+  transition: none !important; 
+  margin-top: -140px; 
+  margin-left: -4px; 
+  transform-origin: bottom center;
+  will-change: transform;
+  box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4), 0px 13px 3px rgba(0, 0, 0, 0.5) inset;
+}
+
+body.stylus-active,
+body.stylus-active * {
+    cursor: none !important;
+}
+
+body.stylus-active {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body.stylus-active.light-on * {
+  pointer-events: none !important;
+}
+
+#stylusProp {
+  pointer-events: none;
+}
+
+.stylus-beam {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 280px;
+    height: 280px;
+    
+    background: radial-gradient(
+        circle, 
+        rgba(173, 216, 230, 0.4) 0%, 
+        rgba(173, 216, 230, 0.1) 40%, 
+        transparent 70%
+    );
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    mix-blend-mode: screen;
+    z-index: -1;
+}
+
+.physical-stylus.lighting .stylus-beam {
+    opacity: 1;
+}
+

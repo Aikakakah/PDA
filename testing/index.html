@@ -1,0 +1,25 @@
+<!doctype html><html lang="en">
+    <head>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    
+    <div class="modal identity-modal" id="identityModal">
+        <div class="identity-handle"></div>
+        <div class="modal-content identity-box">
+            <div class="identity-header">
+                <i class="fas fa-shield-alt"></i> SECURITY CHECK
+                <button class="modal-close" id="closeIdentityModal" style="margin-left:auto;">✕</button>
+            </div>
+            <div class="identity-content">
+                <p>Biometric scan failed. Manual override required.</p>
+                <p>Please enter personnel identifier to initialize Robust#OS™.</p>
+                <input type="text" id="identityInput" placeholder="Enter Name / Callsign" maxlength="20" autocomplete="off">
+                <button id="identitySubmitBtn">INITIALIZE</button>
+            </div>
+        </div>
+    </div>
+
+
+</body></html>

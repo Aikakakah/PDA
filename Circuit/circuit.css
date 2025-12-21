@@ -1,0 +1,228 @@
+.pda-circuit-board {
+     position: absolute;
+    width: 49.9%;
+    height: 50%;
+    top: 48%;
+    left: 24.8%;
+    background-color: #0e3c0e;
+    background-image: url(Images/board.svg);
+    background-size: 287px;
+    background-repeat: no-repeat;
+    background-position: -1px;
+    border: 2px solid #0a2a0a;
+    border-radius: 8px;
+    z-index: 1;
+    display: block;
+    flex-direction: column;
+    align-items: center;
+
+    
+}
+
+.pcb-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+    z-index: 1;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.overlay-battery {
+    background-image: url('Images/board-battery.svg');
+    background-size: 287px;
+    background-repeat: no-repeat;
+    background-position: -1px;
+}
+
+.overlay-traces {
+    background-image: url('Images/board-traces.svg');
+    background-size: 287px;
+    background-repeat: no-repeat;
+    background-position: -1px;
+}
+
+.pcb-overlay.active {
+    opacity: 1;
+}
+.overlay-communication { background-image: url('Images/board-communication.svg');
+background-size: 287px;
+    background-repeat: no-repeat;
+    background-position: -1px; }
+.overlay-notekeeper    { background-image: url('Images/board-notekeeper.svg');
+background-size: 287px;
+    background-repeat: no-repeat;
+    background-position: -1px; }
+.overlay-speakers      { background-image: url('Images/board-speakers.svg'); background-size: 287px;
+    background-repeat: no-repeat;
+    background-position: -1px;}
+
+.overlay-terminal      { background-image: url('Images/board-terminal.svg'); background-size: 287px;
+    background-repeat: no-repeat;
+    background-position: -1px;}
+
+.coin-cell {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #e6e6e6, #bdc3c7);
+    border: 3px solid #95a5a6;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    left: 7%;
+    top: 35.2%;
+}
+.coin-text { font-size: 6px; color: #7f8c8d; font-family: sans-serif; }
+
+.via {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #0a2a0a;
+    border: 1px solid #b87333;
+}
+.via.v1 { top: 18%; left: 42%; }
+.via.v2 { bottom: 30%; right: 12%; }
+.via.v3 { top: 60%; left: 15%; }
+
+
+.resistor-slot {
+    width: 3px;
+    height: 10px;
+    border: 1px dashed rgba(255,255,255,0.3);
+    background: rgba(0,0,0,0.2);
+    position: relative;
+    z-index: 2;
+}
+
+.resistor-slot.r1 {top: 54.18%; left: 4.59%;} /* power */
+.resistor-slot.r2 {top: -0.94%;left: 84.1%;transform: rotate(90deg);} /* communication */
+.resistor-slot.r3 {top: 0.61%;left: 19.4%;} /* notekeeper */
+.resistor-slot.r4 {top: 26.3%;left: 19.4%;} /* terminal 1*/
+.resistor-slot.r5 {top: 14%;left: 36.65%;transform: rotate(90deg);} /* terminal 2*/
+.resistor-slot.r6 {top: 47.89%;left: 60.1%;} /* speakers */
+
+.pcb-label {
+    font-size: 6px;
+    color: #bdc3c7;
+    margin-top: 2px;
+    font-family: monospace;
+    z-index: 2;
+}
+.pcb-label {
+    font-size: 6px;
+    color: #bdc3c7;
+    margin-bottom: 2px;
+    font-family: monospace;
+}
+
+/* --- Resistor Visuals --- */
+.resistor-kit {
+    display: flex;
+    gap: 10px;
+}
+
+.resistor-prop {
+    width: 40px;
+    height: 10px;
+    position: relative;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+.resistor-prop.floating {
+    transition: none !important;
+}
+/* The wire line running through */
+.resistor-prop::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: #bdc3c7; /* Silver wire */
+    z-index: 0;
+}
+
+/* The main beige body */
+.resistor-body {
+    width: 24px;
+    height: 8px;
+    border-radius: 2px;
+    position: relative;
+    z-index: 1;
+    box-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    
+    /* Define the 4-band pattern using a linear gradient */
+    /* Beige > Band1 > Beige > Band2 > Beige > Band3 > Beige > Band4 > Beige */
+    background: linear-gradient(to right,
+        #f5deb3 0%,   #f5deb3 15%, 
+        var(--b1) 15%, var(--b1) 25%,
+        #f5deb3 25%,  #f5deb3 35%,
+        var(--b2) 35%, var(--b2) 45%,
+        #f5deb3 45%,  #f5deb3 55%,
+        var(--b3) 55%, var(--b3) 65%,
+        #f5deb3 65%,  #f5deb3 80%,
+        var(--b4) 80%, var(--b4) 90%,
+        #f5deb3 90%,  #f5deb3 100%
+    );
+}
+
+/* The colored band (variable via CSS var) */
+.resistor-body::after {
+    display: none;
+}
+/* --- UPDATED: Resistor Rotation & Shrinking when placed --- */
+.resistor-prop.placed {
+    /* 1. Force the container to be smaller (Shrunk Size) */
+    width: 12px !important; 
+    height: 5px !important;
+    
+    position: absolute;
+    top: 50% !important;
+    left: 50% !important;
+    
+    /* 2. Rotate it */
+    transform: translate(-50%, -50%) rotate(90deg) !important;
+    
+    pointer-events: auto; 
+    transition: transform 0.3s ease-out;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+/* 3. NEW: Scale the inner body when parent is placed/shrunk */
+.resistor-prop.placed .resistor-body {
+    width: 100% !important; /* Fill the tiny 22px width */
+    height: 100% !important; /* Fill the tiny 6px height */
+    box-shadow: none; /* Remove shadow for cleaner look at small size */
+    border-radius: 1px;
+}
+
+/* Manufacturer Label on back */
+.pda-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #ccc;
+    color: #111;
+    padding: 10px 20px;
+    border-radius: 2px;
+    font-family: monospace;
+    font-size: 10px;
+    text-align: left;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    opacity: 0.8;
+}

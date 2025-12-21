@@ -1,0 +1,320 @@
+.pda-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 5s;
+    transform-style: preserve-3d;
+    transform-origin: 50% 50% calc(var(--pda-depth) / -2);
+}
+
+.pda.flipped .pda-inner {
+    transform: rotateY(180deg);
+}
+
+.pda-front, .pda-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border-radius: calc(var(--radius) + 6px);
+    box-shadow: 0 8px 28px rgba(0,0,0,.7), 0 0 10px rgba(0,0,0,.4);
+    background: linear-gradient(180deg, rgb(70, 22, 57) 0%, #250b1e 100%);
+    will-change: transform;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 8px;
+    -webkit-font-smoothing: antialiased;
+}
+
+.pda-front {
+    z-index: 2;
+    transform: rotateY(0deg);
+    background: linear-gradient(180deg, rgb(70, 22, 57) 0%, #250b1e 100%);
+    border: 1px solid #2a0d21;
+    will-change: transform;
+}
+
+.pda-back {
+    transform: rotateY(180deg) translateZ(var(--pda-depth));
+    background: linear-gradient(180deg, rgb(70, 22, 57) 0%, #250b1e 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #1a0514;
+    text-align:center;
+}
+.pda-wall {
+    position: absolute;
+    background: #180512;
+    /* border: 1px solid rgba(0,0,0,0.3); */
+    pointer-events: none !important;
+    backface-visibility: hidden;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+}
+
+.pda-wall.right, .pda-wall.left {
+    width: var(--pda-depth);
+    height: calc(100% - 10px);
+    top: 5px;
+}
+.pda-wall.top, .pda-wall.bottom {
+    width: calc(100% - 10px);
+    height: var(--pda-depth);
+    left: 5px;
+}
+
+.pda-wall.right {
+    right: calc(var(--pda-depth) / -2);
+    transform: translateZ(calc(var(--pda-depth) / -2)) rotateY(90deg);
+}
+
+.pda-wall.left {
+    left: calc(var(--pda-depth) / -2);
+    transform: translateZ(calc(var(--pda-depth) / -2)) rotateY(-90deg);
+}
+
+.pda-wall.top {
+    top: calc(var(--pda-depth) / -2);
+    transform: translateZ(calc(var(--pda-depth) / -2)) rotateX(90deg);
+}
+
+.pda-wall.bottom {
+    bottom: calc(var(--pda-depth) / -2);
+    transform: translateZ(calc(var(--pda-depth) / -2)) rotateX(-90deg);
+}
+
+
+/* --- BEGIN BACK PANEL --- */
+.pda-back-panel {
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    top: 48%;
+    background: #767687;
+    border: 2px solid #333;
+    border-radius: 8px;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+    transition: transform 0.6s cubic-bezier(0.6, -0.28, 0.735, 0.045), opacity 0.6s;
+    z-index: 5;
+}
+.pda-back-panel.unlocked {
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1), inset 0 0 20px rgba(0,0,0,0.8);
+    border-color: #555;
+}
+
+.pda-back-panel.unlocked:hover {
+    border-color: var(--accent);
+}
+
+.pda-back-panel.detached {
+    transform: translateY(300px) rotate(15deg); 
+    opacity: 1;
+    pointer-events: auto; 
+    cursor: pointer;
+}
+
+.panel-screw-hole {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #080808;
+    box-shadow: inset 1px 1px 2px rgba(0,0,0,1), 0 0 0 1px rgba(255,255,255,0.05);
+    z-index: 2;
+}
+
+.panel-screw-hole.tl { top: 10px; left: 10px; }
+.panel-screw-hole.tr { top: 10px; right: 10px; }
+.panel-screw-hole.bl { bottom: 10px; left: 10px; }
+.panel-screw-hole.br { bottom: 10px; right: 10px; }
+
+
+
+/* --- END BACK PANEL --- */
+/* RESISTORS,SCREWS AND CIRCUIT */
+/* The colored band (variable via CSS var) */
+.resistor-body::after {
+    display: none;
+}
+
+.resistor-prop.placed {
+    position: absolute;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) rotate(90deg) !important;
+    pointer-events: auto; 
+    transition: transform 0.3s ease-out;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+.pda-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #ccc;
+    color: #111;
+    padding: 10px 20px;
+    border-radius: 2px;
+    font-family: monospace;
+    font-size: 10px;
+    text-align: left;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    opacity: 0.8;
+}
+
+/* 1. Animation for the Parent .screw (Only handles the final drop and fade) */
+@keyframes unscrew-anim {
+    0% {
+        opacity: 1;
+    }
+    20% {
+        opacity: 1;
+    }
+    40% {
+    }
+    100% {
+        transform: translateY(-50px); 
+        opacity: 0;
+    }
+}
+
+/* 2. Keyframe for Head Rotation AND Lift (Applied to .screw-head) */
+@keyframes head-spin-anim {
+    0% {
+        transform: translateZ(0) scale(1) rotate(var(--start-rot)); 
+    }
+    20% {
+        transform: rotate(var(--start-rot)); 
+    }
+    40% {
+        transform: rotate(calc(var(--start-rot) + 180deg)); 
+    }
+    100% {
+        transform: rotate(calc(var(--start-rot) + 720deg)); 
+    }
+}
+
+/* 3. Keyframe for Thread movement and fade (No change needed) */
+@keyframes unscrew-thread-lift {
+    0% { 
+        opacity: 0; 
+        transform: translateX(-50%) translateY(0) translateZ(-1px); 
+    }
+    10% { 
+        opacity: 1; 
+    }
+    50% {
+        opacity: 1; 
+        transform: translateX(-50%) translateY(-5px) translateZ(-1px); 
+    }
+    100% { 
+        opacity: 0; 
+        transform: translateX(-50%) translateY(-10px) translateZ(-1px); 
+    }
+}
+
+/* 3. Base Screw (Parent) - Handles position and overall animation */
+.screw {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    z-index: 10;
+    transform-style: preserve-3d;
+    perspective: 50px; 
+}
+
+/* Apply base rotation for positioning on the board (e.g., tl, tr, etc.) */
+.screw.tl { top: 10px; left: 10px; --start-rot: 45deg; }
+.screw.tr { top: 10px; right: 10px; --start-rot: 15deg; }
+.screw.bl { bottom: 10px; left: 10px; --start-rot: 90deg; }
+.screw.br { bottom: 10px; right: 10px; --start-rot: 30deg; }
+
+/* 4. Removed State - Targets the parent to start the final drop */
+.screw.removed {
+    animation: unscrew-anim 0.6s ease-in forwards;
+    pointer-events: none;
+}
+
+/* 5. Screw Head Class */
+.screw-head {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    background: radial-gradient(circle, #bdc3c7 0%, #7f8c8d 100%);
+    border-radius: 50%;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.5);
+    z-index: 2; 
+    transform: rotate(var(--start-rot));
+    transform-style: preserve-3d; 
+}
+
+/* 7. Screw Head Cross Pattern (Using ::before & ::after on the new class) */
+.screw-head::after, .screw-head::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    background: #555;
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+/* Cross Line 1 */
+.screw-head::after { 
+    width: 8px;
+    height: 2px;
+}
+/* Cross Line 2 */
+.screw-head::before { 
+    width: 2px;
+    height: 8px;
+}
+
+/* 8. Apply Head Rotation AND LIFT when parent is removed */
+.screw.removed .screw-head {
+    animation: head-spin-anim 0.6s ease-out forwards;
+}
+
+/* 9. Screw Thread Class */
+.screw-thread {
+    position: absolute;
+    top: 100%; 
+    left: 50%;
+    width: 5px; 
+    height: 15px;
+    background: repeating-linear-gradient(
+        180deg,
+        #7f8c8d, 
+        #7f8c8d 1px,
+        #555 1px, 
+        #555 2px
+    );
+    opacity: 0; 
+    z-index: 1; 
+    transform: translateX(-50%) translateZ(-1px);
+}
+
+/* 10. Threads Animation Targeting */
+.screw.removed .screw-thread {
+    animation: unscrew-thread-lift 0.6s ease-out forwards;
+}
+
+.screw-hole {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #080808;
+    box-shadow: inset 1px 1px 2px rgba(0,0,0,1), 0 0 0 1px rgba(255,255,255,0.05);
+    z-index: 2;
+}
+
+/* Position holes (Relative to the Chassis Outline) */
+.screw-hole.tl { top: 10px; left: 10px; }
+.screw-hole.tr { top: 10px; right: 10px; }
+.screw-hole.bl { bottom: 10px; left: 10px; }
+.screw-hole.br { bottom: 10px; right: 10px; }

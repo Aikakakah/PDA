@@ -1,0 +1,39 @@
+/* ADMIN CONTROLS */
+/* Flip Button (Invisible clickable area or specific button) */
+.flip-back-btn {
+    margin-top: 20px;
+    background: transparent;
+    border: 1px solid #555;
+    color: #888;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+.flip-back-btn:hover { background: rgba(255,255,255,0.05); color: #ccc; }
+
+.admin-controls {
+    position: absolute;
+    top: 70px;
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 2000;
+}
+
+.pan-button.admin-btn {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    background: rgba(200, 50, 50, 0.8);
+    border-color: #e74c3c;
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+}
+
+.pan-button.admin-btn:hover {
+    background: rgba(200, 50, 50, 1);
+    transform: scale(1.1);
+}
