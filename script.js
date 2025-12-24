@@ -2232,11 +2232,19 @@ const state = {
             // Button on the Main Face: Rotate DOWN to show the second page
             panUpBtn.addEventListener('click', () => {
                 cubeWrapper.classList.add('pan-up');
+                cubeWrapper.classList.add('is-panning');
             });
 
             // Button on the Second Page: Rotate back UP to the main face
             panDownBtn.addEventListener('click', () => {
                 cubeWrapper.classList.remove('pan-up');
+                cubeWrapper.classList.add('is-panning');
+            });
+            cubeWrapper.addEventListener('transitionend', (e) => {
+                // Only trigger if the transform transition finished on the wrapper itself
+                if (e.target === cubeWrapper && e.propertyName === 'transform') {
+                    cubeWrapper.classList.remove('is-panning');
+                }
             });
         }
     }
