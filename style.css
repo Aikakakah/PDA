@@ -710,3 +710,74 @@ body.stylus-active.light-on * {
     opacity: 1;
 }
 
+
+
+
+
+/* Mobile and Small Screen Support */
+@media (max-width: 800px) {
+    /* 1. Unlock scrolling and height */
+    html, body {
+        overflow-y: auto !important;
+        height: auto !important;
+        width: 100% !important;
+    }
+
+    body {
+        perspective: none; /* Flatten the 3D space */
+    }
+
+    /* 2. Reset the 3D Wrapper */
+    .transition-wrapper {
+        transform: none !important;
+        height: auto !important;
+        position: relative !important;
+        pointer-events: auto !important;
+        display: block !important;
+    }
+
+    /* 3. Stack Book and PDA vertically */
+    .main-content-face {
+        position: relative !important;
+        flex-direction: column !important; /* Book on top */
+        height: auto !important;
+        padding: 60px 10px;
+        gap: 20px; 
+        transform: none !important;
+        justify-content: flex-start !important;
+        align-items: center !important;
+    }
+
+    /* 4. Scale the Book for mobile */
+    #book-injection-point {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        --scale-factor: 0.28; /* Shrink book slightly for mobile */
+    }
+
+    /* 5. Scale the PDA while keeping the aspect ratio */
+    .pda {
+        margin: 0 auto;
+        transform-origin: center top;
+        /* This keeps the ratio identical by scaling the entire object based on screen width */
+        transform: scale(calc(90vw / 576)) !important; 
+        
+        /* Negative margin to pull layout up, compensating for the empty space scaling creates */
+        margin-bottom: calc(-1 * (450px * (1 - (90vw / 576)))); 
+    }
+
+    /* 6. Hide 3D navigation buttons (users will scroll instead) */
+    #panUpBtn, #panDownBtn {
+        display: none !important;
+    }
+
+    /* 7. Adjust Admin Controls for vertical space */
+    .admin-controls {
+        position: static;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-bottom: 20px;
+        transform: scale(0.8);
+    }
+}
