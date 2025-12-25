@@ -646,7 +646,27 @@ const state = {
                 Object.entries(data.slots).forEach(([slotId, ohms]) => {
                     const slot = document.getElementById(slotId);
                     if (slot && slot.children.length === 0) {
-                        const resistor = createResistorDOM(ohms);
+                        
+                        // Attempt to find an existing resistor in the drawer first
+                        // This prevents duplicating resistors (one in slot, one left in drawer)
+                        let resistor = document.querySelector(`.resistor-kit .resistor-prop[data-ohms="${ohms}"]`);
+                        
+                        if (resistor) {
+                            // Move the existing drawer item to the slot
+                            resistor.classList.add('placed');
+                            resistor.classList.remove('floating'); // Ensure clean state
+                            
+                            // Apply placement styles
+                            resistor.style.position = 'absolute';
+                            resistor.style.top = '50%';
+                            resistor.style.left = '50%';
+                            resistor.style.transform = 'translate(-50%, -50%) rotate(90deg)';
+                            resistor.style.pointerEvents = 'auto';
+                        } else {
+                            // Fallback if not found (or if we have multiple of same ohms needed)
+                            resistor = createResistorDOM(ohms);
+                        }
+
                         slot.appendChild(resistor);
                         
                         // Re-trigger validation to show wires/overlays
@@ -1352,6 +1372,24 @@ const state = {
         } else { state.unlockedFeatures.terminal = false; }
 
         renderPrograms();
+
+        // Ensure power state matches the board: if the power resistor is missing, power must be off
+        const r1Ok = isRepaired('slot-r1', '220');
+        if (!r1Ok && state.poweredOn) {
+            state.poweredOn = false;
+            const pdaScreen = document.querySelector('.PDA-screen');
+            const powerOverlay = document.getElementById('powerOverlay');
+            const powerBtnEl = document.getElementById('powerOn');
+            if (pdaScreen) pdaScreen.classList.add('screen-off');
+            if (powerOverlay) powerOverlay.classList.remove('hidden');
+            if (powerBtnEl) {
+                powerBtnEl.disabled = true;
+                powerBtnEl.textContent = "System Error";
+                powerBtnEl.style.backgroundColor = "#555";
+                powerBtnEl.style.cursor = "not-allowed";
+            }
+        }
+
         saveGameProgress();
     }
     
@@ -1734,25 +1772,43 @@ const state = {
         const btnAdminUnlockAll = el('btn-admin-unlock-all');
     
         if (btnAdminPower) {
-            btnAdminPower.addEventListener('click', () => {
-                console.log("ADMIN: Forcing Power On");
-    
+        btnAdminPower.addEventListener('click', () => {
+            // Toggle the state boolean
+            state.poweredOn = !state.poweredOn;
+
+            console.log(`ADMIN: Power ${state.poweredOn ? 'ON' : 'OFF'}`);
+
+            if (state.poweredOn) {
+                // --- POWER ON LOGIC ---
                 if (powerOn) {
                     powerOn.disabled = false;
                     powerOn.textContent = "Power On";
                     powerOn.style.backgroundColor = ""; 
                     powerOn.style.cursor = "pointer";
                 }
-    
-                if(powerOverlay) powerOverlay.classList.add('hidden');
-                const pdaScreen = document.querySelector('.PDA-screen');
-                if(pdaScreen) pdaScreen.classList.remove('screen-off');
-                state.poweredOn = true;
-                saveGameProgress(); 
-    
-                btnAdminPower.style.boxShadow = "0 0 10px #fff";
-            });
-        }
+                if (powerOverlay) powerOverlay.classList.add('hidden');
+                if (pdaScreen) pdaScreen.classList.remove('screen-off');
+                
+                btnAdminPower.style.boxShadow = "0 0 15px #00ff00"; // Green glow for ON
+            } else {
+                // --- POWER OFF LOGIC ---
+                if (powerOn) {
+                    // If you want the physical "Power On" button to become 
+                    // unusable when forced off by Admin, keep these:
+                    powerOn.disabled = true;
+                    powerOn.textContent = "Offline";
+                    powerOn.style.backgroundColor = "#333";
+                    powerOn.style.cursor = "not-allowed";
+                }
+                if (powerOverlay) powerOverlay.classList.remove('hidden');
+                if (pdaScreen) pdaScreen.classList.add('screen-off');
+                
+                btnAdminPower.style.boxShadow = "none"; // Remove glow for OFF
+            }
+
+            // saveGameProgress(); 
+        });
+    }
         
         const adminUnlockBtn = el('btn-admin-unlock-all'); 
         if (adminUnlockBtn) {
@@ -2041,6 +2097,28 @@ const state = {
                         if (item.parentElement.id === 'slot-r2') {
                             state.unlockedFeatures.nanochat = false;
                             renderPrograms(); 
+                        }
+
+                        // If the power resistor is being removed, ensure the PDA actually powers off
+                        if (item.parentElement.id === 'slot-r1') {
+                            // Prefer the shared helper if available
+                            if (typeof turnOffScreen === 'function') {
+                                turnOffScreen();
+                            } else {
+                                // Fallback: update UI/state directly
+                                if (powerBtn) {
+                                    powerBtn.textContent = "System Error";
+                                    powerBtn.style.backgroundColor = "#555";
+                                    powerBtn.disabled = true;
+                                    powerBtn.style.cursor = "not-allowed";
+                                }
+                                const pdaScreen = document.querySelector('.PDA-screen');
+                                const powerOverlay = document.getElementById('powerOverlay');
+                                if (pdaScreen) pdaScreen.classList.add('screen-off');
+                                if (powerOverlay) powerOverlay.classList.remove('hidden');
+                                state.poweredOn = false;
+                                saveGameProgress();
+                            }
                         }
                     }
                     if (item.parentElement && item.parentElement.classList.contains('resistor-slot')) {
