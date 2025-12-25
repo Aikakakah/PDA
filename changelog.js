@@ -15,9 +15,8 @@ export const CHANGELOG_CONTENT = [
             "add textures to pda",
             "ID card flickers out, fix this glitch",
             "fix ringtone modal",
-            "screwdriver needs to be horizontal in drawer",
             "double clicking notes to make big",
-            "screwdriver tip to unscrew only",
+            "screwdriver should tilt when grabbed and automatically return to drawer when all screws removed",
             
         ]
     },
@@ -31,6 +30,9 @@ export const CHANGELOG_CONTENT = [
             "Resistors save with game, power resistor fixed.",
             "Glint shows on power off screen",
             "Drawer fits screwdriver better",
+            "Resistors rotate when placed",
+            "Better drawer positioning",
+            "Only screwdriver tip triggers screw removal",
         ]
     },
     {

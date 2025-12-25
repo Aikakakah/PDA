@@ -216,16 +216,18 @@
 
 /* --- Resistor Visuals --- */
 .resistor-kit {
-    display: flex;
-    gap: 10px;
+    /* display: flex; */
+    /* gap: 10px; */
     height: 50%;
+    width: 100%;
+    overflow: hidden;
     position: relative; /* Added to constrain absolute-positioned resistors */
 }
 
 .resistor-prop {
     width: 40px;
     height: 10px;
-    position: relative;
+    position: absolute;
     cursor: grab;
     display: flex;
     align-items: center;

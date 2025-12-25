@@ -120,6 +120,40 @@ function formatSolTimestamp() {
     return `SOL-${month}${day}.${hours}${seconds}`;
 }
 
+function randomizeResistorsInDrawer() {
+    const kit = document.querySelector('.resistor-kit');
+    if (!kit) return;
+
+    // Ensure the kit is positioned, and use its client dimensions to bound placement
+    const kitWidth = kit.clientWidth;
+    const kitHeight = kit.clientHeight;
+    const padding = 8; // keep a small gap from edges so visuals don't touch borders
+
+    const resistors = kit.querySelectorAll('.resistor-prop');
+    resistors.forEach(res => {
+        // Ensure absolute positioning is used for random placement
+        res.style.position = 'absolute';
+
+        // Measure resistor size (fallback to expected defaults)
+        const resW = res.offsetWidth || 40;
+        const resH = res.offsetHeight || 10;
+
+        // Compute allowed bounds so the resistor fully fits inside the kit
+        const maxX = Math.max(0, kitWidth - resW - padding);
+        const maxY = Math.max(0, kitHeight - resH - padding);
+
+        const randomX = (Math.random() * maxX) + (padding / 2);
+        const randomY = (Math.random() * maxY) + (padding / 2);
+
+        // Limit rotation to avoid visual overhang while still looking scattered
+        const randomRot = (Math.random() * 160) - 80; // -20deg .. +20deg
+
+        res.style.left = `${randomX}px`;
+        res.style.top = `${randomY}px`;
+        res.style.transform = `rotate(${randomRot}deg)`;
+    });
+}
+
 const resistorVisuals = {
     '100': { b1: '#964B00', b2: '#000', b3: '#964B00', b4: '#D4AF37' },
     '220': { b1: '#E74C3C', b2: '#E74C3C', b3: '#964B00', b4: '#D4AF37' },
@@ -1478,6 +1512,7 @@ const state = {
         setInterval(updateHome, 1000);
         updateHome();
         setupHashModal();
+        randomizeResistorsInDrawer();
 
         const pdaContainer = el('pda');
         const flipTriggerBtn = el('btn-flip-trigger');
@@ -2215,11 +2250,15 @@ const state = {
 
                     // 1. Logic for Screwdriver Interaction with Screws
                     if (item.classList.contains('screwdriver-prop')) {
+                        // Find the actual tip element inside the screwdriver
+                        const tip = item.querySelector('.tip');
+                        
                         screws.forEach(screw => {
-                            if (!screw.classList.contains('removed') && isOverlapping(item, screw)) {
+                            // Use the tip's position for the overlap check instead of the whole item
+                            if (!screw.classList.contains('removed') && isOverlapping(tip, screw)) {
                                 screw.classList.add('removed');
                                 const a = new Audio('/Audio/click_fast.ogg'); 
-                                a.play(); // Ensure the audio plays
+                                a.play();
                                 checkPanelStatus();
                             }
                         });
