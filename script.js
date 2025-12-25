@@ -1,6 +1,7 @@
 import { createNewsModule } from './news.js';
 import { createSecretHandler } from './secret_handler.js';
-import { validateResistorDrop } from './Circuit/circuit.js';
+// FIX 1: Import RESISTOR_CONFIG
+import { validateResistorDrop, RESISTOR_CONFIG } from './Circuit/circuit.js';
 import { initializeBookSystem } from './Book/book.js'; 
 import { createNanoChatTriggers } from './nanochat_triggers.js';
 import { createTerminalBridge } from './terminal_bridge.js';
@@ -758,6 +759,7 @@ const state = {
     // SHINE EFFECT
     const initializeShineEffect = () => {
         const pdaScreen = document.querySelector('.PDA-screen');
+        const pdaScreenOff = document.querySelector('.power-overlay');
         const COOLDOWN_MS = 60 * 1000;
         let lastPlayed = 0;
 
@@ -767,8 +769,14 @@ const state = {
                 if (now - lastPlayed > COOLDOWN_MS) {
                     lastPlayed = now;
                     pdaScreen.classList.add('shine-active');
-                    setTimeout(() => pdaScreen.classList.remove('shine-active'), 1500);
+                    pdaScreenOff.classList.add('shine-active');
+                    setTimeout(() => pdaScreen.classList.remove('shine-active') && pdaScreenOff.classList.remove('shine-active'), 1500);
                 }
+                // if (now - lastPlayed > COOLDOWN_MS) {
+                //     lastPlayed = now;
+                //     pdaScreen.classList.add('shine-active');
+                //     setTimeout(() => pdaScreen.classList.remove('shine-active'), 1500);
+                // }
             });
         }
     };
@@ -887,7 +895,6 @@ const state = {
                 }, 1000);
             });
         }
-        // The broken duplicate block that was here has been removed.
     }
 
     
@@ -1312,47 +1319,92 @@ const state = {
         playNext();
     }
     
+    // --- FIX 2: MOVED POWER FUNCTIONS TO GLOBAL SCOPE SO CHECKCIRCUITSTATE CAN USE THEM ---
+    const turnOffScreen = () => {
+        const powerOverlay = document.getElementById('powerOverlay');
+        const pdaScreen = document.querySelector('.PDA-screen');
+        
+        if(powerOverlay) powerOverlay.classList.remove('hidden');
+        if(pdaScreen) pdaScreen.classList.add('screen-off'); 
+        
+        state.poweredOn = false;
+        saveGameProgress();
+    };
+
+    const turnOnScreen = () => {
+        const powerOverlay = document.getElementById('powerOverlay');
+        const pdaScreen = document.querySelector('.PDA-screen');
+        
+        if(powerOverlay) powerOverlay.classList.add('hidden');
+        if(pdaScreen) pdaScreen.classList.remove('screen-off');
+        
+        state.poweredOn = true;
+        saveGameProgress();
+    };
+
+    // --- FIX 3 & 4: UPDATED CHECK CIRCUIT STATE ---
     function checkCircuitState() {
+        // 1. Clear ALL visual overlays first (reset state)
+        document.querySelectorAll('.pcb-overlay').forEach(overlay => {
+            overlay.classList.remove('active');
+        });
+    
+        // 2. Admin Override logic
         if (state.adminOverride) {
             Object.keys(state.unlockedFeatures).forEach(k => state.unlockedFeatures[k] = true);
+            document.querySelectorAll('.pcb-overlay').forEach(overlay => overlay.classList.add('active'));
             renderPrograms();
             return;
         }
-
+    
+        // Helper: Check if a slot has the correct resistor
         const isRepaired = (slotId, correctOhms) => {
             const slot = document.getElementById(slotId);
             if (slot && slot.children.length > 0) {
-                return slot.children[0].dataset.ohms === correctOhms;
+                const resistor = slot.children[0];
+                return resistor.dataset.ohms === correctOhms;
             }
             return false;
         };
-
-        if (state.poweredOn) markPuzzleComplete('fix_power');
-
-        if (isRepaired('slot-r2', '100')) {
-            state.unlockedFeatures.nanochat = true;
-            markPuzzleComplete('fix_nanochat');
-        } else { state.unlockedFeatures.nanochat = false; }
-
-        if (isRepaired('slot-r3', '10k')) {
-            state.unlockedFeatures.notekeeper = true;
-            markPuzzleComplete('fix_notekeeper');
-        } else { state.unlockedFeatures.notekeeper = false; }
-
-        if (isRepaired('slot-r6', '10')) {
-            state.unlockedFeatures.news = true;
-            markPuzzleComplete('fix_news');
-        } else { state.unlockedFeatures.news = false; }
-
+    
+        // 3. Loop through CONFIG to apply effects for any correct slot
+        // This fixes the "doesn't light up" issue by ensuring overlays are always applied if the resistor is right
+        RESISTOR_CONFIG.forEach(config => {
+            if (isRepaired(config.slotId, config.requiredOhms)) {
+                // Apply Effects
+                if (config.effects) {
+                    config.effects.forEach(cls => {
+                        // Special check for Terminal which needs 2 resistors sharing one overlay
+                        if (cls === 'overlay-terminal') {
+                            const r4 = isRepaired('slot-r4', '220');
+                            const r5 = isRepaired('slot-r5', '10k');
+                            if (!r4 || !r5) return; // Don't light up unless BOTH are present
+                        }
+                        
+                        const effectEl = document.querySelector('.' + cls);
+                        if (effectEl) effectEl.classList.add('active');
+                    });
+                }
+            }
+        });
+    
+        // 4. Update Feature States (Game Logic)
+        state.unlockedFeatures.nanochat = isRepaired('slot-r2', '100');
+        state.unlockedFeatures.notekeeper = isRepaired('slot-r3', '10k');
+        state.unlockedFeatures.news = isRepaired('slot-r6', '10');
+        
         const r4Ok = isRepaired('slot-r4', '220');
         const r5Ok = isRepaired('slot-r5', '10k');
-        if (r4Ok && r5Ok) {
-            state.unlockedFeatures.terminal = true;
-            markPuzzleComplete('fix_terminal');
-        } else { state.unlockedFeatures.terminal = false; }
-
+        state.unlockedFeatures.terminal = (r4Ok && r5Ok);
+    
+        // 5. Power Logic (CRITICAL FIX FOR "POWER STAYS ON")
+        // We check R1 explicitly. If it's missing, we kill power immediately.
+        const powerOk = isRepaired('slot-r1', '220');
+        if (!powerOk && state.poweredOn) {
+            turnOffScreen(); 
+        }
+        
         renderPrograms();
-        saveGameProgress();
     }
     
     function setupHashModal() {
@@ -1440,6 +1492,7 @@ const state = {
         setInterval(updateHome, 1000);
         updateHome();
         setupHashModal();
+        checkCircuitState();
 
         const pdaContainer = el('pda');
         const flipTriggerBtn = el('btn-flip-trigger');
@@ -1799,19 +1852,7 @@ const state = {
             });
         }
         
-        const turnOffScreen = () => {
-            if(powerOverlay) powerOverlay.classList.remove('hidden');
-            if(pdaScreen) pdaScreen.classList.add('screen-off'); 
-            state.poweredOn = false;
-            saveGameProgress();
-        };
-    
-        const turnOnScreen = () => {
-            if(powerOverlay) powerOverlay.classList.add('hidden');
-            if(pdaScreen) pdaScreen.classList.remove('screen-off');
-            state.poweredOn = true;
-            saveGameProgress();
-        };
+        // --- OLD POWER FUNCTION DEFINITIONS REMOVED FROM HERE ---
 
         if(!state.poweredOn) {
             turnOffScreen();
@@ -1948,284 +1989,158 @@ const state = {
             backPanel.addEventListener('click', () => {
                 if (backPanel.classList.contains('detached')) {
                     backPanel.classList.remove('detached');
-                    setTimeout(() => {
-                        if (pda) pda.classList.remove('flipped');
-                    }, 600);
-                } 
-                else if (backPanel.classList.contains('unlocked')) {
+                    setTimeout(() => { if (pda) pda.classList.remove('flipped');}, 600);
+                } else if (backPanel.classList.contains('unlocked')) {
                     backPanel.classList.add('detached');
                 }
             });
         }
         
-        if(!state.poweredOn) {
-                if(pda) pda.classList.add('powered-off');
-                if(powerOverlay) powerOverlay.classList.remove('hidden');
-                if(powerBtn) {
-                    powerBtn.disabled = true;
-                    powerBtn.textContent = "System Error";
-                    powerBtn.style.backgroundColor = "#555";
-                    powerBtn.style.cursor = "not-allowed";
-                }
-        }
-
-        const checkTerminalReady = (ignoredItem = null) => {
-            const slot4 = document.getElementById('slot-r4');
-            const slot5 = document.getElementById('slot-r5');
-            
-            const isValid = (slot) => {
-                if (!slot || slot.children.length === 0) return false;
-                const r = slot.children[0];
-                if (r === ignoredItem) return false; 
-                
-                const res = validateResistorDrop(r, slot);
-                return res.success;
-            };
-
-            return isValid(slot4) && isValid(slot5);
-        };
-
-        const isOverlapping = (el1, el2) => {
-            const rect1 = el1.getBoundingClientRect();
-            const rect2 = el2.getBoundingClientRect();
-            return !(
-                rect1.right < rect2.left ||
-                rect1.left > rect2.right ||
-                rect1.bottom < rect2.top ||
-                rect1.top > rect2.bottom
-            );
-        };
-
-        const checkPanelStatus = () => {
-            const remaining = document.querySelectorAll('.screw:not(.removed)').length;
-            if (remaining === 0 && backPanel) {
-                backPanel.classList.add('unlocked');
-                backPanel.classList.add('detached'); 
-            }
-        };
-
-        const repairPDA = () => {
-            setTimeout(() => {
-                if (backPanel) backPanel.classList.remove('detached');
-            }, 600);
-
-            setTimeout(() => {
-                if (pda) pda.classList.remove('flipped');
-            }, 1200);
-            
-            if(powerBtn) {
-                powerBtn.disabled = false;
-                powerBtn.textContent = "Power On";
-                powerBtn.style.backgroundColor = ""; 
-                powerBtn.style.cursor = "pointer";
-                
-                setTimeout(() => {
-                    if(!state.poweredOn) {
-                        powerBtn.click();
-                    }
-                }, 1800); 
-            }
-        };
-
         items.forEach(item => {
             item.addEventListener('mousedown', (e) => {
                 if (e.button !== 0) return;
                 e.preventDefault();
-
-                let isUnplacing = false;
+    
+                // --- 1. REMOVAL LOGIC ---
                 if (item.classList.contains('placed')) {
-                    isUnplacing = true;
+                    const parentSlot = item.parentElement;
+                    
                     item.classList.remove('placed');
-                
-                    if (item.parentElement && item.parentElement.id) {
-                        if (item.parentElement.id === 'slot-r2') {
-                            state.unlockedFeatures.nanochat = false;
-                            renderPrograms(); 
-                        }
-                    }
-                    if (item.parentElement && item.parentElement.classList.contains('resistor-slot')) {
-                        item.parentElement.style.boxShadow = "";
-                    }
-
-                    document.querySelectorAll('.pcb-overlay').forEach(ov => ov.classList.remove('active'));
+                    item.style.transform = ''; 
                     
-                    if (powerBtn) {
-                        powerBtn.textContent = "System Error";
-                        powerBtn.style.backgroundColor = "#555";
-                        powerBtn.disabled = true;
-                        powerBtn.style.cursor = "not-allowed";
+                    if (parentSlot && parentSlot.classList.contains('resistor-slot')) {
+                        parentSlot.style.boxShadow = "";
                     }
-
-                    const allSlots = document.querySelectorAll('.resistor-slot');
-                    allSlots.forEach(slot => {
-                        if (slot.children.length > 0) {
-                            const resistor = slot.children[0];
-                            if (resistor === item) return; 
-
-                            const result = validateResistorDrop(resistor, slot);
-                            
-                            if (result.success) {
-                                slot.style.boxShadow = "0 0 15px #0f0, inset 0 0 10px #0f0";
-                                
-                                if (result.feature) {
-                                    state.unlockedFeatures[result.feature] = true;
-                                    renderPrograms(); 
-                                }
-                                
-                                if (result.effects) {
-                                    result.effects.forEach(cls => {
-                                        if (cls === 'overlay-terminal' && !checkTerminalReady()) return;
-                                        const el = document.querySelector('.' + cls);
-                                        if (el) el.classList.add('active');
-                                    });
-                                }
-                                
-                                if (result.action === 'repair') {
-                                    markPuzzleComplete('fix_power'); 
-                                }
-                                
-                                checkCircuitState(); 
-                            }
-                        }
-                    });
-
-                    setTimeout(() => {
-                        checkCircuitState();
-                        saveGameProgress(); 
-                    }, 50);
-                }
-                
-                const rect = item.getBoundingClientRect();
-                
-                let targetWidth = rect.width;
-                let targetHeight = rect.height;
-
-                if (isUnplacing) {
-                    targetWidth = 40; 
-                    targetHeight = 10;
-                }
-
-                const centerOffsetX = targetWidth / 2;
-                const centerOffsetY = targetHeight / 2;
-
-                const wasFloating = item.classList.contains('floating');
-
-                if (!wasFloating) {
-                    item.style.left = (e.clientX - centerOffsetX) + 'px';
-                    item.style.top = (e.clientY - centerOffsetY) + 'px';
-                    
-                    if (isUnplacing) {
-                        item.style.width = '40px'; 
-                        item.style.height = '10px';
-                    } else {
-                        item.style.width = rect.width + 'px';
-                        item.style.height = rect.height + 'px';
-                    }
-
-                    item.classList.add('floating');
+    
                     document.body.appendChild(item);
+    
+                    saveGameProgress();
+                    checkCircuitState(); 
+                }
+    
+                // --- 2. DRAGGING VISUALS (FIXED) ---
+                
+                // A. Correctly resize items based on type
+                if (item.classList.contains('resistor-prop')) {
+                    // Resistors snap back to their default strip size
+                    item.style.width = '40px'; 
+                    item.style.height = '10px';
+                } else {
+                    // Screwdriver and others should use their natural/CSS size
+                    item.style.width = '';
+                    item.style.height = '';
                 }
 
+                // Move to body to calculate correct screen dimensions
+                document.body.appendChild(item);
+                item.classList.add('floating');
+
+                // B. Calculate Dynamic Offset (Center the item on cursor)
+                const rect = item.getBoundingClientRect();
+                const centerOffsetX = rect.width / 2;
+                const centerOffsetY = rect.height / 2;
+    
+                item.style.left = (e.clientX - centerOffsetX) + 'px';
+                item.style.top = (e.clientY - centerOffsetY) + 'px';
+    
                 const onMouseMove = (moveEvent) => {
                     item.style.left = (moveEvent.clientX - centerOffsetX) + 'px';
                     item.style.top = (moveEvent.clientY - centerOffsetY) + 'px';
                 };
-
+    
                 const onMouseUp = (upEvent) => {
                     document.removeEventListener('mousemove', onMouseMove);
                     document.removeEventListener('mouseup', onMouseUp);
-
+                    item.classList.remove('floating');
+    
+                    // A. Check for Screwdriver usage
                     if (item.classList.contains('screwdriver-prop')) {
                         screws.forEach(screw => {
-                            if (!screw.classList.contains('removed') && isOverlapping(item, screw)) {
+                             const isOverlapping = (el1, el2) => {
+                                const r1 = el1.getBoundingClientRect();
+                                const r2 = el2.getBoundingClientRect();
+                                return !(r1.right < r2.left || r1.left > r2.right || r1.bottom < r2.top || r1.top > r2.bottom);
+                            };
+                             if (!screw.classList.contains('removed') && isOverlapping(item, screw)) {
                                 screw.classList.add('removed');
                                 const a = new Audio('/Audio/click_fast.ogg'); 
-                                checkPanelStatus();
+                                a.play().catch(()=>{});
+                                
+                                const remaining = document.querySelectorAll('.screw:not(.removed)').length;
+                                if (remaining === 0 && backPanel) {
+                                    backPanel.classList.add('unlocked');
+                                    backPanel.classList.add('detached'); 
+                                }
                             }
                         });
                     }
+                    // B. Check for Resistor Drop into Slot
+                let placed = false;
+                if (item.classList.contains('resistor-prop')) {
+                    const allSlots = document.querySelectorAll('.resistor-slot');
+                    
+                    const isOverlapping = (el1, el2) => {
+                        const r1 = el1.getBoundingClientRect();
+                        const r2 = el2.getBoundingClientRect();
+                        return !(r1.right < r2.left || r1.left > r2.right || r1.bottom < r2.top || r1.top > r2.bottom);
+                    };
 
-                    if (item.classList.contains('resistor-prop')) {
-                        const allSlots = document.querySelectorAll('.resistor-slot');
-                        let placedSuccessfully = false;
-
-                        allSlots.forEach(slot => {
-                            if (slot.children.length > 0) return;
-
-                            if (backPanel && backPanel.classList.contains('detached') && isOverlapping(item, slot)) {
-                                
-                                item.style.position = 'absolute';
-                                item.classList.remove('floating');
-                                item.style.left = ''; 
-                                item.style.top = '';
-                                item.style.width = ''; 
-                                item.style.height = '';
-                                item.style.transform = ''; 
-                                item.classList.add('placed');
-                                
-                                slot.innerHTML = '';
+                    allSlots.forEach(slot => {
+                        if (placed) return; 
+                        
+                        if (slot.children.length === 0 && backPanel && backPanel.classList.contains('detached')) {
+                            if (isOverlapping(item, slot)) {
                                 slot.appendChild(item);
-                                placedSuccessfully = true;
+                                item.classList.add('placed');
+                                item.style.position = 'absolute';
+                                item.style.left = '50%';
+                                item.style.top = '50%';
+                                item.style.transform = 'translate(-50%, -50%) rotate(90deg)';
+                                placed = true;
 
                                 const result = validateResistorDrop(item, slot);
-
                                 if (result.success) {
                                     slot.style.boxShadow = "0 0 15px #0f0, inset 0 0 10px #0f0";
-                                    if (result.feature) {
-                                        state.unlockedFeatures[result.feature] = true;
-                                        renderPrograms(); 
-                                    }
-                                    if (result.effects) {
-                                        result.effects.forEach(cls => {
-                                            if (cls === 'overlay-terminal' && !checkTerminalReady()) return;
-
-                                            const el = document.querySelector('.' + cls);
-                                            if (el) el.classList.add('active');
-                                        });
-                                    }
-
                                     if (result.action === 'repair') {
-                                        repairPDA();
+                                        markPuzzleComplete('fix_power');
+                                        if(powerBtn) {
+                                            powerBtn.disabled = false;
+                                            powerBtn.textContent = "Power On";
+                                            powerBtn.style.backgroundColor = ""; 
+                                            powerBtn.style.cursor = "pointer";
+                                        }
                                     }
-                                    checkCircuitState(); 
                                 }
-                                saveGameProgress(); 
+                                saveGameProgress();
+                                checkCircuitState();
                             }
-                        });
-
-                        if (placedSuccessfully) return;
-                    }
-
-                    const drawerRect = drawerPanel.getBoundingClientRect();
-                    const isOverDrawer = (
-                        upEvent.clientX >= drawerRect.left &&
-                        upEvent.clientX <= drawerRect.right &&
-                        upEvent.clientY >= drawerRect.top &&
-                        upEvent.clientY <= drawerRect.bottom
-                    );
-
-                    if (isOverDrawer && drawerPanel.classList.contains('open')) {
-                        item.classList.remove('floating');
-                        
-                        item.style.position = ''; 
-                        
-                        item.style.left = '';
-                        item.style.top = '';
-                        item.style.width = '';
-                        item.style.height = '';
-                        item.style.transform = ''; 
-                        
-                        if(item.classList.contains('resistor-prop')){
-                                document.querySelector('.resistor-kit').appendChild(item);
-                        } else {
-                                drawerZone.appendChild(item);
                         }
+                    });
+                }
+    
+                    // C. FINAL FIX: If not placed in a slot, ALWAYS return to kit/drawer
+                if (!placed) {
+                    // Reset all inline styles so it snaps back to CSS defaults
+                    item.style.position = ''; 
+                    item.style.left = '';
+                    item.style.top = '';
+                    item.style.width = '';
+                    item.style.height = '';
+                    item.style.transform = '';
+                    
+                    if(item.classList.contains('resistor-prop')){
+                        document.querySelector('.resistor-kit').appendChild(item);
+                    } else {
+                        drawerZone.appendChild(item);
                     }
-                };
+                }
+            };
+    
                 document.addEventListener('mousemove', onMouseMove);
                 document.addEventListener('mouseup', onMouseUp);
             });
         });
+    }
 
         // This logic connects the buttons to the CSS transitions
         if (panUpBtn && panDownBtn && cubeWrapper) {
@@ -2239,5 +2154,5 @@ const state = {
                 cubeWrapper.classList.remove('pan-up');
             });
         }
-    }
+    
 })();
