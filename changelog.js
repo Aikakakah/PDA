@@ -20,7 +20,7 @@ export const CHANGELOG_CONTENT = [
             "double clicking notes to make big",
             "screwdriver tip to unscrew only",
             "removing power resistor doesnt turn off pda, issue with savegame, make sure resistors are saved",
-            "Glint shows on power off screen",
+            
         ]
     },
     {
@@ -30,8 +30,8 @@ export const CHANGELOG_CONTENT = [
             "Added resistor color code note",
             "Fixed note pinning and drag logic",
             "Mobile support scaling (basic, fix later)",
-            "Resistors save with game, power resistor fixed."
-            
+            "Resistors save with game, power resistor fixed.",
+            "Glint shows on power off screen",
         ]
     },
     {

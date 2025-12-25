@@ -136,7 +136,7 @@ body {
 }
 
 .power-overlay {
-    z-index: 100;
+    z-index: 2;
     filter: none !important; 
     opacity: 1 !important;
 }
@@ -471,10 +471,8 @@ body {
    background: transparent;
 }
 
-/* Hide scrollbar in Firefox for a cleaner look, but keep scrolling functional */
-scrollbar-width: thin; /* "auto" or "thin" */
-
 .view, .notes-wrap, .chat-messages, .manifest-list {
+   scrollbar-width: thin; /* "auto" or "thin" */
    scrollbar-color: #444448 var(--inner); /* thumb color track color */
 }
 
