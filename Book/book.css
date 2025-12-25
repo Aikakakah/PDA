@@ -229,6 +229,15 @@ body.book-is-maximized .book-widget {
      font-size: 18px;
  }
  
+ .book-note.resistor-color-code{
+  width: 170px;
+  height: 260px;
+  background-size: contain !important;
+  background-repeat: no-repeat;
+  padding: 0 !important;
+  border: none !important;
+ }
+
  .book-note:hover {
      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
  }
@@ -251,6 +260,7 @@ body.book-is-maximized .book-widget {
  
  /* Floating notes dragged out */
  .floating-note {
+  box-sizing: border-box;
      position: fixed; 
      z-index: 9999; 
      width: 80px;
@@ -354,6 +364,7 @@ body.book-is-maximized .book-widget {
 
 /* --- Pinned Note on Corkboard --- */
 .pinned-note {
+  box-sizing: border-box;
   position: absolute;
   width: 80px;
   height: 80px;

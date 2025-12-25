@@ -280,72 +280,88 @@ export function initializeBookSystem(el) {
     }
 
     function animateNoteToCorkboard(note) {
-        const corkboard = document.querySelector('.corkboard');
-        const cubeWrapper = document.getElementById('cubeWrapper');
-        if (!corkboard || !cubeWrapper) return;
+    const corkboard = document.querySelector('.corkboard');
+    const cubeWrapper = document.getElementById('cubeWrapper');
+    if (!corkboard || !cubeWrapper) return;
 
-        const rect = note.getBoundingClientRect();
-        const isFloating = note.classList.contains('floating-note');
-        // Capture IDs before any elements are removed from DOM
-        const originalId = note.dataset.originalId || note.dataset.noteId;
-        const noteText = getCleanNoteText(note);
+    const rect = note.getBoundingClientRect();
+    const isFloating = note.classList.contains('floating-note');
+    const originalId = note.dataset.originalId || note.dataset.noteId;
+    const noteText = getCleanNoteText(note);
 
-        // Create "Flying" clone
-        const flyer = document.createElement('div');
-        flyer.className = 'floating-note flying-to-board';
-        flyer.textContent = noteText; 
-        flyer.style.left = rect.left + 'px';
-        flyer.style.top = rect.top + 'px';
-        flyer.style.width = rect.width + 'px';
-        flyer.style.height = rect.height + 'px';
-        document.body.appendChild(flyer);
+    // Create "Flying" clone
+    const flyer = document.createElement('div');
+    
+    // FIX: Changed 'pinnedNote.className' to 'note.className'
+    flyer.className = note.className + ' flying-to-board'; 
+    
+    flyer.style.backgroundImage = note.style.backgroundImage;
+    flyer.style.backgroundSize = 'contain';
+    flyer.style.backgroundRepeat = 'no-repeat';
+    flyer.style.border = note.style.border;
+    
+    // This ensures the padding: 0 rule from .resistor-color-code is respected
+    flyer.textContent = noteText; 
+    flyer.style.left = rect.left + 'px';
+    flyer.style.top = rect.top + 'px';
+    flyer.style.width = rect.width + 'px';
+    flyer.style.height = rect.height + 'px';
+    document.body.appendChild(flyer);
 
-        // Standardize hiding: use visibility and opacity
-        if (isFloating) {
-            note.remove(); // Remove the floating clone
-        } else {
-            note.style.visibility = 'hidden';
-            note.style.opacity = '0';
-        }
-
-        cubeWrapper.classList.add('pan-up');
-
-        requestAnimationFrame(() => {
-            flyer.style.transition = 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
-            flyer.style.top = '-200px'; 
-            flyer.style.opacity = '0';
-            flyer.style.transform = 'scale(1.5) rotate(15deg)';
-        });
-
-        setTimeout(() => {
-            const pinned = document.createElement('div');
-            pinned.className = 'pinned-note';
-            pinned.textContent = noteText;
-            pinned.dataset.originalId = originalId;
-
-            const pinHead = document.createElement('div');
-            pinHead.className = 'push-pin';
-            pinHead.title = "Double-click to return to book";
-            pinned.appendChild(pinHead);
-
-            const randomX = Math.random() * 60 + 20; 
-            const randomY = Math.random() * 60 + 20;
-            const randomRot = (Math.random() - 0.5) * 15;
-
-            pinned.style.left = `${randomX}%`;
-            pinned.style.top = `${randomY}%`;
-            pinned.style.transform = `rotate(${randomRot}deg)`;
-
-            corkboard.appendChild(pinned);
-            
-            // Find the physical book note to return to later
-            const originalInBookNote = document.querySelector(`.book-note[data-note-id="${originalId}"]`);
-            makePinnedNoteDraggable(pinned, pinHead, originalInBookNote);
-            
-            savePinnedNotesState();
-            flyer.remove();
-        }, 700);
+    if (isFloating) {
+        note.remove();
+    } else {
+        note.style.visibility = 'hidden';
+        note.style.opacity = '0';
     }
+
+    cubeWrapper.classList.add('pan-up');
+
+    requestAnimationFrame(() => {
+        flyer.style.transition = 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+        flyer.style.top = '-200px'; 
+        flyer.style.opacity = '0';
+        flyer.style.transform = 'scale(1.5) rotate(15deg)';
+    });
+
+    setTimeout(() => {
+        const pinned = document.createElement('div');
+        // Standardize class naming
+        pinned.className = note.className.replace('floating-note', 'pinned-note').replace('book-note', 'pinned-note');
+        
+        pinned.style.width = rect.width + 'px';
+        pinned.style.height = rect.height + 'px';
+        pinned.style.backgroundImage = note.style.backgroundImage;
+        pinned.style.backgroundSize = 'contain';
+        pinned.style.backgroundRepeat = 'no-repeat';
+        pinned.style.border = note.style.border;
+        pinned.textContent = noteText;
+        pinned.dataset.originalId = originalId;
+
+        const pinHead = document.createElement('div');
+        pinHead.className = 'push-pin';
+        pinHead.title = "Double-click to return to book";
+        pinned.appendChild(pinHead);
+
+        const randomX = Math.random() * 60 + 20; 
+        const randomY = Math.random() * 60 + 20;
+        const randomRot = (Math.random() - 0.5) * 15;
+
+        pinned.style.left = `${randomX}%`;
+        pinned.style.top = `${randomY}%`;
+        pinned.style.transform = `rotate(${randomRot}deg)`;
+
+        corkboard.appendChild(pinned);
+        
+        const originalInBookNote = document.querySelector(`.book-note[data-note-id="${originalId}"]`);
+        
+        // This re-enables dragging and the double-click-to-return logic
+        makePinnedNoteDraggable(pinned, pinHead, originalInBookNote);
+        
+        savePinnedNotesState();
+        flyer.remove();
+    }, 700);
+}
 
     function makePinnedNoteDraggable(pinnedNote, pinHead, originalNote) {
         let isDragging = false;
@@ -360,12 +376,21 @@ export function initializeBookSystem(el) {
         pinHead.addEventListener('mousedown', (e) => {
             isDragging = true;
             pinnedNote.style.zIndex = '1000'; 
+            
+            // NEW: Apply a scale transform to make it "pop" up when picked up
+            // We preserve the existing rotation but add a scale factor
+            const currentTransform = window.getComputedStyle(pinnedNote).transform;
+            pinnedNote.style.transform = `${currentTransform} scale(1.1)`;
+            pinnedNote.style.cursor = 'grabbing';
+
             const rect = pinnedNote.getBoundingClientRect();
             const corkRect = pinnedNote.offsetParent.getBoundingClientRect();
+            
             startX = e.clientX;
             startY = e.clientY;
             initialLeft = rect.left - corkRect.left;
             initialTop = rect.top - corkRect.top;
+            
             e.preventDefault();
             e.stopPropagation();
         });
@@ -374,17 +399,40 @@ export function initializeBookSystem(el) {
             if (!isDragging) return;
             const dx = e.clientX - startX;
             const dy = e.clientY - startY;
-            const corkboard = pinnedNote.offsetParent;
-            let newLeft = Math.max(0, Math.min(initialLeft + dx, corkboard.clientWidth - pinnedNote.offsetWidth));
-            let newTop = Math.max(0, Math.min(initialTop + dy, corkboard.clientHeight - pinnedNote.offsetHeight));
-            pinnedNote.style.left = `${newLeft}px`;
-            pinnedNote.style.top = `${newTop}px`;
+
+            pinnedNote.style.left = `${initialLeft + dx}px`;
+            pinnedNote.style.top = `${initialTop + dy}px`;
         });
 
-        document.addEventListener('mouseup', () => {
-            if (isDragging) {
-                isDragging = false;
-                pinnedNote.style.zIndex = '';
+        document.addEventListener('mouseup', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            
+            // Reset styles
+            pinnedNote.style.zIndex = '';
+            pinnedNote.style.cursor = '';
+            
+            // NEW: Remove the temporary scaling while keeping the rotation
+            // This returns it to its natural pinned state
+            const currentTransform = pinnedNote.style.transform;
+            pinnedNote.style.transform = currentTransform.replace(' scale(1.1)', '');
+
+            const corkboard = pinnedNote.offsetParent;
+            const corkRect = corkboard.getBoundingClientRect();
+            const pinRect = pinHead.getBoundingClientRect();
+            const pinCenterX = pinRect.left + pinRect.width / 2;
+            const pinCenterY = pinRect.top + pinRect.height / 2;
+
+            const isOutside = (
+                pinCenterX < corkRect.left || 
+                pinCenterX > corkRect.right || 
+                pinCenterY < corkRect.top || 
+                pinCenterY > corkRect.bottom
+            );
+
+            if (isOutside) {
+                animateNoteBackToBook(pinnedNote, originalNote);
+            } else {
                 savePinnedNotesState();
             }
         });
@@ -397,6 +445,14 @@ export function initializeBookSystem(el) {
         const rect = pinnedNote.getBoundingClientRect();
         const flyer = document.createElement('div');
         flyer.className = 'floating-note flying-to-book';
+        flyer.style.backgroundImage = pinnedNote.style.backgroundImage;
+        flyer.style.backgroundSize = 'contain';
+        flyer.style.backgroundRepeat = 'no-repeat';
+        flyer.style.border = 'none';
+        flyer.style.left = rect.left + 'px';
+        flyer.style.top = rect.top + 'px';
+        flyer.style.width = rect.width + 'px';
+        flyer.style.height = rect.height + 'px';
         flyer.textContent = pinnedNote.textContent; 
         flyer.style.left = rect.left + 'px';
         flyer.style.top = rect.top + 'px';
@@ -428,10 +484,23 @@ export function initializeBookSystem(el) {
     function createFloatingNoteFrom(originalNote, startX, startY) {
         const rect = originalNote.getBoundingClientRect();
         const clone = document.createElement('div');
-        clone.classList.add('floating-note');
+        
+        clone.className = originalNote.className;
+        clone.classList.replace('book-note', 'floating-note');
+        
+        clone.style.backgroundImage = originalNote.style.backgroundImage;
+        clone.style.width = rect.width + 'px';
+        clone.style.height = rect.height + 'px';
+        clone.style.backgroundSize = 'contain';
+        clone.style.backgroundRepeat = 'no-repeat';
+        
         clone.textContent = getCleanNoteText(originalNote);
         clone.dataset.originalId = originalNote.dataset.noteId;
 
+        // Apply the scale to the clone immediately upon creation
+        const currentTransform = window.getComputedStyle(clone).transform;
+        clone.style.transform = currentTransform === 'none' ? 'scale(1.1)' : `${currentTransform} scale(1.1)`;
+            
         addPinButtonToNote(clone);
 
         clone.style.left = rect.left + 'px';
@@ -568,7 +637,11 @@ export function initializeBookSystem(el) {
         const pinnedElements = document.querySelectorAll('.pinned-note');
         const notesData = Array.from(pinnedElements).map(p => ({
             originalId: p.dataset.originalId,
-            text: p.childNodes[0].textContent, // Gets text before the pin-head element
+            text: p.childNodes[0].textContent,
+            className: p.className,
+            backgroundImage: p.style.backgroundImage,
+            width: p.style.width,
+            height: p.style.height,
             left: p.style.left,
             top: p.style.top,
             transform: p.style.transform
@@ -586,9 +659,12 @@ export function initializeBookSystem(el) {
 
         notes.forEach(data => {
             const pinned = document.createElement('div');
-            pinned.className = 'pinned-note';
-            pinned.textContent = data.text;
-            pinned.dataset.originalId = data.originalId;
+            pinned.className = data.className || 'pinned-note';
+            pinned.style.backgroundImage = data.backgroundImage || '';
+            // Restore dimensions
+            if (data.width) pinned.style.width = data.width;
+            if (data.height) pinned.style.height = data.height;
+            pinned.style.backgroundSize = 'contain';
 
             const pinHead = document.createElement('div');
             pinHead.className = 'push-pin';
@@ -601,7 +677,6 @@ export function initializeBookSystem(el) {
 
             corkboard.appendChild(pinned);
 
-            // Hide the original note in the book
             const originalNote = document.querySelector(`.book-note[data-note-id="${data.originalId}"]`);
             if (originalNote) {
                 originalNote.style.visibility = 'hidden';

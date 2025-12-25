@@ -19,6 +19,14 @@ export const CHANGELOG_CONTENT = [
     },
     {
         version: "0.0.4",
+        date: "2655-12-24",
+        changes: [
+            "Added resistor color code note",
+            "Fixed note pinning and drag logic",
+        ]
+    },
+    {
+        version: "0.0.4",
         date: "2655-12-21",
         changes: [
             "Added corkboard (CHANGE IMAGE)",
