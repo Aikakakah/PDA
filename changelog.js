@@ -23,6 +23,7 @@ export const CHANGELOG_CONTENT = [
         changes: [
             "Added resistor color code note",
             "Fixed note pinning and drag logic",
+            "Mobile support scaling (basic, fix later)",
         ]
     },
     {
