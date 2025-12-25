@@ -82,7 +82,15 @@
 
 .drawer-inner {
     width: 100%;
-    height: 100%;
+    height: 100%; /* Ensure it fills the drawer panel */
+    display: flex;
+    flex-direction: column; /* Stack top and bottom */
+    padding: 20px;
+    box-sizing: border-box;
+}
+.drawer-inner-screwdriver-section {
+    width: 100%;
+    height: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -90,6 +98,7 @@
     padding: 10px;
     box-sizing: border-box;
 }
+
 
 /* Generic Draggable Item in Drawer */
 .drawer-item {
@@ -107,12 +116,13 @@
 /* The Screwdriver Container */
 .screwdriver-prop {
     width: 44px; 
-    height: 260px; /* Taller overall profile */
+    height: 260px;
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     filter: drop-shadow(5px 8px 6px rgba(0,0,0,0.4));
+    transform: rotate(90deg);
 }
 
 /* 1. The Handle (Heavy Duty & Longer) */
@@ -166,8 +176,8 @@
 
 /* 3. The Tip (High-Detail Phillips Head) */
 .screwdriver-prop .tip {
-    position: absolute;
-    bottom: 0;
+    position: relative;
+    bottom: -233px;
     width: 14px; /* Slightly wider than the shaft for the "flares" */
     height: 20px;
     /* Machined metal look with dark recessed flutes */
@@ -208,6 +218,8 @@
 .resistor-kit {
     display: flex;
     gap: 10px;
+    height: 50%;
+    position: relative; /* Added to constrain absolute-positioned resistors */
 }
 
 .resistor-prop {

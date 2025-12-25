@@ -2213,16 +2213,19 @@ const state = {
                     document.removeEventListener('mousemove', onMouseMove);
                     document.removeEventListener('mouseup', onMouseUp);
 
+                    // 1. Logic for Screwdriver Interaction with Screws
                     if (item.classList.contains('screwdriver-prop')) {
                         screws.forEach(screw => {
                             if (!screw.classList.contains('removed') && isOverlapping(item, screw)) {
                                 screw.classList.add('removed');
                                 const a = new Audio('/Audio/click_fast.ogg'); 
+                                a.play(); // Ensure the audio plays
                                 checkPanelStatus();
                             }
                         });
                     }
 
+                    // 2. Logic for Resistor Interaction with Circuit Slots
                     if (item.classList.contains('resistor-prop')) {
                         const allSlots = document.querySelectorAll('.resistor-slot');
                         let placedSuccessfully = false;
@@ -2231,7 +2234,7 @@ const state = {
                             if (slot.children.length > 0) return;
 
                             if (backPanel && backPanel.classList.contains('detached') && isOverlapping(item, slot)) {
-                                
+                                // Reset styles to fit into the slot
                                 item.style.position = 'absolute';
                                 item.classList.remove('floating');
                                 item.style.left = ''; 
@@ -2256,7 +2259,6 @@ const state = {
                                     if (result.effects) {
                                         result.effects.forEach(cls => {
                                             if (cls === 'overlay-terminal' && !checkTerminalReady()) return;
-
                                             const el = document.querySelector('.' + cls);
                                             if (el) el.classList.add('active');
                                         });
@@ -2274,6 +2276,7 @@ const state = {
                         if (placedSuccessfully) return;
                     }
 
+                    // 3. Logic for returning items to the Drawer (Split Layout)
                     const drawerRect = drawerPanel.getBoundingClientRect();
                     const isOverDrawer = (
                         upEvent.clientX >= drawerRect.left &&
@@ -2283,20 +2286,50 @@ const state = {
                     );
 
                     if (isOverDrawer && drawerPanel.classList.contains('open')) {
+                        // Reset the item's appearance
                         item.classList.remove('floating');
-                        
-                        item.style.position = ''; 
-                        
-                        item.style.left = '';
-                        item.style.top = '';
+                        item.classList.remove('placed'); // Ensure 'placed' is removed if coming from circuit
+                        // item.style.position = ''; 
+                        // item.style.left = '';
+                        // item.style.top = '';
                         item.style.width = '';
                         item.style.height = '';
-                        item.style.transform = ''; 
+                        // item.style.transform = ''; 
                         
-                        if(item.classList.contains('resistor-prop')){
-                                document.querySelector('.resistor-kit').appendChild(item);
-                        } else {
-                                drawerZone.appendChild(item);
+                        // Ensure specific placement based on item type
+                        if (item.classList.contains('resistor-prop')) {
+                            // Put resistors in the top section
+                            const resistorZone = document.querySelector('.resistor-kit');
+                            if (resistorZone) {
+                                // 1. Set to absolute to break out of any layout flow
+                                item.style.position = 'absolute';
+
+                                // 2. Generate random position (keep away from edges to avoid clipping)
+                                // Using percentages (10% to 80%) so it scales with drawer size
+                                const randomX = Math.floor(Math.random() * 70) + 10; 
+                                const randomY = Math.floor(Math.random() * 60) + 10;
+                                const randomRotation = Math.floor(Math.random() * 360);
+
+                                item.style.left = `${randomX}%`;
+                                item.style.top = `${randomY}%`;
+                                item.style.transform = `rotate(${randomRotation}deg)`;
+
+                                resistorZone.appendChild(item);
+                            }
+                        }
+                        if (item.classList.contains('screwdriver-prop')) {
+                            const toolZone = document.querySelector('.drawer-inner-screwdriver-section');
+                            if (toolZone) {
+                                // Clear drag styles to allow CSS to take over again
+                                item.classList.remove('floating');
+                                item.style.position = '';
+                                item.style.top = '';
+                                item.style.left = '';
+                                item.style.width = '';
+                                item.style.height = '';
+                                
+                                toolZone.appendChild(item);
+                            }
                         }
                     }
                 };

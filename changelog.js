@@ -15,11 +15,9 @@ export const CHANGELOG_CONTENT = [
             "add textures to pda",
             "ID card flickers out, fix this glitch",
             "fix ringtone modal",
-            "Fix PDA power off screen, glint should still show",
             "screwdriver needs to be horizontal in drawer",
             "double clicking notes to make big",
             "screwdriver tip to unscrew only",
-            "removing power resistor doesnt turn off pda, issue with savegame, make sure resistors are saved",
             
         ]
     },
@@ -32,6 +30,7 @@ export const CHANGELOG_CONTENT = [
             "Mobile support scaling (basic, fix later)",
             "Resistors save with game, power resistor fixed.",
             "Glint shows on power off screen",
+            "Drawer fits screwdriver better",
         ]
     },
     {
