@@ -796,7 +796,7 @@ const state = {
             }
         }
     });
-    discordBridge.start();
+    // discordBridge.start();
     
     function showView(v) {
         if (!views || Object.keys(views).length === 0) return;
@@ -1176,6 +1176,7 @@ const state = {
             if (state.pendingConnection) {
                 if (cmd.toUpperCase() === 'Y') {
                     state.terminalMode = 'CHAT';
+                    discordBridge.start();
                     state.terminalHistory.push({ text: "Connection Accepted. Secure Uplink Established.", type: "system" });
                     const msg = state.pendingConnection;
                     state.terminalHistory.push({

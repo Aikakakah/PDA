@@ -7,7 +7,6 @@ export const CHANGELOG_CONTENT = [
         changes: [
             "name change should not reset progress, but have other button to reset",
             "fix sandystars, add better glitching, story",
-            "constantly sending requests to server, should only trigger when terminal command is sent",
             "should add glint when hovering over drawer handle",
             "fix manifest department header glitching",
             "double resistor (terminal) lights up around the single resistor when correct one is placed",
@@ -17,12 +16,22 @@ export const CHANGELOG_CONTENT = [
             "fix ringtone modal",
             "double clicking notes to make big",
             "screwdriver should tilt when grabbed and automatically return to drawer when all screws removed",
-            "Checklist on corkboard for written puzzles to update progress in PDA"
+            "Checklist on corkboard for written puzzles to update progress in PDA",
+            "Add status lights on PDA - power, unread nanochat/news, remote connection for terminal",
+            "Add notification bubbles on nanochat/news apps"
             
         ]
     },
     {
-        version: "0.0.4",
+        version: "0.0.6",
+        date: "2655-12-27",
+        changes: [
+            "Added gold bug puzzle",
+            "No longer sending requests to connect to discord until terminal chat is triggered",
+        ]
+    },
+    {
+        version: "0.0.5",
         date: "2655-12-24",
         changes: [
             "Added resistor color code note",
