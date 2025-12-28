@@ -17,6 +17,7 @@ export const CHANGELOG_CONTENT = [
             "fix ringtone modal",
             "double clicking notes to make big",
             "screwdriver should tilt when grabbed and automatically return to drawer when all screws removed",
+            "Checklist on corkboard for written puzzles to update progress in PDA"
             
         ]
     },
@@ -33,6 +34,7 @@ export const CHANGELOG_CONTENT = [
             "Resistors rotate when placed",
             "Better drawer positioning",
             "Only screwdriver tip triggers screw removal",
+            "Added parsons code note"
         ]
     },
     {

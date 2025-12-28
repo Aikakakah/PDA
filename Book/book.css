@@ -238,6 +238,15 @@ body.book-is-maximized .book-widget {
   border: none !important;
  }
 
+.book-note.subject-printout{
+  width: 260px;
+  height: 333px;
+  background-size: contain !important;
+  background-repeat: no-repeat;
+  padding: 0 !important;
+  border: none !important;
+ }
+
  .book-note:hover {
      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
  }
@@ -369,7 +378,7 @@ body.book-is-maximized .book-widget {
   width: 80px;
   height: 80px;
   background: linear-gradient(135deg, #fffacd 0%, #fdf5e6 100%);
-  border: 1px solid #ddd;
+  /* border: 1px solid #ddd; */
   border-radius: 2px;
   padding: 8px;
   color: #333;
