@@ -635,29 +635,51 @@ export function initializeBookSystem(el) {
 
     function savePinnedNotesState() {
         const pinnedElements = document.querySelectorAll('.pinned-note');
-        const notesData = Array.from(pinnedElements).map(p => ({
-            originalId: p.dataset.originalId,
-            text: p.childNodes[0].textContent,
-            className: p.className,
-            backgroundImage: p.style.backgroundImage,
-            width: p.style.width,
-            height: p.style.height,
-            left: p.style.left,
-            top: p.style.top,
-            transform: p.style.transform
-        }));
+        // Use a map keyed by originalId to avoid duplicate entries
+        const notesMap = new Map();
+        pinnedElements.forEach(p => {
+            const originalId = p.dataset.originalId || p.dataset.noteId;
+            if (!originalId) return; // skip malformed pins
+            if (notesMap.has(originalId)) return; // dedupe
+            notesMap.set(originalId, {
+                originalId,
+                text: (p.childNodes && p.childNodes[0]) ? p.childNodes[0].textContent : p.textContent || '',
+                className: p.className,
+                backgroundImage: p.style.backgroundImage || '',
+                width: p.style.width || '',
+                height: p.style.height || '',
+                left: p.style.left || '',
+                top: p.style.top || '',
+                transform: p.style.transform || ''
+            });
+        });
+        const notesData = Array.from(notesMap.values());
         localStorage.setItem('book_pinned_notes', JSON.stringify(notesData));
     }
 
     function loadPinnedNotesState() {
         const savedData = localStorage.getItem('book_pinned_notes');
         if (!savedData) return;
-        
-        const notes = JSON.parse(savedData);
+        let notes;
+        try {
+            notes = JSON.parse(savedData);
+        } catch (err) {
+            console.warn('Failed to parse pinned notes state:', err);
+            return;
+        }
         const corkboard = document.querySelector('.corkboard');
         if (!corkboard) return;
 
+        // Remove any existing pinned notes to avoid duplicates
+        corkboard.querySelectorAll('.pinned-note').forEach(p => p.remove());
+
         notes.forEach(data => {
+            if (!data || !data.originalId) return; // skip malformed entries
+
+            // Skip if a pinned note already exists for this originalId
+            const already = Array.from(corkboard.querySelectorAll('.pinned-note')).some(p => p.dataset.originalId === data.originalId);
+            if (already) return;
+
             const pinned = document.createElement('div');
             pinned.className = data.className || 'pinned-note';
             pinned.style.backgroundImage = data.backgroundImage || '';
@@ -666,35 +688,60 @@ export function initializeBookSystem(el) {
             if (data.height) pinned.style.height = data.height;
             pinned.style.backgroundSize = 'contain';
 
+            pinned.textContent = data.text || '';
+
             const pinHead = document.createElement('div');
             pinHead.className = 'push-pin';
             pinHead.title = "Double-click to return to book";
             pinned.appendChild(pinHead);
 
-            pinned.style.left = data.left;
-            pinned.style.top = data.top;
-            pinned.style.transform = data.transform;
+            pinned.style.left = data.left || `${Math.random() * 60 + 20}%`;
+            pinned.style.top = data.top || `${Math.random() * 60 + 20}%`;
+            pinned.style.transform = data.transform || `rotate(${(Math.random() - 0.5) * 15}deg)`;
+
+            // store original id for reference
+            pinned.dataset.originalId = data.originalId;
 
             corkboard.appendChild(pinned);
 
-            const originalNote = document.querySelector(`.book-note[data-note-id="${data.originalId}"]`);
-            if (originalNote) {
+            // Hide all matching original book notes (protect against multiple instances)
+            document.querySelectorAll(`.book-note[data-note-id="${data.originalId}"]`).forEach(originalNote => {
                 originalNote.style.visibility = 'hidden';
                 originalNote.style.opacity = '0';
-            }
-            
-            makePinnedNoteDraggable(pinned, pinHead, originalNote);
+            });
+
+            const originalReference = document.querySelector(`.book-note[data-note-id="${data.originalId}"]`);
+            makePinnedNoteDraggable(pinned, pinHead, originalReference);
         });
     }
 
     function initFlashlight() {
-        const pageContainer = document.getElementById('flashlightPage');
-        if (!pageContainer) return;
-        const revealLayer = pageContainer.querySelector('.layer-reveal');
-        pageContainer.addEventListener('mousemove', (e) => {
-            const rect = pageContainer.getBoundingClientRect();
-            revealLayer.style.setProperty('--x', `${e.clientX - rect.left}px`);
-            revealLayer.style.setProperty('--y', `${e.clientY - rect.top}px`);
+        const containers = document.querySelectorAll('.flashlight-container');
+        if (!containers || containers.length === 0) return;
+        containers.forEach(container => {
+            const revealLayer = container.querySelector('.layer-reveal');
+            if (!revealLayer) return;
+
+            function updatePos(clientX, clientY) {
+                const rect = container.getBoundingClientRect();
+                revealLayer.style.setProperty('--x', `${clientX - rect.left}px`);
+                revealLayer.style.setProperty('--y', `${clientY - rect.top}px`);
+            }
+
+            container.addEventListener('mousemove', (e) => {
+                updatePos(e.clientX, e.clientY);
+            });
+
+            container.addEventListener('touchmove', (e) => {
+                const t = e.touches && e.touches[0];
+                if (t) updatePos(t.clientX, t.clientY);
+            }, { passive: true });
+
+            // Ensure the reveal has a reasonable initial position when hovered
+            container.addEventListener('mouseenter', () => {
+                const rect = container.getBoundingClientRect();
+                updatePos(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            });
         });
     }
 

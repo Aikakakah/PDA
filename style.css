@@ -141,7 +141,63 @@ body {
     opacity: 1 !important;
 }
 
+/* BEGIN STATUS LIGHTS */
+.status-lights {
+    position: absolute;
+    top: -4px;
+    left: 16px;
+    display: flex;
+    gap: 0px;
+    z-index: 10;
+}
+.status-light {
+    width: 8px;
+    height: 12px;
+    background-color: gray;
+    border-radius: 0 0 5px 5px;
+    margin: 4px;
+    box-shadow: 0 0 4px rgba(0,0,0,0.6);
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+/* .power-light {
+    background-color: red;
+    margin: 4px;
+    box-shadow: 0 0 4px rgba(0,0,0,0.6);
+    transition: background-color 0.3s, box-shadow 0.3s;
+} */
+/* Power Light - Green when on */
+.power-light.on {
+    background-color: var(--ok) !important; 
+    box-shadow: 0 0 8px var(--ok) !important;
+}
 
+/* Notification Light - News (Solid) and NanoChat (Blinking) */
+.notification-light.on {
+    background-color: var(--info);
+    box-shadow: 0 0 8px var(--info);
+}
+.notification-light.blinking {
+    animation: blink-fast 0.5s infinite alternate;
+}
+
+/* Connection Light - Terminal Message (Solid) and Connection Request (Slow Blink) */
+.connection-light.on {
+    background-color: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+}
+.connection-light.slow-blinking {
+    animation: blink-slow 2s infinite alternate;
+}
+
+@keyframes blink-fast {
+    from { background-color: var(--info); box-shadow: 0 0 8px var(--info); }
+    to { background-color: #444; box-shadow: none; }
+}
+
+@keyframes blink-slow {
+    from { background-color: var(--accent); box-shadow: 0 0 8px var(--accent); }
+    to { background-color: #444; box-shadow: none; }
+}
 
 
 

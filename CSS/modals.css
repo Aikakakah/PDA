@@ -136,16 +136,14 @@
 
 
 .ringtone-modal {
-    background: var(--inner); 
-    padding: 15px;
-    border-radius: var(--radius);
-    width: 90%; 
-    max-width: 280px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     position: absolute;
+    inset: 0;
     display: flex;
-    flex-direction: column;
-}
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 100;
+} 
 
 .ringtone-modal .modal-content {
     background: var(--inner); 
@@ -180,6 +178,7 @@
 }
  /* Specific Content Box for Ringtone */
  .ringtone-modal .modal-content {
+    position: relative;
     background: var(--panel);
     padding: 20px;
     border-radius: 8px;
@@ -189,9 +188,17 @@
     flex-direction: column;
     align-items: center;
     gap: 15px;
-    position: absolute;
     justify-content: center;
  }
+
+ /* Place the close button inside the ringtone content */
+ .ringtone-modal .modal-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: var(--muted);
+ }
+ 
  
  
  /* Ensure it hides correctly */

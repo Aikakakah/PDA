@@ -249,6 +249,10 @@ const state = {
     shiftStart: Date.now(),
     flashlight: false,
     stylus: false,
+    hasUnreadNews: false,
+    hasUnreadNanoChat: false,
+    hasUnreadTerminal: false,
+    pendingConnection: null, 
     poweredOn: false, // Default to false, load will update
     unlockedFeatures: {
         notekeeper: false,
@@ -1006,11 +1010,25 @@ const state = {
         switch (p.type) {
         case 'notekeeper': renderNotekeeper(); break;
         case 'manifest': renderManifest(); break;
-        case 'nanochat': renderNanoChat(); break;
+        case 'nanochat': 
+            // Opening NanoChat clears the unread flag
+            state.hasUnreadNanoChat = false;
+            saveGameProgress();
+            updateStatusLights();
+            renderNanoChat(); break;
         case 'news': 
+            // Viewing news marks it as read
+            state.hasUnreadNews = false;
+            saveGameProgress();
+            updateStatusLights();
             if (newsModule) newsModule.renderNewsProgram(); 
             break;
-        case 'terminal': renderTerminal(); break; 
+        case 'terminal': 
+            // Viewing terminal clears the unread terminal indicator
+            state.hasUnreadTerminal = false;
+            saveGameProgress();
+            updateStatusLights();
+            renderTerminal(); break; 
         case 'settings':
                 showView('settings');
                 document.querySelectorAll('.nav-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
@@ -1189,10 +1207,11 @@ const state = {
                     
                     state.pendingConnection = null;
                     promptSpan.textContent = '[NETLINK] user:';
-                    
+                    updateStatusLights();
                 } else if (cmd.toUpperCase() === 'N') {
                     state.terminalHistory.push({ text: "Connection Refused.", type: "error" });
                     state.pendingConnection = null;
+                    updateStatusLights();
                 } else {
                     state.terminalHistory.push({ text: "Invalid input. Accept? [Y/N]", type: "system" });
                 }
@@ -1329,7 +1348,13 @@ const state = {
                 return; 
         }
         
-        if (newsModule) newsModule.handleNewsArticle(key); 
+        if (newsModule) {
+            newsModule.handleNewsArticle(key);
+            // New unlocked article should show as unread
+            state.hasUnreadNews = true;
+            saveGameProgress();
+            updateStatusLights();
+        }
         
         let i = 0;
         const playNext = () => {
@@ -1365,6 +1390,37 @@ const state = {
         };
         
         playNext();
+    }
+
+    function updateStatusLights() {
+        const pwr = document.getElementById('power-light');
+        const ntf = document.getElementById('notification-light');
+        const con = document.getElementById('connection-light');
+        if (!pwr || !ntf || !con) return;
+
+        // Power Light: Green when system is powered on, otherwise 'off'
+        pwr.classList.toggle('on', state.poweredOn);
+        pwr.classList.toggle('off', !state.poweredOn);
+
+        // Notification Light: NanoChat (Blinking) takes precedence over News (Solid)
+        ntf.classList.remove('on', 'blinking', 'off');
+        if (state.hasUnreadNanoChat) {
+            ntf.classList.add('blinking');
+        } else if (state.hasUnreadNews) {
+            ntf.classList.add('on');
+        } else {
+            ntf.classList.add('off');
+        }
+
+        // Connection Light: Request (Slow Blink) vs Message (Solid) vs off
+        con.classList.remove('on', 'slow-blinking', 'off');
+        if (state.pendingConnection) {
+            con.classList.add('slow-blinking');
+        } else if (state.hasUnreadTerminal) {
+            con.classList.add('on');
+        } else {
+            con.classList.add('off');
+        }
     }
     
     function checkCircuitState() {
@@ -1508,6 +1564,8 @@ const state = {
         nanoChatTriggers = createNanoChatTriggers(secretHandler);
        
         restoreGameProgress();
+        // Ensure UI status lights reflect the loaded state
+        updateStatusLights();
         renderPrograms();
         showView('home');
         setInterval(updateHome, 1000);
@@ -1842,7 +1900,8 @@ const state = {
                 btnAdminPower.style.boxShadow = "none"; // Remove glow for OFF
             }
 
-            // saveGameProgress(); 
+            // Update status lights after admin toggle
+            updateStatusLights();
         });
     }
         
@@ -1896,6 +1955,7 @@ const state = {
             if(pdaScreen) pdaScreen.classList.add('screen-off'); 
             state.poweredOn = false;
             saveGameProgress();
+            updateStatusLights();
         };
     
         const turnOnScreen = () => {
@@ -1903,6 +1963,7 @@ const state = {
             if(pdaScreen) pdaScreen.classList.remove('screen-off');
             state.poweredOn = true;
             saveGameProgress();
+            updateStatusLights();
         };
 
         if(!state.poweredOn) {

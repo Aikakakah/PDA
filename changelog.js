@@ -17,9 +17,19 @@ export const CHANGELOG_CONTENT = [
             "double clicking notes to make big",
             "screwdriver should tilt when grabbed and automatically return to drawer when all screws removed",
             "Checklist on corkboard for written puzzles to update progress in PDA",
-            "Add status lights on PDA - power, unread nanochat/news, remote connection for terminal",
-            "Add notification bubbles on nanochat/news apps"
             
+            "Add notification bubbles on nanochat/news apps",
+            "When expand book is clicked with flashlight/pen, current page should zoom while keeping pen active. Have a dedicated close button, disable right click to put away pen",
+
+        ]
+    },
+    {
+        version: "0.0.7",
+        date: "2655-12-28",
+        changes: [
+            "Added status lights on PDA - power, unread nanochat/news, remote connection for terminal (should flash on request/new message from Jasper)",
+            "Added Subject Printout note",
+            "Notes properly pin an unpin to correct locations."
         ]
     },
     {
