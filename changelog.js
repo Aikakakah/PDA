@@ -19,8 +19,15 @@ export const CHANGELOG_CONTENT = [
             "Checklist on corkboard for written puzzles to update progress in PDA",
             
             "Add notification bubbles on nanochat/news apps",
-            "When expand book is clicked with flashlight/pen, current page should zoom while keeping pen active. Have a dedicated close button, disable right click to put away pen",
 
+        ]
+    },
+    {
+        version: "0.0.8",
+        date: "2026-01-07",
+        changes: [
+            "Double clicking flashlight on the book maximizes it",
+            
         ]
     },
     {

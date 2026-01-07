@@ -227,6 +227,16 @@ export function initializeBookSystem(el) {
         }
     }
 
+    const bookEl = el('book'); // Grab the reference
+    if (bookEl) {
+        bookEl.addEventListener('dblclick', () => {
+            // Check if the flashlight/stylus is "picked up"
+            if (document.body.classList.contains('stylus-active')) {
+                toggleMaximize();
+            }
+        });
+    }
+
     if (bookMaximizeBtn) {
         bookMaximizeBtn.addEventListener('click', toggleMaximize);
     }
@@ -376,7 +386,7 @@ export function initializeBookSystem(el) {
         pinHead.addEventListener('mousedown', (e) => {
             isDragging = true;
             pinnedNote.style.zIndex = '1000'; 
-            
+            if (pinnedNote.classList.contains('expanded')) return;
             // NEW: Apply a scale transform to make it "pop" up when picked up
             // We preserve the existing rotation but add a scale factor
             const currentTransform = window.getComputedStyle(pinnedNote).transform;
@@ -481,6 +491,39 @@ export function initializeBookSystem(el) {
         }, 700);
     }
 
+    function toggleNoteExpand(noteEl) {
+        const isExpanded = noteEl.classList.contains('expanded');
+
+        if (!isExpanded) {
+            // --- EXPAND ---
+            noteEl.classList.add('expanded');
+            document.body.classList.add('note-is-expanded');
+            
+            // Save previous cursor to restore later
+            noteEl.dataset.prevCursor = noteEl.style.cursor;
+            noteEl.style.cursor = 'default';
+
+            // One-time listener to close when clicking the backdrop
+            const closeOnBackdrop = (e) => {
+                // Close if clicking outside the note
+                if (!noteEl.contains(e.target)) {
+                    toggleNoteExpand(noteEl);
+                    document.removeEventListener('click', closeOnBackdrop);
+                }
+            };
+            // Small timeout to prevent immediate triggering
+            setTimeout(() => {
+                document.addEventListener('click', closeOnBackdrop);
+            }, 50);
+
+        } else {
+            // --- SHRINK ---
+            noteEl.classList.remove('expanded');
+            document.body.classList.remove('note-is-expanded');
+            noteEl.style.cursor = noteEl.dataset.prevCursor || 'grab';
+        }
+    }
+
     function createFloatingNoteFrom(originalNote, startX, startY) {
         const rect = originalNote.getBoundingClientRect();
         const clone = document.createElement('div');
@@ -497,6 +540,12 @@ export function initializeBookSystem(el) {
         clone.textContent = getCleanNoteText(originalNote);
         clone.dataset.originalId = originalNote.dataset.noteId;
 
+        clone.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            e.stopPropagation(); // Stop event bubbling
+            toggleNoteExpand(clone);
+        });
+        
         // Apply the scale to the clone immediately upon creation
         const currentTransform = window.getComputedStyle(clone).transform;
         clone.style.transform = currentTransform === 'none' ? 'scale(1.1)' : `${currentTransform} scale(1.1)`;
@@ -724,13 +773,29 @@ export function initializeBookSystem(el) {
 
             function updatePos(clientX, clientY) {
                 const rect = container.getBoundingClientRect();
-                revealLayer.style.setProperty('--x', `${clientX - rect.left}px`);
-                revealLayer.style.setProperty('--y', `${clientY - rect.top}px`);
+
+                // 1. Calculate the Scale Factor 
+                // (Visual Size / Internal Layout Size)
+                const scaleX = rect.width / container.offsetWidth;
+                const scaleY = rect.height / container.offsetHeight;
+                
+                // 2. Adjust offset by dividing by the scale
+                // This converts screen pixels back into "CSS pixels" inside the element
+                const x = (clientX - rect.left) / scaleX;
+                const y = (clientY - rect.top) / scaleY;
+
+                revealLayer.style.setProperty('--x', `${x}px`);
+                revealLayer.style.setProperty('--y', `${y}px`);
             }
 
             container.addEventListener('mousemove', (e) => {
                 updatePos(e.clientX, e.clientY);
             });
+
+            container.addEventListener('touchstart', (e) => {
+             const t = e.touches[0];
+             updatePos(t.clientX, t.clientY);
+            }, { passive: true });
 
             container.addEventListener('touchmove', (e) => {
                 const t = e.touches && e.touches[0];
