@@ -27,7 +27,7 @@ export const CHANGELOG_CONTENT = [
         date: "2026-01-07",
         changes: [
             "Double clicking flashlight on the book maximizes it",
-            
+            "Double clicking notes maximizes them",
         ]
     },
     {
