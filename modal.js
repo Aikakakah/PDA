@@ -127,30 +127,20 @@ export function createIdentityModalMarkup() {
     `;
 }
 
-// modal.js
+/* --- RULES --- */
 export function createRulesModalMarkup() {
     return `
         <div class="modal rules-modal hidden" id="rulesModal">
             <div class="modal-content">
                 <button class="modal-close" id="closeRulesModal">✕</button>
                 <div class="modal-header">
-                    <div class="modal-title">System Patch Notes</div>
+                    <div class="modal-title">STATION RULES & REGS</div>
                 </div>
-                <div class="rules-list" id="rulesList"></div>
+                <div class="rules-container">
+                    <div class="rules-toc" id="rulesToc"></div>
+                    <div class="rules-list" id="rulesList"></div>
+                </div>
             </div>
         </div>
-        `;
+    `;
 }
-
-/* <div class="modal rules-modal hidden" id="rulesModal" >
-<div class="modal-content rules-box">
-    <div class="rules-background">
-    <button class="modal-close" id="closeRulesModal" style="margin-left:auto;">✕</button>
-    <div class="rules-content">
-        <h2>STATION RULES & REGS</h2>
-    </div>
-    <div id="rulesList" class="modal-body rules-list">
-        </div>
-</div>
-</div>
-`; */
