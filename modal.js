@@ -126,3 +126,19 @@ export function createIdentityModalMarkup() {
         </div>
     `;
 }
+
+// modal.js
+export function createRulesModalMarkup() {
+    return `
+        <div id="rulesModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>STATION RULES & REGS</h2>
+                    <button id="closeRulesModal" class="modal-close">&times;</button>
+                </div>
+                <div id="rulesList" class="modal-body changelog-list">
+                    </div>
+            </div>
+        </div>
+    `;
+}

@@ -5,12 +5,14 @@ import { initializeBookSystem } from './Book/book.js';
 import { createNanoChatTriggers } from './nanochat_triggers.js';
 import { createTerminalBridge } from './terminal_bridge.js';
 import { SYSTEM_VERSION, CHANGELOG_CONTENT } from './changelog.js';
+import { RULES_CONTENT } from './rules.js';
 import { 
     createRingtoneModalMarkup, 
     createIdentityModalMarkup, 
     createChangelogModalMarkup, 
     createOSModalMarkup,
-    createNanoChatNewContactModal
+    createNanoChatNewContactModal,
+    createRulesModalMarkup
 } from './modal.js';
 
 // Helper to inject HTML from file
@@ -391,6 +393,40 @@ const state = {
             ringtoneModal?.classList.remove('hidden'); 
         });
     }
+    // Insert the modal into the DOM
+    document.body.insertAdjacentHTML('beforeend', createRulesModalMarkup());
+
+    // Modal Elements
+    const rulesModal = document.getElementById('rulesModal');
+    const closeRulesModal = document.getElementById('closeRulesModal');
+    const rulesList = document.getElementById('rulesList');
+    const btnAdminRules = document.getElementById('btn-admin-rules');
+
+    // Open Rules Function
+    function openRules() {
+        if (!rulesModal || !rulesList) return;
+        rulesList.innerHTML = RULES_CONTENT.map(category => `
+            <div class="changelog-entry">
+                <div class="changelog-ver">${category.category}</div>
+                <ul class="changelog-items">
+                    ${category.items.map(item => `<li>${item}</li>`).join('')}
+                </ul>
+            </div>
+        `).join('');
+        rulesModal.classList.remove('hidden');
+    }
+
+    // Event Listeners
+    btnAdminRules?.addEventListener('click', openRules);
+
+    closeRulesModal?.addEventListener('click', () => {
+        rulesModal?.classList.add('closing');
+        setTimeout(() => {
+            rulesModal?.classList.remove('closing');
+            rulesModal?.classList.add('hidden');
+        }, 250);
+    });
+
     /* --- CHANGELOG --- */
     document.body.insertAdjacentHTML('beforeend', createChangelogModalMarkup(state.systemVersion));
 
