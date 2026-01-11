@@ -371,6 +371,8 @@ const state = {
     let secretHandler = null;
     
     let changelogList = null;
+    let rulesList = null;
+
     let osCopyModal = null;
     let osModalDisplay = null;
     let osPasteInput = null;
@@ -393,31 +395,22 @@ const state = {
             ringtoneModal?.classList.remove('hidden'); 
         });
     }
-    // Insert the modal into the DOM
+
+    /* --- RULES --- */
     document.body.insertAdjacentHTML('beforeend', createRulesModalMarkup());
 
-    // Modal Elements
-    const rulesModal = document.getElementById('rulesModal');
-    const closeRulesModal = document.getElementById('closeRulesModal');
-    const rulesList = document.getElementById('rulesList');
-    const btnAdminRules = document.getElementById('btn-admin-rules');
+    let rulesModal = null;
+    let openRulesModal = null;
+    let closeRulesModal = null;
 
-    // Open Rules Function
-    function openRules() {
-        if (!rulesModal || !rulesList) return;
-        rulesList.innerHTML = RULES_CONTENT.map(category => `
-            <div class="changelog-entry">
-                <div class="changelog-ver">${category.category}</div>
-                <ul class="changelog-items">
-                    ${category.items.map(item => `<li>${item}</li>`).join('')}
-                </ul>
-            </div>
-        `).join('');
-        rulesModal.classList.remove('hidden');
+    openRulesModal = document.getElementById('btn-admin-rules');
+    closeRulesModal = document.getElementById('closeRulesModal');
+    rulesModal = document.getElementById('rulesModal');
+    rulesList = document.getElementById('rulesList');
+    
+    if (openRulesModal) { 
+        openRulesModal?.addEventListener('click', openRules); 
     }
-
-    // Event Listeners
-    btnAdminRules?.addEventListener('click', openRules);
 
     closeRulesModal?.addEventListener('click', () => {
         rulesModal?.classList.add('closing');
@@ -426,6 +419,52 @@ const state = {
             rulesModal?.classList.add('hidden');
         }, 250);
     });
+
+    function openRules() {
+        if (!rulesModal || !rulesList) return;
+        rulesList.innerHTML = RULES_CONTENT.map(category => `
+            <div class="rules-entry">
+                <ul class="rules-items">
+                    ${category.items.map(item => `<li>${item}</li>`).join('')}
+                </ul>
+            </div>
+        `).join('');
+        rulesModal.classList.remove('hidden'); 
+    }
+
+    // // Insert the modal into the DOM
+    // document.body.insertAdjacentHTML('beforeend', createRulesModalMarkup());
+
+    // // Modal Elements
+    // const rulesModal = document.getElementById('rulesModal');
+    // const closeRulesModal = document.getElementById('closeRulesModal');
+    // const rulesList = document.getElementById('rulesList');
+    // const btnAdminRules = document.getElementById('btn-admin-rules');
+
+    // // Open Rules Function
+    // function openRules() {
+    //     if (!rulesModal || !rulesList) return;
+    //     rulesList.innerHTML = RULES_CONTENT.map(category => `
+    //         <div class="changelog-entry">
+    //             <div class="changelog-ver">${category.category}</div>
+    //             <ul class="changelog-items">
+    //                 ${category.items.map(item => `<li>${item}</li>`).join('')}
+    //             </ul>
+    //         </div>
+    //     `).join('');
+    //     rulesModal.classList.remove('hidden');
+    // }
+
+    // // Event Listeners
+    // btnAdminRules?.addEventListener('click', openRules);
+
+    // closeRulesModal?.addEventListener('click', () => {
+    //     rulesModal?.classList.add('closing');
+    //     setTimeout(() => {
+    //         rulesModal?.classList.remove('closing');
+    //         rulesModal?.classList.add('hidden');
+    //     }, 250);
+    // });
 
     /* --- CHANGELOG --- */
     document.body.insertAdjacentHTML('beforeend', createChangelogModalMarkup(state.systemVersion));

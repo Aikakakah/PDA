@@ -727,3 +727,61 @@
     color: var(--text);
     font-size: 0.9em;
 }
+
+
+/* --- RULES --- */
+.rules-modal {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+ }
+
+.rules-modal .modal-content {
+    max-width: 450px;
+}
+
+.rules-modal .rules-list {
+    max-height: 300px;
+    overflow-y: auto;
+    text-align: left;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.rules-modal .rules-list::-webkit-scrollbar {
+    width: 5px;
+    margin-right: 5px;
+    padding: 1px;
+    border: none;
+}
+
+.rules-modal .rules-entry {
+    margin-bottom: 15px;
+    border-bottom: 1px dashed #444;
+    padding-bottom: 10px;
+}
+
+.rules-modal .rules-ver {
+    color: var(--ok);
+    font-weight: bold;
+    font-size: 1em;
+    margin-bottom: 4px;
+}
+
+.rules-modal .rules-date {
+    color: var(--muted);
+    font-size: 0.8em;
+    right: 8px;
+    font-weight: normal;
+}
+
+.rules-modal .rules-items {
+    padding-left: 20px;
+    margin: 5px 0 0 0;
+    color: var(--text);
+    font-size: 0.9em;
+}
