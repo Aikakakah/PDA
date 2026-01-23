@@ -966,7 +966,7 @@ RULES_CONTENT.forEach(cat => {
             }
         }
     });
-    // discordBridge.start();
+    discordBridge.start();
     
     function showView(v) {
         if (!views || Object.keys(views).length === 0) return;
@@ -1339,7 +1339,7 @@ RULES_CONTENT.forEach(cat => {
                     
                     const div = document.createElement('div');
                     div.className = `terminal-line ${line.type || ''}`;
-                    div.textContent = `${line.timestamp}: ${line.content}`;
+                    div.textContent = `${line.solTimestamp}: ${line.content}`;
                     outputDiv.appendChild(div);
     
                 } else {
