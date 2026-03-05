@@ -23,6 +23,14 @@ export const CHANGELOG_CONTENT = [
         ]
     },
     {
+        version: "0.0.9",
+        date: "2026-01-18",
+        changes: [
+            "Added more rules",
+            "Working on discord bot",
+        ]
+    },
+    {
         version: "0.0.8",
         date: "2026-01-07",
         changes: [
