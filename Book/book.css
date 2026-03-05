@@ -111,7 +111,8 @@ body.book-is-maximized .book-widget {
  .my-page {
    width: 100%;
    height: 100%;
-   background-color: var(--pda-bg); 
+   /* background-color: var(--pda-bg);  */
+   background-color: transparent;
    border: none; 
    overflow: hidden;
    padding: 0;
@@ -188,6 +189,23 @@ body.book-is-maximized .book-widget {
    object-fit: cover; 
    margin: 0;
  }
+
+ .my-page p {
+  font-family: 'Caveat', cursive;
+  font-size: 19px;
+  font-weight: 100;
+  letter-spacing: .15px;
+  -webkit-text-stroke-width: 0.2px;
+  -webkit-text-stroke-color: #d2b18f;
+  padding-top: 2%;
+  padding-left: 7%;
+  padding-right: 5%;
+  color: black;
+  background: none;
+  background-color: none !important;
+  position: absolute;
+  z-index: 1;
+}
  
  .my-page.page-cover {
    background-color: #333336;

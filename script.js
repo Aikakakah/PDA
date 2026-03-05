@@ -326,6 +326,15 @@ const state = {
     unlockedNews: null 
 };
 
+RULES_CONTENT.forEach(cat => {
+    cat.items.forEach(item => {
+        if (item.image) {
+            const img = new Image();
+            img.src = item.image;
+        }
+    });
+});
+
 (async () => {
     
     const preloadedNotes = {};
@@ -371,6 +380,9 @@ const state = {
     let secretHandler = null;
     
     let changelogList = null;
+    let rulesList = null;
+    let rulesToc = null;
+
     let osCopyModal = null;
     let osModalDisplay = null;
     let osPasteInput = null;
@@ -393,31 +405,23 @@ const state = {
             ringtoneModal?.classList.remove('hidden'); 
         });
     }
-    // Insert the modal into the DOM
+
+    /* --- RULES --- */
     document.body.insertAdjacentHTML('beforeend', createRulesModalMarkup());
 
-    // Modal Elements
-    const rulesModal = document.getElementById('rulesModal');
-    const closeRulesModal = document.getElementById('closeRulesModal');
-    const rulesList = document.getElementById('rulesList');
-    const btnAdminRules = document.getElementById('btn-admin-rules');
+    let rulesModal = null;
+    let openRulesModal = null;
+    let closeRulesModal = null;
 
-    // Open Rules Function
-    function openRules() {
-        if (!rulesModal || !rulesList) return;
-        rulesList.innerHTML = RULES_CONTENT.map(category => `
-            <div class="changelog-entry">
-                <div class="changelog-ver">${category.category}</div>
-                <ul class="changelog-items">
-                    ${category.items.map(item => `<li>${item}</li>`).join('')}
-                </ul>
-            </div>
-        `).join('');
-        rulesModal.classList.remove('hidden');
+    openRulesModal = document.getElementById('btn-admin-rules');
+    closeRulesModal = document.getElementById('closeRulesModal');
+    rulesModal = document.getElementById('rulesModal');
+    rulesList = document.getElementById('rulesList');
+    rulesToc = document.getElementById('rulesToc');
+    
+    if (openRulesModal) { 
+        openRulesModal?.addEventListener('click', openRules); 
     }
-
-    // Event Listeners
-    btnAdminRules?.addEventListener('click', openRules);
 
     closeRulesModal?.addEventListener('click', () => {
         rulesModal?.classList.add('closing');
@@ -426,6 +430,132 @@ const state = {
             rulesModal?.classList.add('hidden');
         }, 250);
     });
+
+    /**
+ * Opens the Rules modal and generates the hierarchical Table of Contents 
+ * and Rules List content.
+ */
+    function openRules() {
+        if (!rulesModal || !rulesList || !rulesToc) return;
+        
+        rulesToc.innerHTML = '';
+        rulesList.innerHTML = '';
+
+        RULES_CONTENT.forEach((category, index) => {
+            // --- 1. Determine Hierarchy Depth ---
+            let depth = 0;
+            if (category.parentCategory) {
+                depth = 1;
+                // Find if the parent itself has a parent to identify Level 2 (Sub-Sub)
+                const parentObj = RULES_CONTENT.find(c => c.category === category.parentCategory);
+                if (parentObj && parentObj.parentCategory) {
+                    depth = 2;
+                }
+            }
+
+            // --- 2. Create Table of Contents (TOC) Item ---
+            const tocItem = document.createElement('div');
+            let classList = ['toc-item'];
+            
+            if (depth === 1) {
+                classList.push('sub-toc-item');
+                tocItem.style.display = 'none'; // Initially hidden
+            } else if (depth === 2) {
+                classList.push('sub-sub-toc-item');
+                tocItem.style.display = 'none'; // Initially hidden
+            }
+            
+            tocItem.className = classList.join(' ');
+            tocItem.textContent = category.category;
+            tocItem.dataset.category = category.category;
+            tocItem.dataset.parent = category.parentCategory || ''; // Link for toggle logic
+            
+            // TOC Click Behavior: Scroll to content and expand
+            tocItem.addEventListener('click', () => {
+                const target = rulesList.children[index];
+                if (!category.alwaysExpanded) {
+                    target.classList.add('expanded');
+                    // Ensure sub-items in TOC reveal if this item is a parent
+                    toggleTOCSubgroups(category.category, true);
+                }
+                
+                rulesList.scrollTo({
+                    top: target.offsetTop - 10,
+                    behavior: 'smooth'
+                });
+            });
+            
+            rulesToc.appendChild(tocItem);
+
+            // --- 3. Create Rules Content Entry ---
+            const entry = document.createElement('div');
+            entry.className = 'rules-entry' + (category.alwaysExpanded ? ' expanded' : '');
+            
+            let contentHtml = '';
+            let inList = false;
+            category.items.forEach(item => {
+                const imgHtml = item.image ? `<img src="${item.image}" class="rules-image" loading="lazy">` : '';
+                if (item.bullet) {
+                    if (!inList) { contentHtml += '<ul class="rules-items">'; inList = true; }
+                    contentHtml += `<li>${item.text}${imgHtml}</li>`;
+                } else {
+                    if (inList) { contentHtml += '</ul>'; inList = false; }
+                    contentHtml += `<div class="rules-text-entry">${item.text}${imgHtml}</div>`;
+                }
+            });
+            if (inList) contentHtml += '</ul>';
+
+            // Header displays hierarchy styling via muted text for subs
+            entry.innerHTML = `
+                <div class="rules-header" style="${category.alwaysExpanded ? 'cursor: default;' : ''}">
+                    <span style="${depth > 0 ? 'font-size: 0.9em; color: var(--muted);' : ''}">
+                        ${category.category}
+                    </span>
+                    ${category.alwaysExpanded ? '' : '<span class="arrow"><i class="fas fa-chevron-right"></i></span>'}
+                </div>
+                ${contentHtml}
+            `;
+            
+            // Toggle logic for the content header
+            if (!category.alwaysExpanded) {
+                entry.querySelector('.rules-header').addEventListener('click', () => {
+                    const isExpanded = entry.classList.toggle('expanded');
+                    // Trigger visibility of children in the TOC
+                    toggleTOCSubgroups(category.category, isExpanded);
+                });
+            }
+
+            rulesList.appendChild(entry);
+        });
+
+        rulesModal.classList.remove('hidden'); 
+    }
+
+        // Helper to find and toggle visibility of sub-subgroups in the TOC
+        function toggleTOCSubgroups(parentName, show) {
+            // Select all TOC items that list this category as their parent
+            const children = document.querySelectorAll(`.rules-toc .toc-item[data-parent="${parentName}"]`);
+            
+            children.forEach(child => {
+                child.style.display = show ? 'block' : 'none';
+                
+                // If we are hiding a parent, recursively hide all its descendants
+                if (!show) {
+                    const childCategoryName = child.dataset.category;
+                    toggleTOCSubgroups(childCategoryName, false);
+                    
+                    // Also ensure the corresponding content entry is collapsed
+                    // This keeps the TOC and Content views in sync
+                    const entries = document.querySelectorAll('.rules-entry');
+                    entries.forEach(entry => {
+                        const headerText = entry.querySelector('.rules-header span').textContent.trim();
+                        if (headerText === childCategoryName) {
+                            entry.classList.remove('expanded');
+                        }
+                    });
+                }
+            });
+        }
 
     /* --- CHANGELOG --- */
     document.body.insertAdjacentHTML('beforeend', createChangelogModalMarkup(state.systemVersion));
@@ -836,7 +966,7 @@ const state = {
             }
         }
     });
-    // discordBridge.start();
+    discordBridge.start();
     
     function showView(v) {
         if (!views || Object.keys(views).length === 0) return;
@@ -1209,7 +1339,7 @@ const state = {
                     
                     const div = document.createElement('div');
                     div.className = `terminal-line ${line.type || ''}`;
-                    div.textContent = `${line.timestamp}: ${line.content}`;
+                    div.textContent = `${line.solTimestamp}: ${line.content}`;
                     outputDiv.appendChild(div);
     
                 } else {
