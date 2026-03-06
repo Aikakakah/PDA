@@ -430,7 +430,7 @@ body.note-is-expanded::after {
 }
 
 .flashlight-container p {
-  z-index: 1;
+  z-index: 0;
 
 }
 
