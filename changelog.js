@@ -19,7 +19,15 @@ export const CHANGELOG_CONTENT = [
             "Checklist on corkboard for written puzzles to update progress in PDA",
             
             "Add notification bubbles on nanochat/news apps",
+            "Fade book text when flashlight hovers over it"
 
+        ]
+    },
+    {
+        version: "0.0.9",
+        date: "2026-03-07",
+        changes: [
+            "Added beginning of the book"
         ]
     },
     {
@@ -27,7 +35,7 @@ export const CHANGELOG_CONTENT = [
         date: "2026-01-07",
         changes: [
             "Double clicking flashlight on the book maximizes it",
-            "Double clicking notes maximizes them",
+            "Double clicking notes maximizes them when pinned",
         ]
     },
     {

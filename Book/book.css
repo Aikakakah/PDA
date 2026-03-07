@@ -419,7 +419,7 @@ body.note-is-expanded::after {
 
 
 
- /* #region FLASHLIGHT STYLES */
+/* #region FLASHLIGHT STYLES */
 .flashlight-container {
   position: absolute !important;
   display: block;
@@ -500,7 +500,7 @@ body.stylus-active .book-note, body.stylus-active .floating-note {
 }
 
 
-/* --- Maximize Button Styling --- */
+/* #region Maximize Button */
 .book-max-btn {
   position: absolute;
   top: -40px;
@@ -525,8 +525,8 @@ body.stylus-active .book-note, body.stylus-active .floating-note {
   border-color: #5e2b63;
   box-shadow: 0 0 10px rgba(94, 43, 99, 0.5);
 }
-
-/* --- Maximized State (Applied to Body or Parent) --- */
+/* #endregion */
+/* #region Maximized Book */
 .book-widget.maximized {
   position: fixed !important;
   top: 50% !important;
@@ -586,3 +586,4 @@ body.book-is-maximized .pda {
   transform-style: preserve-3d;
   cursor: grab; 
 }
+/* #endregion */
