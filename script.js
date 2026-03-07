@@ -406,6 +406,75 @@ RULES_CONTENT.forEach(cat => {
         });
     }
 
+    // --- ADMIN: Export Page Logic ---
+// --- ADMIN: Export Page Logic (Open in New Tab) ---
+const exportBtn = document.getElementById('btn-admin-export');
+
+if (exportBtn) {
+    exportBtn.addEventListener('click', async () => {
+        // 1. Find all possible page elements
+        const allPages = document.querySelectorAll('.my-page');
+        if (allPages.length === 0) return;
+
+        // 2. Identify which pages are currently visible
+        const visiblePages = Array.from(allPages).filter(page => {
+            const style = window.getComputedStyle(page);
+            return style.display !== 'none' && style.opacity !== '0' && style.visibility !== 'hidden';
+        });
+
+        let targetEl = null;
+
+        // 3. Logic to choose the page
+        if (visiblePages.length > 1) {
+            const isLeft = confirm("Copy the LEFT page to clipboard?\n\n(Click 'OK' for Left, 'Cancel' for Right)");
+            targetEl = isLeft ? visiblePages[0] : visiblePages[1];
+        } else {
+            targetEl = visiblePages[0];
+        }
+
+        if (!targetEl) return;
+
+        // --- Visual Feedback ---
+        const originalIcon = exportBtn.innerHTML;
+        exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        exportBtn.style.pointerEvents = 'none';
+
+        try {
+            // 4. Capture ONLY the selected target element
+            const canvas = await html2canvas(targetEl, {
+                useCORS: true,
+                backgroundColor: null,
+                scale: 3, // High quality for Krita
+                logging: false
+            });
+
+            // 5. Convert to Blob and WRITE DIRECTLY TO CLIPBOARD
+            canvas.toBlob(async (blob) => {
+                if (blob) {
+                    try {
+                        // Create a new Clipboard item and write it
+                        const item = new ClipboardItem({ 'image/png': blob });
+                        await navigator.clipboard.write([item]);
+                        
+                        // Let the user know it worked
+                        alert("Copied to clipboard! You can now paste it directly into Krita.");
+                    } catch (clipboardError) {
+                        console.error("Clipboard error:", clipboardError);
+                        alert("Could not copy to clipboard. Your browser might be blocking it.");
+                    }
+                }
+            }, 'image/png');
+
+        } catch (err) {
+            console.error("Export failed:", err);
+            alert("Could not capture the page.");
+        } finally {
+            // Restore button state
+            exportBtn.innerHTML = originalIcon;
+            exportBtn.style.pointerEvents = 'auto';
+        }
+    });
+}
     /* --- RULES --- */
     document.body.insertAdjacentHTML('beforeend', createRulesModalMarkup());
 
