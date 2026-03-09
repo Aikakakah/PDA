@@ -412,19 +412,15 @@ const exportBtn = document.getElementById('btn-admin-export');
 
 if (exportBtn) {
     exportBtn.addEventListener('click', async () => {
-        // 1. Find all possible page elements
         const allPages = document.querySelectorAll('.my-page');
         if (allPages.length === 0) return;
 
-        // 2. Identify which pages are currently visible
         const visiblePages = Array.from(allPages).filter(page => {
             const style = window.getComputedStyle(page);
             return style.display !== 'none' && style.opacity !== '0' && style.visibility !== 'hidden';
         });
 
         let targetEl = null;
-
-        // 3. Logic to choose the page
         if (visiblePages.length > 1) {
             const isLeft = confirm("Copy the LEFT page to clipboard?\n\n(Click 'OK' for Left, 'Cancel' for Right)");
             targetEl = isLeft ? visiblePages[0] : visiblePages[1];
@@ -434,42 +430,60 @@ if (exportBtn) {
 
         if (!targetEl) return;
 
-        // --- Visual Feedback ---
         const originalIcon = exportBtn.innerHTML;
         exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
         exportBtn.style.pointerEvents = 'none';
 
         try {
-            // 4. Capture ONLY the selected target element
-            const canvas = await html2canvas(targetEl, {
+            const targetWidth = 1104;
+            const targetHeight = 1452;
+            
+            // 1. Increase the scale slightly more than needed to ensure 
+            // we over-capture the edges (prevents the 1103px rounding error)
+            const exactScale = (targetWidth / targetEl.offsetWidth) * 1.01;
+
+            const rawCanvas = await html2canvas(targetEl, {
                 useCORS: true,
                 backgroundColor: null,
-                scale: 3, // High quality for Krita
-                logging: false
+                scale: exactScale, 
+                logging: false,
+                // These settings help prevent edge-clipping
+                width: targetEl.offsetWidth,
+                height: targetEl.offsetHeight,
+                scrollX: 0,
+                scrollY: -window.scrollY 
             });
 
-            // 5. Convert to Blob and WRITE DIRECTLY TO CLIPBOARD
-            canvas.toBlob(async (blob) => {
+            // 2. Create the strict "Final" canvas
+            const finalCanvas = document.createElement('canvas');
+            finalCanvas.width = targetWidth;
+            finalCanvas.height = targetHeight;
+            const ctx = finalCanvas.getContext('2d');
+            
+            // 3. Draw with explicit sizing to fill every pixel
+            // This stretches the image by that 1px difference if necessary
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(rawCanvas, 0, 0, targetWidth, targetHeight);
+
+            // 4. Clipboard Export
+            finalCanvas.toBlob(async (blob) => {
                 if (blob) {
                     try {
-                        // Create a new Clipboard item and write it
                         const item = new ClipboardItem({ 'image/png': blob });
                         await navigator.clipboard.write([item]);
-                        
-                        // Let the user know it worked
-                        alert("Copied to clipboard! You can now paste it directly into Krita.");
+                        // Small success flash or alert
+                        console.log("Exported at exact 1104x1452");
                     } catch (clipboardError) {
                         console.error("Clipboard error:", clipboardError);
-                        alert("Could not copy to clipboard. Your browser might be blocking it.");
+                        alert("Could not copy to clipboard.");
                     }
                 }
             }, 'image/png');
 
         } catch (err) {
             console.error("Export failed:", err);
-            alert("Could not capture the page.");
         } finally {
-            // Restore button state
             exportBtn.innerHTML = originalIcon;
             exportBtn.style.pointerEvents = 'auto';
         }

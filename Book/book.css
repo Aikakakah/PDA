@@ -1,4 +1,11 @@
 /* Book/book.css */
+/* Z-index Guide:
+Base: 0
+Text: 1
+Scribbles: 2
+Notes: 3
+Page Shadows: 4
+ */
 
 /* --- STPAGEFLIP BOOK WIDGET STYLES --- */
 .book-widget {
@@ -31,20 +38,25 @@
   content: "";
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 4;
   pointer-events: none;
 }
 
 .my-page.page-left::before {
-  box-shadow: inset -7px 0 25px -7px rgba(109, 83, 59, 0.7);
-  box-shadow: inset -3px 0 20px -3px rgba(0, 0, 0, 0.5);
-  box-shadow: inset -1px 0 20px -3px rgba(0, 0, 0, 0.7);
+  mix-blend-mode: multiply;
+  box-shadow: inset -20px 0 20px -7px rgba(160, 140, 110, 0.7),
+              inset -3px 0 20px -3px rgba(211, 179, 145, 0.5),
+              inset -1px 0 20px -3px rgba(211, 179, 145, 0.7),
+              inset -10px 0 10px -15px rgba(0, 0, 0, 0.8);
 }
 
 .my-page.page-right::before {
-  box-shadow: inset 7px 0 25px -7px rgba(109, 83, 59, 0.7);
-  box-shadow: inset 3px 0 20px -3px rgba(0, 0, 0, 0.5);
-  box-shadow: inset 1px 0 20px -3px rgba(0, 0, 0, 0.7);
+  mix-blend-mode: multiply;
+  box-shadow: inset 20px 0 20px -7px rgba(160, 140, 110, 0.7),
+              inset 3px 0 20px -3px rgba(211, 179, 145, 0.5),
+              inset 1px 0 20px -3px rgba(211, 179, 145, 0.7),
+              inset 10px 0 10px -15px rgba(0, 0, 0, 0.8)
+  /* border-right: 1px solid rgba(255, 0, 0, 0.7); */
 }
 /* #endregion */
 
@@ -62,7 +74,7 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.001); 
   pointer-events: none;
-  z-index: 2;
+  z-index: 4;
   box-shadow: inset -20px 0 40px -7px rgba(67, 16, 16, 0.9);
 }
 .my-page.inner-cover-back::after {
@@ -71,7 +83,7 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.001);
   pointer-events: none;
-  z-index: 2;
+  z-index: 4;
   box-shadow: inset 20px 0 40px -7px rgba(67, 16, 16, 0.9);
 }
 /* #endregion */
@@ -98,7 +110,7 @@
 
 .my-page p {
   position: relative;
-  z-index: 2;
+  z-index: 1;
   background: none;
   background-color: none !important;
   margin: 0;
@@ -113,6 +125,22 @@
   letter-spacing: .15px;
   -webkit-text-stroke-width: 0.1px;
   -webkit-text-stroke-color: #d2b18f;
+}
+.my-page .text-date {
+  position: absolute;
+  z-index: 1;
+  background: none;
+  background-color: none !important;
+  margin: 0;
+
+  font-family: 'Caveat', cursive;
+  color: black;
+  font-size: 16px;
+  font-weight: 100;
+  letter-spacing: .15px;
+  text-align: left;
+  -webkit-text-stroke-width: 0.15px;
+  -webkit-text-stroke-color: black;
 }
 
 .my-page img {
@@ -131,7 +159,7 @@
  /* --- Book Notes Styling --- */
  .book-note {
      position: absolute;
-     z-index: 10;
+     z-index: 2;
      width: 80px;
      height: 80px;
      left: 20px; 
