@@ -20,8 +20,22 @@ export const CHANGELOG_CONTENT = [
             
             "Add notification bubbles on nanochat/news apps",
             "Fade book text when flashlight hovers over it",
+            "Instructions should update for hints or be based on progress",
+            "When PDA is first turned on, have it glitch out with an error stating it is in disrepair before opening to the homescreen. Error: Corrupted system files.",
+            "All secrets should have screen go black then fade in normally",
+            "Secrets from the menu should click back into the menu.",
+            "PDA expand button?"
             
 
+        ]
+    },
+    {
+        version: "0.0.11",
+        date: "2026-03-22",
+        changes: [
+            "Updated circuit power note and board.",
+            "Chess puzzle leads to news resistor.",
+            "Fixed hash modal formatting"
         ]
     },
     {

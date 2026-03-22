@@ -1736,7 +1736,8 @@ if (exportBtn) {
     function setupHashModal() {
         const pdaScreen = document.querySelector('.PDA-screen');
 
-        if (!pdaScreen || document.getElementById('osCopyModal')) return;
+        // if (!pdaScreen || document.getElementById('osCopyModal')) return;
+        if (!pdaScreen) return;
         
         // Bind Global Variables
         osCopyModal = document.getElementById('osCopyModal');
