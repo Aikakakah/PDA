@@ -106,7 +106,7 @@ background-size: 287px;
     z-index: 2;
 }
 
-.resistor-slot.r1 {top: 54.18%; left: 4.59%;} /* power */
+.resistor-slot.r1 {top: 35.6%; left: 7.3%;} /* power */
 .resistor-slot.r2 {top: -0.94%;left: 84.1%;transform: rotate(90deg);} /* communication */
 .resistor-slot.r3 {top: 0.61%;left: 19.4%;} /* notekeeper */
 .resistor-slot.r4 {top: 26.3%;left: 19.4%;} /* terminal 1*/
