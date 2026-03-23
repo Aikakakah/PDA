@@ -9,6 +9,8 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/page-flip/dist/css/page-flip.css">
         <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     </head>
     <body>
         <div class="transition-wrapper" id="cubeWrapper">
@@ -37,6 +39,12 @@
                     <button id="btn-admin-reset" class="pan-button admin-btn" title="Reset All Progress">
                         <i class="fas fa-trash-restore"></i>
                     </button>
+                    <button id="btn-admin-rules" class="pan-button admin-btn" title="View Station Rules">
+                        <i class="fas fa-gavel"></i>
+                    </button>
+                    <button id="btn-admin-export" class="pan-button admin-btn" title="Export Page as Image">
+                        <i class="fas fa-camera"></i>
+                    </button>
                 </div>
             
                 <div class="top-right-drawer-panel">
@@ -44,8 +52,7 @@
                     </button>
                     
                     <div class="drawer-inner" id="drawerDropZone">
-                        <div id="screwdriverItem" class="drawer-item screwdriver-prop" title="Screwdriver"></div>
-                        <div class="resistor-kit">
+                        <div class="resistor-kit" id="resistorZone">
                             <div class="drawer-item resistor-prop" data-ohms="100" title="100 Ohm Resistor">
                                 <div class="resistor-body" style="--b1: #964B00; --b2: #000; --b3: #964B00; --b4: #D4AF37;"></div>
                             </div>
@@ -54,14 +61,43 @@
                                 <div class="resistor-body" style="--b1: #E74C3C; --b2: #E74C3C; --b3: #964B00; --b4: #D4AF37;"></div>
                             </div>
                 
-                            <div class="drawer-item resistor-prop" data-ohms="10k" title="10k Ohm Resistor">
+                            <div class="drawer-item resistor-prop" data-ohms="10k">
                                 <div class="resistor-body" style="--b1: #964B00; --b2: #000; --b3: #E67E22; --b4: #D4AF37;"></div>
                             </div>
                             
-                            <div class="drawer-item resistor-prop" data-ohms="10" title="10 Ohm Resistor">
+                            <div class="drawer-item resistor-prop" data-ohms="10">
+                                <div class="resistor-body" style="--b1: #964B00; --b2: #000; --b3: #000; --b4: #D4AF37;"></div>
+                            </div>
+                            <div class="drawer-item resistor-prop" data-ohms="220">
+                                <div class="resistor-body" style="--b1: #E74C3C; --b2: #E74C3C; --b3: #964B00; --b4: #D4AF37;"></div>
+                            </div>
+                
+                            <div class="drawer-item resistor-prop" data-ohms="10k"]">
+                                <div class="resistor-body" style="--b1: #964B00; --b2: #000; --b3: #E67E22; --b4: #D4AF37;"></div>
+                            </div>
+                            
+                            <div class="drawer-item resistor-prop" data-ohms="10">
+                                <div class="resistor-body" style="--b1: #964B00; --b2: #000; --b3: #000; --b4: #D4AF37;"></div>
+                            </div>
+                            <div class="drawer-item resistor-prop" data-ohms="220">
+                                <div class="resistor-body" style="--b1: #E74C3C; --b2: #E74C3C; --b3: #964B00; --b4: #D4AF37;"></div>
+                            </div>
+                
+                            <div class="drawer-item resistor-prop" data-ohms="10k">
+                                <div class="resistor-body" style="--b1: #964B00; --b2: #000; --b3: #E67E22; --b4: #D4AF37;"></div>
+                            </div>
+                            
+                            <div class="drawer-item resistor-prop" data-ohms="10">
                                 <div class="resistor-body" style="--b1: #964B00; --b2: #000; --b3: #000; --b4: #D4AF37;"></div>
                             </div>
                         </div>
+
+                        <div class="drawer-inner-screwdriver-section">
+                            <div id="screwdriverItem" class="drawer-item screwdriver-prop" title="Screwdriver">
+                                <div class="tip"></div>
+                            </div>
+                        </div>
+                        
                     </div>
                 </div>
 
@@ -70,6 +106,11 @@
                 <div id="pda" class="pda">
                     <div class="pda-inner">
                         <div class="pda-front">
+                            <div class = "status-lights">
+                                <div id="power-light" class="status-light power-light off" title="Power Status"></div>
+                                <div id="notification-light" class="status-light notification-light off" title="Unread Messages"></div>
+                                <div id="connection-light" class="status-light connection-light off" title="Remote Connection Status"></div>
+                            </div>
                             <div class="stylus-slot-hole"></div>
                             <div id="stylusProp" class="physical-stylus">
                                 <div class="stylus-cap"></div>
@@ -79,6 +120,7 @@
                             <div class="PDA-screen">
                                 <div class="pda-mid-layer"></div>
                                 <div class="pda-shine"></div>
+                                <div id="secretScreen" class="secret-screen hidden"></div>
                                 <div id="header" class="header">
                                     <div class="left">
                                         <button class="nav-btn" data-tab="home" id="tab-home" aria-pressed="true" title="Home">
@@ -166,7 +208,7 @@
                                             </div>
                                     </section>
                                     
-                                    <div id="secretScreen" class="secret-screen hidden"></div>
+                                    <!-- <div id="secretScreen" class="secret-screen hidden"></div> -->
             
                                     <section id="view-program" class="view">
                                         <div class="program-area" id="programArea"></div>
@@ -188,6 +230,8 @@
                             </div> 
                         </div> 
                         <div class="pda-back">
+                            <div class="sticky-note" data-note-id="4">📝 Sticky note</div>
+                            
                             <div id="circuit-injection-point"></div>
                             
                             <div class="pda-chassis-outline">

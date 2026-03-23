@@ -14,14 +14,14 @@ export function createOSModalMarkup() {
                     <button class="modal-close" id="closeOsModal">✕</button>
                 </div>
                 
-                <p style="color:var(--text); font-size:0.9em; margin: 10px 0;">
-                    Use this token to verify or transfer progress between systems.
+                <p style="color:var(--text); font-size:0.9em; margin: 10px 0px 20px; text-align: center;">
+                    Use this token to transfer progress between systems.<br><br>
+                    Warning: This will overwrite all current progress on the target system. Make sure to record the current one before applying a new hash.<br>
                 </p>
                 
-                <label style="color:var(--muted); font-size:0.8em; text-transform:uppercase;">Current Hash</label>
                 <div id="osModalDisplay" class="hash-display">UNKNOWN</div>
-                <div style="text-align:right; margin-bottom:15px; margin-top:5px;">
-                     <button id="copyOsBtn" class="action-btn">Copy Hash</button>
+                <div style="text-align:center; margin-bottom:15px; margin-top:5px;">
+                    <button id="copyOsBtn" class="action-btn">Copy Hash</button>
                 </div>
                 
                 <hr style="border:0; border-top:1px solid #333; margin:10px 0;">
@@ -121,6 +121,24 @@ export function createIdentityModalMarkup() {
                     <p1>Cookies are saved. If you don't want to save them, you can copy the code in the settings-status menu.</p1>
                     <input type="text" id="identityInput" placeholder="Enter Name / Callsign" maxlength="20" autocomplete="off">
                     <button id="identitySubmitBtn" title="Good luck!">INITIALIZE</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/* --- RULES --- */
+export function createRulesModalMarkup() {
+    return `
+        <div class="modal rules-modal hidden" id="rulesModal">
+            <div class="modal-content">
+                <button class="modal-close" id="closeRulesModal">✕</button>
+                <div class="modal-header">
+                    <div class="modal-title">STATION RULES & REGS</div>
+                </div>
+                <div class="rules-container">
+                    <div class="rules-toc" id="rulesToc"></div>
+                    <div class="rules-list" id="rulesList"></div>
                 </div>
             </div>
         </div>

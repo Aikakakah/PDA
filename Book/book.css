@@ -1,205 +1,165 @@
 /* Book/book.css */
+/* Z-index Guide:
+Base: 0
+Text: 1
+Scribbles: 2
+Notes: 3
+Page Shadows: 4
+ */
 
 /* --- STPAGEFLIP BOOK WIDGET STYLES --- */
 .book-widget {
-    display: flex;
-    flex-direction: column;
-    width: var(--book-width);
-    height: var(--book-height);
-    left: 50px;
-    border-radius: 2px;
-    padding: 2px;
-    position: relative; 
-    z-index: 2;
-    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), clip-path 0.4s ease;;
-    transform-origin: center center;
- }
-
- .book-widget.on-cover {
-  clip-path: inset(0 0 0 50%);
-}
-.book-widget.on-back-cover {
-  clip-path: inset(0 50% 0 0);
+  position: relative; 
+  display: flex;
+  flex-direction: column;
+  width: var(--book-width);
+  height: var(--book-height);
+  left: 50px;
+  border-radius: 2px;
+  padding: 2px;
+  z-index: 2;
+  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), clip-path 0.4s ease;;
+  transform-origin: center center;
 }
 
- /* --- NEW: Maximize Button Styling --- */
- .book-max-btn {
-    position: absolute;
-    top: -40px;
-    right: 0;
-    width: 36px;
-    height: 36px;
-    background: #2b2b2e;
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 4px;
-    color: #e6e6e6;
-    cursor: pointer;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    font-size: 16px;
- }
- 
- .book-max-btn:hover {
-    background: #5e2b63;
-    border-color: #5e2b63;
-    box-shadow: 0 0 10px rgba(94, 43, 99, 0.5);
- }
 
- /* --- NEW: Maximized State (Applied to Body or Parent) --- */
- .book-widget.maximized {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) scale(1) translateZ(1000px) !important; /* Force to front */
-  width: 95vw !important;
-  height: 95vh !important;
-  z-index: 99999 !important;
-  transition: all 0.5s ease-in-out;
+/* #region SHADOW STYLES */
+/* Cover Shadow Styles */
+.my-page.page-cover-front {
+  box-shadow: inset 0px 0 35px 0px rgba(0, 0, 0, 0.9), -5px 0 10px 2px rgba(0, 0, 0, 0.7);
 }
-.book-widget.maximized .book-page {
-  pointer-events: auto !important;
-}
- body.book-is-maximized .book-widget {
-     position: fixed !important;
-     top: 50% !important;
-     left: 50% !important;
-     z-index: 10000 !important;
-     /* box-shadow: 0 0 50px rgba(0,0,0,0.8); */
- }
 
- body.book-is-maximized::after {
-     content: "";
-     position: fixed;
-     inset: 0;
-     background: rgba(0,0,0,0.85);
-     backdrop-filter: blur(5px);
-     z-index: 9000 !important;
-     animation: fadeIn 0.3s ease;
- }
- body.book-is-maximized #cubeWrapper {
-  z-index: 9500 !important;
+.my-page.page-cover-back {
+  box-shadow: inset 0px 0 35px 0px rgba(0, 0, 0, 0.9), 10px 0 10px 0px rgba(0, 0, 0, 0.7);
 }
-body.book-is-maximized .book-widget {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  z-index: 10000 !important;
+
+/* Page Shadow Styles */
+.my-page.page-left::before, .my-page.page-right::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
 }
- 
- @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
- /* Hide PDA when book is huge */
- body.book-is-maximized .pda {
-     opacity: 0;
-     pointer-events: none;
-     transition: opacity 0.3s;
- }
+.my-page.page-left::before {
+  mix-blend-mode: multiply;
+  box-shadow: inset -20px 0 20px -7px rgba(160, 140, 110, 0.7),
+              inset -3px 0 20px -3px rgba(211, 179, 145, 0.5),
+              inset -1px 0 20px -3px rgba(211, 179, 145, 0.7),
+              inset -10px 0 10px -15px rgba(0, 0, 0, 0.8);
+}
 
- .book-page {
-    flex-grow: 1;
-    position: relative; 
-    display: block; 
-    overflow: visible; 
-    transform-style: preserve-3d;
-    cursor: grab; 
- }
- 
- /* STPAGEFLIP SPECIFIC PAGE AND IMAGE STYLES */
- .my-page {
-   width: 100%;
-   height: 100%;
-   background-color: var(--pda-bg); 
-   border: none; 
-   overflow: hidden;
-   padding: 0;
- }
- .my-page::before {
-   content: ""; 
-   position: absolute; 
-   top: 0;
-   bottom: 0;
-   width: 100%;
-   height: 100%;
-   pointer-events: none; 
-   }
- 
- /* 1. Page Content Wrapper */
- .page-content {
-   width: 100%;
-   height: 100%;
-   display: flex; 
-   justify-content: center; 
-   align-items: center; 
-   padding: 0; 
- }
- 
- .my-page.inner-cover-front::after {
-   content: "";
-   position: absolute;
-   inset: 0;
-   background: rgba(0, 0, 0, 0.001); 
-   pointer-events: none;
-   z-index: 2;
-   box-shadow: inset -20px 0 40px -7px rgba(67, 16, 16, 0.9);
- }
- .my-page.inner-cover-back::after {
-   content: "";
-   position: absolute;
-   inset: 0;
-   background: rgba(0, 0, 0, 0.001);
-   pointer-events: none;
-   z-index: 2;
-   box-shadow: inset 20px 0 40px -7px rgba(67, 16, 16, 0.9);
- }
- .my-page.p1::after {
-   content: "";
-   position: absolute;
-   inset: 0;
-   background: rgba(0, 0, 0, 0.001); 
-   pointer-events: none;
-   z-index: 2;
-   box-shadow: inset 3px 0 15px -3px rgba(0, 0, 0, 0.5),inset 10px 0 25px -7px rgba(109, 83, 59, 0.7);
- }
- 
- .my-page img {
-   display: block;
-   width: 100%;
-   height: 100%;
-   object-fit: cover; 
-   margin: 0;
- }
- 
- .my-page.page-cover {
-   background-color: #333336;
- }
- 
- .my-page.page-cover-top {
-   box-shadow: inset 0px 0 35px 0px rgba(0, 0, 0, 0.9), -5px 0 10px 2px rgba(0, 0, 0, 0.7);
- }
- 
- .my-page.page-cover-bottom {
-   box-shadow: inset 0px 0 35px 0px rgba(0, 0, 0, 0.9), 10px 0 10px 0px rgba(0, 0, 0, 0.7);
- }
- 
- .my-page.page-left::before {
-     box-shadow: inset -7px 0 25px -7px rgba(109, 83, 59, 0.7);
-     box-shadow: inset -3px 0 20px -3px rgba(0, 0, 0, 0.5);
-     box-shadow: inset -1px 0 20px -3px rgba(0, 0, 0, 0.7);
- }
- 
- .my-page.page-right::before {
-     box-shadow: inset 7px 0 25px -7px rgba(109, 83, 59, 0.7);
-     box-shadow: inset 3px 0 20px -3px rgba(0, 0, 0, 0.5);
-     box-shadow: inset 1px 0 20px -3px rgba(0, 0, 0, 0.7);
- }
+.my-page.page-right::before {
+  mix-blend-mode: multiply;
+  box-shadow: inset 20px 0 20px -7px rgba(160, 140, 110, 0.7),
+              inset 3px 0 20px -3px rgba(211, 179, 145, 0.5),
+              inset 1px 0 20px -3px rgba(211, 179, 145, 0.7),
+              inset 10px 0 10px -15px rgba(0, 0, 0, 0.8)
+  /* border-right: 1px solid rgba(255, 0, 0, 0.7); */
+}
+/* #endregion */
+
+/* #region COVER STYLES */
+.book-widget.on-cover { clip-path: inset(0 0 0 50%);}
+.book-widget.on-back-cover { clip-path: inset(0 50% 0 0);}
+
+.my-page.page-cover {
+  background-color: #333336;
+}
+
+.my-page.inner-cover-front::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.001); 
+  pointer-events: none;
+  z-index: 4;
+  box-shadow: inset -20px 0 40px -7px rgba(67, 16, 16, 0.9);
+}
+.my-page.inner-cover-back::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.001);
+  pointer-events: none;
+  z-index: 4;
+  box-shadow: inset 20px 0 40px -7px rgba(67, 16, 16, 0.9);
+}
+/* #endregion */
+
+/* #region PAGE STYLES */
+.my-page {
+  width: 100%;
+  height: 100%;
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  overflow: hidden;
+}
+
+.my-page::before {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  bottom: 0;
+  content: "";
+  pointer-events: none;
+}
+
+.my-page p {
+  position: relative;
+  z-index: 1;
+  background: none;
+  background-color: none !important;
+  margin: 0;
+  padding-top: 2%;
+  padding-left: 7%;
+  padding-right: 5%;
+
+  font-family: 'Caveat', cursive;
+  color: black;
+  font-size: 19px;
+  font-weight: 100;
+  letter-spacing: .15px;
+  -webkit-text-stroke-width: 0.1px;
+  -webkit-text-stroke-color: #d2b18f;
+}
+.my-page .text-date {
+  position: absolute;
+  z-index: 1;
+  background: none;
+  background-color: none !important;
+  margin: 0;
+
+  font-family: 'Caveat', cursive;
+  color: black;
+  font-size: 16px;
+  font-weight: 100;
+  letter-spacing: .15px;
+  text-align: left;
+  -webkit-text-stroke-width: 0.15px;
+  -webkit-text-stroke-color: black;
+}
+
+.my-page img {
+  position: absolute !important;
+  display: block;
+  object-fit: cover; 
+  width: 100%;
+  height: 100%;
+  top: 0;
+  margin: 0;
+}
+/* #endregion */
+
+ /* #region NOTE STYLES */
  
  /* --- Book Notes Styling --- */
  .book-note {
      position: absolute;
-     z-index: 10;
+     z-index: 2;
      width: 80px;
      height: 80px;
      left: 20px; 
@@ -229,6 +189,24 @@ body.book-is-maximized .book-widget {
      font-size: 18px;
  }
  
+ .book-note.resistor-color-code{
+  width: 170px;
+  height: 260px;
+  background-size: contain !important;
+  background-repeat: no-repeat;
+  padding: 0 !important;
+  border: none !important;
+ }
+
+.book-note.subject-printout{
+  width: 260px;
+  height: 333px;
+  background-size: contain !important;
+  background-repeat: no-repeat;
+  padding: 0 !important;
+  border: none !important;
+ }
+
  .book-note:hover {
      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
  }
@@ -251,13 +229,14 @@ body.book-is-maximized .book-widget {
  
  /* Floating notes dragged out */
  .floating-note {
+  box-sizing: border-box;
      position: fixed; 
      z-index: 9999; 
      width: 80px;
      height: 80px;
      transform: none;
      background: linear-gradient(135deg, #fffacd 0%, #ffffe0 100%);
-     border: 1px solid #ddd;
+     /* border: 1px solid #ddd; */
      border-radius: 2px;
      padding: 8px;
      color: #333;
@@ -354,11 +333,12 @@ body.book-is-maximized .book-widget {
 
 /* --- Pinned Note on Corkboard --- */
 .pinned-note {
+  box-sizing: border-box;
   position: absolute;
   width: 80px;
   height: 80px;
   background: linear-gradient(135deg, #fffacd 0%, #fdf5e6 100%);
-  border: 1px solid #ddd;
+  /* border: 1px solid #ddd; */
   border-radius: 2px;
   padding: 8px;
   color: #333;
@@ -419,17 +399,67 @@ body.book-is-maximized .book-widget {
   box-shadow: 0 0 5px rgba(255,0,0,0.5);
 }
 
+/* --- Expanded Note Styles --- */
+
+/* Book/book.css */
+
+/* --- EXPANDED NOTE STYLES (Updated) --- */
+
+body.note-is-expanded::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85); 
+    backdrop-filter: blur(5px);
+    z-index: 19000; 
+    animation: fadeIn 0.2s ease;
+}
+
+.expanded-note-clone {
+    position: fixed !important;
+    /* We let JS handle the exact transform value now */
+    z-index: 20000 !important;
+    
+    margin: 0 !important;
+    cursor: zoom-out !important;
+    
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important;
+    /* Ensure borders don't get pixelated during scaling if possible */
+    backface-visibility: hidden;
+    
+    /* Ensure text wraps nicely */
+    white-space: pre-wrap;
+    overflow: hidden; 
+}
+
+/* Hide interaction elements on the expanded view */
+.expanded-note-clone .note-pin-btn,
+.expanded-note-clone .push-pin,
+.expanded-note-clone .floating-note-close {
+    display: none !important;
+}
+
+.expanded-note-clone[style*="background-image"] {
+   background-size: contain !important;
+   background-position: center;
+}
+/* #endregion */
 
 
 
-
- /* --- Flashlight/Reveal Effect for Page 2 --- */
+/* #region FLASHLIGHT STYLES */
 .flashlight-container {
-    pointer-events: auto !important;
-    position: relative;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
+  position: absolute !important;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: auto !important;
+}
+
+.flashlight-container p {
+  z-index: 0;
+
 }
 
 /* The bottom image (Blank/Dark) */
@@ -471,34 +501,117 @@ body.stylus-active.light-on .flashlight-container {
   pointer-events: auto !important;
 }
 
-.flashlight-container img, 
-.flashlight-container .layer-base {
-    pointer-events: none !important;
-    user-select: none;
-    -webkit-user-drag: none;
+.flashlight-container img, .flashlight-container .layer-base {
+  pointer-events: none !important;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
-
+/* #endregion */
 
 
 /* --- STYLUS MODE: DISABLE FLIPPING --- */
 
-/* 1. When stylus is active, ignore mouse interaction on the book pages.
-   This prevents the library from detecting hovers (curling corners) or clicks (flipping). */
-body.stylus-active .book-page,
-body.stylus-active .my-page {
-    pointer-events: none !important;
+/* 1. When stylus is active, ignore mouse interaction on the book pages. This prevents the library from detecting hovers (curling corners) or clicks (flipping). */
+body.stylus-active .book-page, body.stylus-active .my-page {
+  pointer-events: none !important;
 }
 
-/* 2. Re-enable interaction specifically for the Flashlight layer 
-   so the mousemove effect still works. */
+/* 2. Re-enable interaction specifically for the Flashlight layer so the mousemove effect still works. */
 body.stylus-active .flashlight-container {
-    pointer-events: auto !important;
+  pointer-events: auto !important;
 }
 
-/* 3. Re-enable interaction for Notes so they can still be dragged/closed 
-   if the user wants to reorganize while in Stylus mode. */
-body.stylus-active .book-note,
-body.stylus-active .floating-note {
-    pointer-events: auto !important;
+/* 3. Re-enable interaction for Notes so they can still be dragged/closed if the user wants to reorganize while in Stylus mode. */
+body.stylus-active .book-note, body.stylus-active .floating-note {
+  pointer-events: auto !important;
 }
+
+
+/* #region Maximize Button */
+.book-max-btn {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  width: 36px;
+  height: 36px;
+  background: #2b2b2e;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  color: #e6e6e6;
+  cursor: pointer;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  font-size: 16px;
+}
+ 
+.book-max-btn:hover {
+  background: #5e2b63;
+  border-color: #5e2b63;
+  box-shadow: 0 0 10px rgba(94, 43, 99, 0.5);
+}
+/* #endregion */
+/* #region Maximized Book */
+.book-widget.maximized {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) scale(1) translateZ(1000px) !important; /* Force to front */
+  width: 95vw !important;
+  height: 95vh !important;
+  z-index: 99999 !important;
+  transition: all 0.5s ease-in-out;
+}
+.book-widget.maximized .book-page {
+  pointer-events: auto !important;
+}
+body.book-is-maximized .book-widget {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  z-index: 10000 !important;
+  /* box-shadow: 0 0 50px rgba(0,0,0,0.8); */
+}
+
+body.book-is-maximized::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(5px);
+  z-index: 9000 !important;
+  animation: fadeIn 0.3s ease;
+}
+
+body.book-is-maximized #cubeWrapper {
+  z-index: 9500 !important;
+}
+
+body.book-is-maximized .book-widget {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  z-index: 10000 !important;
+}
+ 
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Hide PDA when book is huge */
+body.book-is-maximized .pda {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.book-page {
+  flex-grow: 1;
+  position: relative; 
+  display: block; 
+  overflow: visible; 
+  transform-style: preserve-3d;
+  cursor: grab; 
+}
+/* #endregion */

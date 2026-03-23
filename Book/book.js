@@ -227,6 +227,16 @@ export function initializeBookSystem(el) {
         }
     }
 
+    const bookEl = el('book'); // Grab the reference
+    if (bookEl) {
+        bookEl.addEventListener('dblclick', () => {
+            // Check if the flashlight/stylus is "picked up"
+            if (document.body.classList.contains('stylus-active')) {
+                toggleMaximize();
+            }
+        });
+    }
+
     if (bookMaximizeBtn) {
         bookMaximizeBtn.addEventListener('click', toggleMaximize);
     }
@@ -286,13 +296,17 @@ export function initializeBookSystem(el) {
 
         const rect = note.getBoundingClientRect();
         const isFloating = note.classList.contains('floating-note');
-        // Capture IDs before any elements are removed from DOM
         const originalId = note.dataset.originalId || note.dataset.noteId;
         const noteText = getCleanNoteText(note);
 
         // Create "Flying" clone
         const flyer = document.createElement('div');
-        flyer.className = 'floating-note flying-to-board';
+        flyer.className = note.className + ' flying-to-board'; 
+        
+        flyer.style.backgroundImage = note.style.backgroundImage;
+        flyer.style.backgroundSize = 'contain';
+        flyer.style.backgroundRepeat = 'no-repeat';
+        flyer.style.border = note.style.border;
         flyer.textContent = noteText; 
         flyer.style.left = rect.left + 'px';
         flyer.style.top = rect.top + 'px';
@@ -300,9 +314,8 @@ export function initializeBookSystem(el) {
         flyer.style.height = rect.height + 'px';
         document.body.appendChild(flyer);
 
-        // Standardize hiding: use visibility and opacity
         if (isFloating) {
-            note.remove(); // Remove the floating clone
+            note.remove();
         } else {
             note.style.visibility = 'hidden';
             note.style.opacity = '0';
@@ -319,9 +332,25 @@ export function initializeBookSystem(el) {
 
         setTimeout(() => {
             const pinned = document.createElement('div');
-            pinned.className = 'pinned-note';
+            // Standardize class naming
+            pinned.className = note.className.replace('floating-note', 'pinned-note').replace('book-note', 'pinned-note');
+            
+            pinned.style.width = rect.width + 'px';
+            pinned.style.height = rect.height + 'px';
+            pinned.style.backgroundImage = note.style.backgroundImage;
+            pinned.style.backgroundSize = 'contain';
+            pinned.style.backgroundRepeat = 'no-repeat';
+            pinned.style.border = note.style.border;
             pinned.textContent = noteText;
             pinned.dataset.originalId = originalId;
+
+            // --- NEW: Add Double Click to Expand ---
+            pinned.addEventListener('dblclick', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleNoteExpand(pinned);
+            });
+            // ---------------------------------------
 
             const pinHead = document.createElement('div');
             pinHead.className = 'push-pin';
@@ -338,8 +367,8 @@ export function initializeBookSystem(el) {
 
             corkboard.appendChild(pinned);
             
-            // Find the physical book note to return to later
             const originalInBookNote = document.querySelector(`.book-note[data-note-id="${originalId}"]`);
+            
             makePinnedNoteDraggable(pinned, pinHead, originalInBookNote);
             
             savePinnedNotesState();
@@ -360,12 +389,21 @@ export function initializeBookSystem(el) {
         pinHead.addEventListener('mousedown', (e) => {
             isDragging = true;
             pinnedNote.style.zIndex = '1000'; 
+            if (pinnedNote.classList.contains('expanded')) return;
+            // NEW: Apply a scale transform to make it "pop" up when picked up
+            // We preserve the existing rotation but add a scale factor
+            const currentTransform = window.getComputedStyle(pinnedNote).transform;
+            pinnedNote.style.transform = `${currentTransform} scale(1.1)`;
+            pinnedNote.style.cursor = 'grabbing';
+
             const rect = pinnedNote.getBoundingClientRect();
             const corkRect = pinnedNote.offsetParent.getBoundingClientRect();
+            
             startX = e.clientX;
             startY = e.clientY;
             initialLeft = rect.left - corkRect.left;
             initialTop = rect.top - corkRect.top;
+            
             e.preventDefault();
             e.stopPropagation();
         });
@@ -374,17 +412,40 @@ export function initializeBookSystem(el) {
             if (!isDragging) return;
             const dx = e.clientX - startX;
             const dy = e.clientY - startY;
-            const corkboard = pinnedNote.offsetParent;
-            let newLeft = Math.max(0, Math.min(initialLeft + dx, corkboard.clientWidth - pinnedNote.offsetWidth));
-            let newTop = Math.max(0, Math.min(initialTop + dy, corkboard.clientHeight - pinnedNote.offsetHeight));
-            pinnedNote.style.left = `${newLeft}px`;
-            pinnedNote.style.top = `${newTop}px`;
+
+            pinnedNote.style.left = `${initialLeft + dx}px`;
+            pinnedNote.style.top = `${initialTop + dy}px`;
         });
 
-        document.addEventListener('mouseup', () => {
-            if (isDragging) {
-                isDragging = false;
-                pinnedNote.style.zIndex = '';
+        document.addEventListener('mouseup', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            
+            // Reset styles
+            pinnedNote.style.zIndex = '';
+            pinnedNote.style.cursor = '';
+            
+            // NEW: Remove the temporary scaling while keeping the rotation
+            // This returns it to its natural pinned state
+            const currentTransform = pinnedNote.style.transform;
+            pinnedNote.style.transform = currentTransform.replace(' scale(1.1)', '');
+
+            const corkboard = pinnedNote.offsetParent;
+            const corkRect = corkboard.getBoundingClientRect();
+            const pinRect = pinHead.getBoundingClientRect();
+            const pinCenterX = pinRect.left + pinRect.width / 2;
+            const pinCenterY = pinRect.top + pinRect.height / 2;
+
+            const isOutside = (
+                pinCenterX < corkRect.left || 
+                pinCenterX > corkRect.right || 
+                pinCenterY < corkRect.top || 
+                pinCenterY > corkRect.bottom
+            );
+
+            if (isOutside) {
+                animateNoteBackToBook(pinnedNote, originalNote);
+            } else {
                 savePinnedNotesState();
             }
         });
@@ -397,6 +458,14 @@ export function initializeBookSystem(el) {
         const rect = pinnedNote.getBoundingClientRect();
         const flyer = document.createElement('div');
         flyer.className = 'floating-note flying-to-book';
+        flyer.style.backgroundImage = pinnedNote.style.backgroundImage;
+        flyer.style.backgroundSize = 'contain';
+        flyer.style.backgroundRepeat = 'no-repeat';
+        flyer.style.border = 'none';
+        flyer.style.left = rect.left + 'px';
+        flyer.style.top = rect.top + 'px';
+        flyer.style.width = rect.width + 'px';
+        flyer.style.height = rect.height + 'px';
         flyer.textContent = pinnedNote.textContent; 
         flyer.style.left = rect.left + 'px';
         flyer.style.top = rect.top + 'px';
@@ -425,13 +494,124 @@ export function initializeBookSystem(el) {
         }, 700);
     }
 
+    // --- REPLACED: Dynamic Scale to 90% Viewport ---
+    function toggleNoteExpand(originalNote) {
+        // Check if we are already viewing a clone
+        const existingClone = document.querySelector('.expanded-note-clone');
+        
+        if (existingClone) {
+            // --- CLOSING ---
+            document.body.classList.remove('note-is-expanded');
+            
+            // Animate out
+            existingClone.style.transform = 'translate(-50%, -50%) scale(0.1)';
+            existingClone.style.opacity = '0';
+            
+            setTimeout(() => {
+                existingClone.remove();
+                if (originalNote) {
+                    originalNote.style.opacity = '1';
+                    originalNote.style.visibility = 'visible';
+                }
+            }, 200);
+            
+            return;
+        }
+
+        // --- EXPANDING ---
+        if (!originalNote) return;
+
+        // 1. Get dimensions
+        const rect = originalNote.getBoundingClientRect();
+
+        // 2. Calculate Scale to fit 90% of viewport
+        const viewportW = window.innerWidth;
+        const viewportH = window.innerHeight;
+        
+        // Calculate scale needed to reach 90% height
+        const scaleHeight = (viewportH * 0.90) / rect.height;
+        // Calculate scale needed to reach 90% width (prevents overflow on mobile/narrow screens)
+        const scaleWidth = (viewportW * 0.90) / rect.width;
+        
+        // Use the smaller of the two to ensure it fits entirely
+        const finalScale = Math.min(scaleHeight, scaleWidth);
+
+        // 3. Create Clone
+        const clone = originalNote.cloneNode(true);
+        
+        clone.className = originalNote.className;
+        clone.classList.remove('dragging', 'flying-to-board', 'book-note');
+        clone.classList.add('expanded-note-clone'); 
+        
+        // Match content and visuals
+        clone.style.width = rect.width + 'px';
+        clone.style.height = rect.height + 'px';
+        clone.style.backgroundImage = originalNote.style.backgroundImage;
+        clone.style.backgroundSize = 'contain';
+        clone.style.backgroundRepeat = 'no-repeat';
+        clone.style.backgroundColor = getComputedStyle(originalNote).backgroundColor;
+        
+        // Start position (exactly over the original)
+        clone.style.left = rect.left + 'px';
+        clone.style.top = rect.top + 'px';
+        clone.style.margin = '0';
+        clone.style.transform = 'none'; 
+        
+        document.body.appendChild(clone);
+        document.body.classList.add('note-is-expanded');
+
+        // Hide original
+        originalNote.style.opacity = '0'; 
+
+        // 4. Animate to Center with calculated scale
+        requestAnimationFrame(() => {
+            clone.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            clone.style.top = '50%';
+            clone.style.left = '50%';
+            // Apply the calculated dynamic scale
+            clone.style.transform = `translate(-50%, -50%) scale(${finalScale})`; 
+        });
+
+        // 5. Close Listeners
+        clone.addEventListener('click', () => toggleNoteExpand(originalNote));
+        
+        const closeOnBackdrop = (e) => {
+            if (!clone.contains(e.target)) {
+                toggleNoteExpand(originalNote);
+                document.removeEventListener('click', closeOnBackdrop);
+            }
+        };
+        setTimeout(() => {
+            document.addEventListener('click', closeOnBackdrop);
+        }, 50);
+    }
+
     function createFloatingNoteFrom(originalNote, startX, startY) {
         const rect = originalNote.getBoundingClientRect();
         const clone = document.createElement('div');
-        clone.classList.add('floating-note');
+        
+        clone.className = originalNote.className;
+        clone.classList.replace('book-note', 'floating-note');
+        
+        clone.style.backgroundImage = originalNote.style.backgroundImage;
+        clone.style.width = rect.width + 'px';
+        clone.style.height = rect.height + 'px';
+        clone.style.backgroundSize = 'contain';
+        clone.style.backgroundRepeat = 'no-repeat';
+        
         clone.textContent = getCleanNoteText(originalNote);
         clone.dataset.originalId = originalNote.dataset.noteId;
 
+        clone.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            e.stopPropagation(); // Stop event bubbling
+            toggleNoteExpand(clone);
+        });
+        
+        // Apply the scale to the clone immediately upon creation
+        const currentTransform = window.getComputedStyle(clone).transform;
+        clone.style.transform = currentTransform === 'none' ? 'scale(1.1)' : `${currentTransform} scale(1.1)`;
+            
         addPinButtonToNote(clone);
 
         clone.style.left = rect.left + 'px';
@@ -566,60 +746,134 @@ export function initializeBookSystem(el) {
 
     function savePinnedNotesState() {
         const pinnedElements = document.querySelectorAll('.pinned-note');
-        const notesData = Array.from(pinnedElements).map(p => ({
-            originalId: p.dataset.originalId,
-            text: p.childNodes[0].textContent, // Gets text before the pin-head element
-            left: p.style.left,
-            top: p.style.top,
-            transform: p.style.transform
-        }));
+        // Use a map keyed by originalId to avoid duplicate entries
+        const notesMap = new Map();
+        pinnedElements.forEach(p => {
+            const originalId = p.dataset.originalId || p.dataset.noteId;
+            if (!originalId) return; // skip malformed pins
+            if (notesMap.has(originalId)) return; // dedupe
+            notesMap.set(originalId, {
+                originalId,
+                text: (p.childNodes && p.childNodes[0]) ? p.childNodes[0].textContent : p.textContent || '',
+                className: p.className,
+                backgroundImage: p.style.backgroundImage || '',
+                width: p.style.width || '',
+                height: p.style.height || '',
+                left: p.style.left || '',
+                top: p.style.top || '',
+                transform: p.style.transform || ''
+            });
+        });
+        const notesData = Array.from(notesMap.values());
         localStorage.setItem('book_pinned_notes', JSON.stringify(notesData));
     }
 
     function loadPinnedNotesState() {
         const savedData = localStorage.getItem('book_pinned_notes');
         if (!savedData) return;
-        
-        const notes = JSON.parse(savedData);
+        let notes;
+        try {
+            notes = JSON.parse(savedData);
+        } catch (err) {
+            console.warn('Failed to parse pinned notes state:', err);
+            return;
+        }
         const corkboard = document.querySelector('.corkboard');
         if (!corkboard) return;
 
+        // Remove any existing pinned notes to avoid duplicates
+        corkboard.querySelectorAll('.pinned-note').forEach(p => p.remove());
+
         notes.forEach(data => {
+            if (!data || !data.originalId) return; 
+
+            const already = Array.from(corkboard.querySelectorAll('.pinned-note')).some(p => p.dataset.originalId === data.originalId);
+            if (already) return;
+
             const pinned = document.createElement('div');
-            pinned.className = 'pinned-note';
-            pinned.textContent = data.text;
-            pinned.dataset.originalId = data.originalId;
+            pinned.className = data.className || 'pinned-note';
+            pinned.style.backgroundImage = data.backgroundImage || '';
+            
+            if (data.width) pinned.style.width = data.width;
+            if (data.height) pinned.style.height = data.height;
+            pinned.style.backgroundSize = 'contain';
+
+            pinned.textContent = data.text || '';
+
+            // --- NEW: Add Double Click to Expand ---
+            pinned.addEventListener('dblclick', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleNoteExpand(pinned);
+            });
+            // ---------------------------------------
 
             const pinHead = document.createElement('div');
             pinHead.className = 'push-pin';
             pinHead.title = "Double-click to return to book";
             pinned.appendChild(pinHead);
 
-            pinned.style.left = data.left;
-            pinned.style.top = data.top;
-            pinned.style.transform = data.transform;
+            pinned.style.left = data.left || `${Math.random() * 60 + 20}%`;
+            pinned.style.top = data.top || `${Math.random() * 60 + 20}%`;
+            pinned.style.transform = data.transform || `rotate(${(Math.random() - 0.5) * 15}deg)`;
+
+            pinned.dataset.originalId = data.originalId;
 
             corkboard.appendChild(pinned);
 
-            // Hide the original note in the book
-            const originalNote = document.querySelector(`.book-note[data-note-id="${data.originalId}"]`);
-            if (originalNote) {
+            document.querySelectorAll(`.book-note[data-note-id="${data.originalId}"]`).forEach(originalNote => {
                 originalNote.style.visibility = 'hidden';
                 originalNote.style.opacity = '0';
-            }
-            
-            makePinnedNoteDraggable(pinned, pinHead, originalNote);
+            });
+
+            const originalReference = document.querySelector(`.book-note[data-note-id="${data.originalId}"]`);
+            makePinnedNoteDraggable(pinned, pinHead, originalReference);
         });
     }
 
     function initFlashlight() {
-        const pageContainer = document.getElementById('flashlightPage');
-        if (!pageContainer) return;
-        const revealLayer = pageContainer.querySelector('.layer-reveal');
-        pageContainer.addEventListener('mousemove', (e) => {
-            const rect = pageContainer.getBoundingClientRect();
-            revealLayer.style.setProperty('--x', `${e.clientX - rect.left}px`);
-            revealLayer.style.setProperty('--y', `${e.clientY - rect.top}px`);
+        const containers = document.querySelectorAll('.flashlight-container');
+        if (!containers || containers.length === 0) return;
+        containers.forEach(container => {
+            const revealLayer = container.querySelector('.layer-reveal');
+            if (!revealLayer) return;
+
+            function updatePos(clientX, clientY) {
+                const rect = container.getBoundingClientRect();
+
+                // 1. Calculate the Scale Factor 
+                // (Visual Size / Internal Layout Size)
+                const scaleX = rect.width / container.offsetWidth;
+                const scaleY = rect.height / container.offsetHeight;
+                
+                // 2. Adjust offset by dividing by the scale
+                // This converts screen pixels back into "CSS pixels" inside the element
+                const x = (clientX - rect.left) / scaleX;
+                const y = (clientY - rect.top) / scaleY;
+
+                revealLayer.style.setProperty('--x', `${x}px`);
+                revealLayer.style.setProperty('--y', `${y}px`);
+            }
+
+            container.addEventListener('mousemove', (e) => {
+                updatePos(e.clientX, e.clientY);
+            });
+
+            container.addEventListener('touchstart', (e) => {
+             const t = e.touches[0];
+             updatePos(t.clientX, t.clientY);
+            }, { passive: true });
+
+            container.addEventListener('touchmove', (e) => {
+                const t = e.touches && e.touches[0];
+                if (t) updatePos(t.clientX, t.clientY);
+            }, { passive: true });
+
+            // Ensure the reveal has a reasonable initial position when hovered
+            container.addEventListener('mouseenter', () => {
+                const rect = container.getBoundingClientRect();
+                updatePos(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            });
         });
     }
 

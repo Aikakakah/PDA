@@ -8,6 +8,11 @@
     -webkit-backdrop-filter: blur(2px);
     animation: modalFadeIn 0.2s ease-in forwards;
 }
+.modal {
+    backdrop-filter: none !important; 
+    -webkit-backdrop-filter: none !important;
+    background-color: rgba(0, 0, 0, 0.458)!important; /* Use a solid dark color instead of blur */
+}
 
 .modal.hidden {
     display: none !important;
@@ -136,16 +141,14 @@
 
 
 .ringtone-modal {
-    background: var(--inner); 
-    padding: 15px;
-    border-radius: var(--radius);
-    width: 90%; 
-    max-width: 280px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     position: absolute;
+    inset: 0;
     display: flex;
-    flex-direction: column;
-}
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 100;
+} 
 
 .ringtone-modal .modal-content {
     background: var(--inner); 
@@ -180,6 +183,7 @@
 }
  /* Specific Content Box for Ringtone */
  .ringtone-modal .modal-content {
+    position: relative;
     background: var(--panel);
     padding: 20px;
     border-radius: 8px;
@@ -189,9 +193,17 @@
     flex-direction: column;
     align-items: center;
     gap: 15px;
-    position: absolute;
     justify-content: center;
  }
+
+ /* Place the close button inside the ringtone content */
+ .ringtone-modal .modal-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: var(--muted);
+ }
+ 
  
  
  /* Ensure it hides correctly */
@@ -573,7 +585,7 @@
     padding: 15px;
     border-radius: var(--radius);
     width: 90%; 
-    max-width: 280px;
+    /* max-width: 280px; */
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     display: flex;
     flex-direction: column;
@@ -658,6 +670,8 @@
     font-family: 'Share Tech Mono', ui-monospace, monospace;
     font-size: 1em;
     text-transform: uppercase;
+    position: relative;
+    left: 25%;
 }
 
 
@@ -719,4 +733,233 @@
     margin: 5px 0 0 0;
     color: var(--text);
     font-size: 0.9em;
+}
+
+
+/* --- RULES --- */
+.rules-modal {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+ }
+
+ /* --- RULES MODAL UPDATES --- */
+ .rules-modal .modal-content {
+     width: 90%;
+     max-width: 650px; /* Increased to accommodate ToC */
+ }
+ 
+ .rules-modal .rules-container {
+     display: flex;
+     gap: 15px;
+     height: 350px;
+     margin-top: 15px;
+     text-align: left;
+ }
+ 
+ /* Sidebar ToC */
+ .rules-modal .rules-toc {
+     width: 160px;
+     border-right: 1px solid #333;
+     padding-right: 10px;
+     overflow-y: auto;
+     flex-shrink: 0;
+ }
+ 
+ .rules-modal .toc-item {
+     cursor: pointer;
+     padding: 4px 8px;
+     font-size: 0.85em;
+     color: var(--muted);
+     /* border-radius: 4px; */
+     transition: background 0.2s, color 0.2s;
+     margin-bottom: 2px;
+     position: relative;
+ }
+ 
+ .rules-modal .toc-item:hover {
+     background: rgba(255, 255, 255, 0.05);
+     color: var(--info);
+ }
+ 
+ /* Main List and Dropdowns */
+ .rules-modal .rules-list {
+    flex: 1;
+    overflow-y: auto;
+    background: rgba(0,0,0,0.5); /* Slightly darker for contrast without blur */
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 10px;
+
+    /* PERFORMANCE FIXES */
+    transform: translateZ(0); /* Forces GPU rendering */
+    will-change: scroll-position;
+    backface-visibility: hidden;
+    perspective: 1000;
+}
+ 
+ .rules-modal .rules-entry {
+     border-bottom: 1px solid #222;
+     contain: content;
+     content-visibility: auto;
+     contain-intrinsic-size: 100px;
+ }
+ 
+ .rules-modal .rules-header {
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     padding: 10px 5px;
+     cursor: pointer;
+     font-weight: bold;
+     color: var(--text);
+ }
+ 
+ .rules-modal .rules-header .arrow {
+     font-size: 0.8em;
+     transition: transform 0.3s;
+     color: var(--muted);
+ }
+ 
+ /* Animation for Expand */
+ .rules-modal .rules-entry.expanded .arrow {
+     transform: rotate(90deg);
+ }
+ 
+ .rules-modal .rules-items {
+     display: none;
+     padding: 0 0 10px 25px;
+     margin: 0;
+     list-style-type: square;
+     color: var(--muted);
+     font-size: 0.9em;
+ }
+ 
+ .rules-modal .rules-entry.expanded .rules-items {
+     display: block;
+ }
+
+
+
+ .rules-modal .rules-text-entry {
+    padding: 8px 10px;
+    font-size: 0.9em;
+    color: var(--text);
+    line-height: 1.4;
+    display: none;
+}
+
+/* Show non-bullets when the parent is expanded */
+.rules-modal .rules-entry.expanded .rules-text-entry {
+    display: block;
+}
+
+/* Ensure spacing between a text block and a following list */
+.rules-modal .rules-text-entry + .rules-items {
+    padding-top: 0;
+    margin-top: -5px;
+}
+
+.rules-modal .rules-image {
+    display: block;
+    max-width: 100%;       /* Prevents horizontal scrolling */
+    height: auto;
+    margin: 10px auto;     /* Centers the image with spacing */
+    border: 1px solid #444;
+    border-radius: 4px;
+    background: #000;      /* Background for transparent PNGs */
+    will-change: transform;
+    image-rendering: auto;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    filter: none;
+}
+
+/* If the image is inside a bullet point, adjust spacing */
+.rules-modal li .rules-image {
+    margin: 8px 0;
+    max-width: 90%;
+}
+
+/* SUBGROUPS */
+.rules-modal .toc-item.sub-toc-item {
+    padding-left: 25px;
+    font-size: 0.8em;
+    opacity: 0.7;
+    /* border-left: 1px solid #444; */
+}
+
+.rules-modal .toc-item.sub-toc-item:hover {
+    opacity: 1;
+    /* border-left-color: var(--info); */
+}
+
+.rules-modal .sub-toc-item {
+    padding-left: 20px;
+    font-size: 0.85em;
+    color: var(--muted);
+}
+
+.rules-modal .sub-toc-item::before {
+    content: "";
+    position: absolute;
+    left: 10px;
+    top: -14px;
+    width: 12px;
+    height: 24px;
+    
+    /* Create the L-shape using borders */
+    border-left: 1px solid #444;   
+    border-bottom: 1px solid #444; 
+    
+    pointer-events: none;
+}
+.rules-modal .sub-toc-item:first-of-type::before {
+    height: 10px;
+    top: -12px;
+}
+.rules-modal .toc-item + .sub-toc-item::before,
+.rules-modal .toc-item:not(.toc-item):not(.sub-toc-item) + .sub-toc-item::before {
+    top: -15px;
+    height: 24px;
+}
+
+
+/* SUB-SUBGROUPS */
+/* Double indentation for sub-subgroups */
+.rules-modal .sub-sub-toc-item {
+    padding-left: 40px;
+    font-size: 0.8em;
+    color: var(--muted);
+    padding-top: 0px !important;
+}
+
+/* 3. The Right Angle Indent Shape */
+.rules-modal .sub-sub-toc-item::before {
+    content: "";
+    position: absolute;
+    left: 28px;
+    top: -14px;
+    width: 8px;
+    height: 20px;
+    
+    /* Create the L-shape using borders */
+    border-left: 1px solid #444;   
+    border-bottom: 1px solid #444; 
+    
+    pointer-events: none;
+}
+
+/* 4. Fix for the very first sub-subgroup (shortens the top line) */
+.rules-modal .sub-sub-toc-item:first-of-type::before {
+    height: 40px;
+    top: -12px;
+}
+
+/* 2. FIX: Target only the FIRST sub-subgroup after a parent */
+.rules-modal .sub-toc-item + .sub-sub-toc-item::before,
+.rules-modal .toc-item:not(.sub-toc-item):not(.sub-sub-toc-item) + .sub-sub-toc-item::before {
+    top: -6px;
+    height: 12px;
 }

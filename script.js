@@ -5,12 +5,14 @@ import { initializeBookSystem } from './Book/book.js';
 import { createNanoChatTriggers } from './nanochat_triggers.js';
 import { createTerminalBridge } from './terminal_bridge.js';
 import { SYSTEM_VERSION, CHANGELOG_CONTENT } from './changelog.js';
+import { RULES_CONTENT } from './rules.js';
 import { 
     createRingtoneModalMarkup, 
     createIdentityModalMarkup, 
     createChangelogModalMarkup, 
     createOSModalMarkup,
-    createNanoChatNewContactModal
+    createNanoChatNewContactModal,
+    createRulesModalMarkup
 } from './modal.js';
 
 // Helper to inject HTML from file
@@ -120,6 +122,40 @@ function formatSolTimestamp() {
     return `SOL-${month}${day}.${hours}${seconds}`;
 }
 
+function randomizeResistorsInDrawer() {
+    const kit = document.querySelector('.resistor-kit');
+    if (!kit) return;
+
+    // Ensure the kit is positioned, and use its client dimensions to bound placement
+    const kitWidth = kit.clientWidth;
+    const kitHeight = kit.clientHeight;
+    const padding = 8; // keep a small gap from edges so visuals don't touch borders
+
+    const resistors = kit.querySelectorAll('.resistor-prop');
+    resistors.forEach(res => {
+        // Ensure absolute positioning is used for random placement
+        res.style.position = 'absolute';
+
+        // Measure resistor size (fallback to expected defaults)
+        const resW = res.offsetWidth || 40;
+        const resH = res.offsetHeight || 10;
+
+        // Compute allowed bounds so the resistor fully fits inside the kit
+        const maxX = Math.max(0, kitWidth - resW - padding);
+        const maxY = Math.max(0, kitHeight - resH - padding);
+
+        const randomX = (Math.random() * maxX) + (padding / 2);
+        const randomY = (Math.random() * maxY) + (padding / 2);
+
+        // Limit rotation to avoid visual overhang while still looking scattered
+        const randomRot = (Math.random() * 160) - 80; // -20deg .. +20deg
+
+        res.style.left = `${randomX}px`;
+        res.style.top = `${randomY}px`;
+        res.style.transform = `rotate(${randomRot}deg)`;
+    });
+}
+
 const resistorVisuals = {
     '100': { b1: '#964B00', b2: '#000', b3: '#964B00', b4: '#D4AF37' },
     '220': { b1: '#E74C3C', b2: '#E74C3C', b3: '#964B00', b4: '#D4AF37' },
@@ -215,6 +251,10 @@ const state = {
     shiftStart: Date.now(),
     flashlight: false,
     stylus: false,
+    hasUnreadNews: false,
+    hasUnreadNanoChat: false,
+    hasUnreadTerminal: false,
+    pendingConnection: null, 
     poweredOn: false, // Default to false, load will update
     unlockedFeatures: {
         notekeeper: false,
@@ -286,6 +326,15 @@ const state = {
     unlockedNews: null 
 };
 
+RULES_CONTENT.forEach(cat => {
+    cat.items.forEach(item => {
+        if (item.image) {
+            const img = new Image();
+            img.src = item.image;
+        }
+    });
+});
+
 (async () => {
     
     const preloadedNotes = {};
@@ -331,6 +380,9 @@ const state = {
     let secretHandler = null;
     
     let changelogList = null;
+    let rulesList = null;
+    let rulesToc = null;
+
     let osCopyModal = null;
     let osModalDisplay = null;
     let osPasteInput = null;
@@ -353,6 +405,241 @@ const state = {
             ringtoneModal?.classList.remove('hidden'); 
         });
     }
+
+    // --- ADMIN: Export Page Logic ---
+// --- ADMIN: Export Page Logic (Open in New Tab) ---
+const exportBtn = document.getElementById('btn-admin-export');
+
+if (exportBtn) {
+    exportBtn.addEventListener('click', async () => {
+        const allPages = document.querySelectorAll('.my-page');
+        if (allPages.length === 0) return;
+
+        const visiblePages = Array.from(allPages).filter(page => {
+            const style = window.getComputedStyle(page);
+            return style.display !== 'none' && style.opacity !== '0' && style.visibility !== 'hidden';
+        });
+
+        let targetEl = null;
+        if (visiblePages.length > 1) {
+            const isLeft = confirm("Copy the LEFT page to clipboard?\n\n(Click 'OK' for Left, 'Cancel' for Right)");
+            targetEl = isLeft ? visiblePages[0] : visiblePages[1];
+        } else {
+            targetEl = visiblePages[0];
+        }
+
+        if (!targetEl) return;
+
+        const originalIcon = exportBtn.innerHTML;
+        exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        exportBtn.style.pointerEvents = 'none';
+
+        try {
+            const targetWidth = 1104;
+            const targetHeight = 1452;
+            
+            // 1. Increase the scale slightly more than needed to ensure 
+            // we over-capture the edges (prevents the 1103px rounding error)
+            const exactScale = (targetWidth / targetEl.offsetWidth) * 1.01;
+
+            const rawCanvas = await html2canvas(targetEl, {
+                useCORS: true,
+                backgroundColor: null,
+                scale: exactScale, 
+                logging: false,
+                // These settings help prevent edge-clipping
+                width: targetEl.offsetWidth,
+                height: targetEl.offsetHeight,
+                scrollX: 0,
+                scrollY: -window.scrollY 
+            });
+
+            // 2. Create the strict "Final" canvas
+            const finalCanvas = document.createElement('canvas');
+            finalCanvas.width = targetWidth;
+            finalCanvas.height = targetHeight;
+            const ctx = finalCanvas.getContext('2d');
+            
+            // 3. Draw with explicit sizing to fill every pixel
+            // This stretches the image by that 1px difference if necessary
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(rawCanvas, 0, 0, targetWidth, targetHeight);
+
+            // 4. Clipboard Export
+            finalCanvas.toBlob(async (blob) => {
+                if (blob) {
+                    try {
+                        const item = new ClipboardItem({ 'image/png': blob });
+                        await navigator.clipboard.write([item]);
+                        // Small success flash or alert
+                        console.log("Exported at exact 1104x1452");
+                    } catch (clipboardError) {
+                        console.error("Clipboard error:", clipboardError);
+                        alert("Could not copy to clipboard.");
+                    }
+                }
+            }, 'image/png');
+
+        } catch (err) {
+            console.error("Export failed:", err);
+        } finally {
+            exportBtn.innerHTML = originalIcon;
+            exportBtn.style.pointerEvents = 'auto';
+        }
+    });
+}
+    /* --- RULES --- */
+    document.body.insertAdjacentHTML('beforeend', createRulesModalMarkup());
+
+    let rulesModal = null;
+    let openRulesModal = null;
+    let closeRulesModal = null;
+
+    openRulesModal = document.getElementById('btn-admin-rules');
+    closeRulesModal = document.getElementById('closeRulesModal');
+    rulesModal = document.getElementById('rulesModal');
+    rulesList = document.getElementById('rulesList');
+    rulesToc = document.getElementById('rulesToc');
+    
+    if (openRulesModal) { 
+        openRulesModal?.addEventListener('click', openRules); 
+    }
+
+    closeRulesModal?.addEventListener('click', () => {
+        rulesModal?.classList.add('closing');
+        setTimeout(() => {
+            rulesModal?.classList.remove('closing');
+            rulesModal?.classList.add('hidden');
+        }, 250);
+    });
+
+    /**
+ * Opens the Rules modal and generates the hierarchical Table of Contents 
+ * and Rules List content.
+ */
+    function openRules() {
+        if (!rulesModal || !rulesList || !rulesToc) return;
+        
+        rulesToc.innerHTML = '';
+        rulesList.innerHTML = '';
+
+        RULES_CONTENT.forEach((category, index) => {
+            // --- 1. Determine Hierarchy Depth ---
+            let depth = 0;
+            if (category.parentCategory) {
+                depth = 1;
+                // Find if the parent itself has a parent to identify Level 2 (Sub-Sub)
+                const parentObj = RULES_CONTENT.find(c => c.category === category.parentCategory);
+                if (parentObj && parentObj.parentCategory) {
+                    depth = 2;
+                }
+            }
+
+            // --- 2. Create Table of Contents (TOC) Item ---
+            const tocItem = document.createElement('div');
+            let classList = ['toc-item'];
+            
+            if (depth === 1) {
+                classList.push('sub-toc-item');
+                tocItem.style.display = 'none'; // Initially hidden
+            } else if (depth === 2) {
+                classList.push('sub-sub-toc-item');
+                tocItem.style.display = 'none'; // Initially hidden
+            }
+            
+            tocItem.className = classList.join(' ');
+            tocItem.textContent = category.category;
+            tocItem.dataset.category = category.category;
+            tocItem.dataset.parent = category.parentCategory || ''; // Link for toggle logic
+            
+            // TOC Click Behavior: Scroll to content and expand
+            tocItem.addEventListener('click', () => {
+                const target = rulesList.children[index];
+                if (!category.alwaysExpanded) {
+                    target.classList.add('expanded');
+                    // Ensure sub-items in TOC reveal if this item is a parent
+                    toggleTOCSubgroups(category.category, true);
+                }
+                
+                rulesList.scrollTo({
+                    top: target.offsetTop - 10,
+                    behavior: 'smooth'
+                });
+            });
+            
+            rulesToc.appendChild(tocItem);
+
+            // --- 3. Create Rules Content Entry ---
+            const entry = document.createElement('div');
+            entry.className = 'rules-entry' + (category.alwaysExpanded ? ' expanded' : '');
+            
+            let contentHtml = '';
+            let inList = false;
+            category.items.forEach(item => {
+                const imgHtml = item.image ? `<img src="${item.image}" class="rules-image" loading="lazy">` : '';
+                if (item.bullet) {
+                    if (!inList) { contentHtml += '<ul class="rules-items">'; inList = true; }
+                    contentHtml += `<li>${item.text}${imgHtml}</li>`;
+                } else {
+                    if (inList) { contentHtml += '</ul>'; inList = false; }
+                    contentHtml += `<div class="rules-text-entry">${item.text}${imgHtml}</div>`;
+                }
+            });
+            if (inList) contentHtml += '</ul>';
+
+            // Header displays hierarchy styling via muted text for subs
+            entry.innerHTML = `
+                <div class="rules-header" style="${category.alwaysExpanded ? 'cursor: default;' : ''}">
+                    <span style="${depth > 0 ? 'font-size: 0.9em; color: var(--muted);' : ''}">
+                        ${category.category}
+                    </span>
+                    ${category.alwaysExpanded ? '' : '<span class="arrow"><i class="fas fa-chevron-right"></i></span>'}
+                </div>
+                ${contentHtml}
+            `;
+            
+            // Toggle logic for the content header
+            if (!category.alwaysExpanded) {
+                entry.querySelector('.rules-header').addEventListener('click', () => {
+                    const isExpanded = entry.classList.toggle('expanded');
+                    // Trigger visibility of children in the TOC
+                    toggleTOCSubgroups(category.category, isExpanded);
+                });
+            }
+
+            rulesList.appendChild(entry);
+        });
+
+        rulesModal.classList.remove('hidden'); 
+    }
+
+        // Helper to find and toggle visibility of sub-subgroups in the TOC
+        function toggleTOCSubgroups(parentName, show) {
+            // Select all TOC items that list this category as their parent
+            const children = document.querySelectorAll(`.rules-toc .toc-item[data-parent="${parentName}"]`);
+            
+            children.forEach(child => {
+                child.style.display = show ? 'block' : 'none';
+                
+                // If we are hiding a parent, recursively hide all its descendants
+                if (!show) {
+                    const childCategoryName = child.dataset.category;
+                    toggleTOCSubgroups(childCategoryName, false);
+                    
+                    // Also ensure the corresponding content entry is collapsed
+                    // This keeps the TOC and Content views in sync
+                    const entries = document.querySelectorAll('.rules-entry');
+                    entries.forEach(entry => {
+                        const headerText = entry.querySelector('.rules-header span').textContent.trim();
+                        if (headerText === childCategoryName) {
+                            entry.classList.remove('expanded');
+                        }
+                    });
+                }
+            });
+        }
+
     /* --- CHANGELOG --- */
     document.body.insertAdjacentHTML('beforeend', createChangelogModalMarkup(state.systemVersion));
 
@@ -646,7 +933,27 @@ const state = {
                 Object.entries(data.slots).forEach(([slotId, ohms]) => {
                     const slot = document.getElementById(slotId);
                     if (slot && slot.children.length === 0) {
-                        const resistor = createResistorDOM(ohms);
+                        
+                        // Attempt to find an existing resistor in the drawer first
+                        // This prevents duplicating resistors (one in slot, one left in drawer)
+                        let resistor = document.querySelector(`.resistor-kit .resistor-prop[data-ohms="${ohms}"]`);
+                        
+                        if (resistor) {
+                            // Move the existing drawer item to the slot
+                            resistor.classList.add('placed');
+                            resistor.classList.remove('floating'); // Ensure clean state
+                            
+                            // Apply placement styles
+                            resistor.style.position = 'absolute';
+                            resistor.style.top = '50%';
+                            resistor.style.left = '50%';
+                            resistor.style.transform = 'translate(-50%, -50%) rotate(90deg)';
+                            resistor.style.pointerEvents = 'auto';
+                        } else {
+                            // Fallback if not found (or if we have multiple of same ohms needed)
+                            resistor = createResistorDOM(ohms);
+                        }
+
                         slot.appendChild(resistor);
                         
                         // Re-trigger validation to show wires/overlays
@@ -952,11 +1259,25 @@ const state = {
         switch (p.type) {
         case 'notekeeper': renderNotekeeper(); break;
         case 'manifest': renderManifest(); break;
-        case 'nanochat': renderNanoChat(); break;
+        case 'nanochat': 
+            // Opening NanoChat clears the unread flag
+            state.hasUnreadNanoChat = false;
+            saveGameProgress();
+            updateStatusLights();
+            renderNanoChat(); break;
         case 'news': 
+            // Viewing news marks it as read
+            state.hasUnreadNews = false;
+            saveGameProgress();
+            updateStatusLights();
             if (newsModule) newsModule.renderNewsProgram(); 
             break;
-        case 'terminal': renderTerminal(); break; 
+        case 'terminal': 
+            // Viewing terminal clears the unread terminal indicator
+            state.hasUnreadTerminal = false;
+            saveGameProgress();
+            updateStatusLights();
+            renderTerminal(); break; 
         case 'settings':
                 showView('settings');
                 document.querySelectorAll('.nav-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
@@ -1101,7 +1422,7 @@ const state = {
                     
                     const div = document.createElement('div');
                     div.className = `terminal-line ${line.type || ''}`;
-                    div.textContent = `${line.timestamp}: ${line.content}`;
+                    div.textContent = `${line.solTimestamp}: ${line.content}`;
                     outputDiv.appendChild(div);
     
                 } else {
@@ -1122,6 +1443,7 @@ const state = {
             if (state.pendingConnection) {
                 if (cmd.toUpperCase() === 'Y') {
                     state.terminalMode = 'CHAT';
+                    discordBridge.start();
                     state.terminalHistory.push({ text: "Connection Accepted. Secure Uplink Established.", type: "system" });
                     const msg = state.pendingConnection;
                     state.terminalHistory.push({
@@ -1134,10 +1456,11 @@ const state = {
                     
                     state.pendingConnection = null;
                     promptSpan.textContent = '[NETLINK] user:';
-                    
+                    updateStatusLights();
                 } else if (cmd.toUpperCase() === 'N') {
                     state.terminalHistory.push({ text: "Connection Refused.", type: "error" });
                     state.pendingConnection = null;
+                    updateStatusLights();
                 } else {
                     state.terminalHistory.push({ text: "Invalid input. Accept? [Y/N]", type: "system" });
                 }
@@ -1274,7 +1597,13 @@ const state = {
                 return; 
         }
         
-        if (newsModule) newsModule.handleNewsArticle(key); 
+        if (newsModule) {
+            newsModule.handleNewsArticle(key);
+            // New unlocked article should show as unread
+            state.hasUnreadNews = true;
+            saveGameProgress();
+            updateStatusLights();
+        }
         
         let i = 0;
         const playNext = () => {
@@ -1310,6 +1639,37 @@ const state = {
         };
         
         playNext();
+    }
+
+    function updateStatusLights() {
+        const pwr = document.getElementById('power-light');
+        const ntf = document.getElementById('notification-light');
+        const con = document.getElementById('connection-light');
+        if (!pwr || !ntf || !con) return;
+
+        // Power Light: Green when system is powered on, otherwise 'off'
+        pwr.classList.toggle('on', state.poweredOn);
+        pwr.classList.toggle('off', !state.poweredOn);
+
+        // Notification Light: NanoChat (Blinking) takes precedence over News (Solid)
+        ntf.classList.remove('on', 'blinking', 'off');
+        if (state.hasUnreadNanoChat) {
+            ntf.classList.add('blinking');
+        } else if (state.hasUnreadNews) {
+            ntf.classList.add('on');
+        } else {
+            ntf.classList.add('off');
+        }
+
+        // Connection Light: Request (Slow Blink) vs Message (Solid) vs off
+        con.classList.remove('on', 'slow-blinking', 'off');
+        if (state.pendingConnection) {
+            con.classList.add('slow-blinking');
+        } else if (state.hasUnreadTerminal) {
+            con.classList.add('on');
+        } else {
+            con.classList.add('off');
+        }
     }
     
     function checkCircuitState() {
@@ -1352,13 +1712,32 @@ const state = {
         } else { state.unlockedFeatures.terminal = false; }
 
         renderPrograms();
+
+        // Ensure power state matches the board: if the power resistor is missing, power must be off
+        const r1Ok = isRepaired('slot-r1', '220');
+        if (!r1Ok && state.poweredOn) {
+            state.poweredOn = false;
+            const pdaScreen = document.querySelector('.PDA-screen');
+            const powerOverlay = document.getElementById('powerOverlay');
+            const powerBtnEl = document.getElementById('powerOn');
+            if (pdaScreen) pdaScreen.classList.add('screen-off');
+            if (powerOverlay) powerOverlay.classList.remove('hidden');
+            if (powerBtnEl) {
+                powerBtnEl.disabled = true;
+                powerBtnEl.textContent = "System Error";
+                powerBtnEl.style.backgroundColor = "#555";
+                powerBtnEl.style.cursor = "not-allowed";
+            }
+        }
+
         saveGameProgress();
     }
     
     function setupHashModal() {
         const pdaScreen = document.querySelector('.PDA-screen');
 
-        if (!pdaScreen || document.getElementById('osCopyModal')) return;
+        // if (!pdaScreen || document.getElementById('osCopyModal')) return;
+        if (!pdaScreen) return;
         
         // Bind Global Variables
         osCopyModal = document.getElementById('osCopyModal');
@@ -1435,11 +1814,14 @@ const state = {
         nanoChatTriggers = createNanoChatTriggers(secretHandler);
        
         restoreGameProgress();
+        // Ensure UI status lights reflect the loaded state
+        updateStatusLights();
         renderPrograms();
         showView('home');
         setInterval(updateHome, 1000);
         updateHome();
         setupHashModal();
+        randomizeResistorsInDrawer();
 
         const pdaContainer = el('pda');
         const flipTriggerBtn = el('btn-flip-trigger');
@@ -1734,25 +2116,44 @@ const state = {
         const btnAdminUnlockAll = el('btn-admin-unlock-all');
     
         if (btnAdminPower) {
-            btnAdminPower.addEventListener('click', () => {
-                console.log("ADMIN: Forcing Power On");
-    
+        btnAdminPower.addEventListener('click', () => {
+            // Toggle the state boolean
+            state.poweredOn = !state.poweredOn;
+
+            console.log(`ADMIN: Power ${state.poweredOn ? 'ON' : 'OFF'}`);
+
+            if (state.poweredOn) {
+                // --- POWER ON LOGIC ---
                 if (powerOn) {
                     powerOn.disabled = false;
                     powerOn.textContent = "Power On";
                     powerOn.style.backgroundColor = ""; 
                     powerOn.style.cursor = "pointer";
                 }
-    
-                if(powerOverlay) powerOverlay.classList.add('hidden');
-                const pdaScreen = document.querySelector('.PDA-screen');
-                if(pdaScreen) pdaScreen.classList.remove('screen-off');
-                state.poweredOn = true;
-                saveGameProgress(); 
-    
-                btnAdminPower.style.boxShadow = "0 0 10px #fff";
-            });
-        }
+                if (powerOverlay) powerOverlay.classList.add('hidden');
+                if (pdaScreen) pdaScreen.classList.remove('screen-off');
+                
+                btnAdminPower.style.boxShadow = "0 0 15px #00ff00"; // Green glow for ON
+            } else {
+                // --- POWER OFF LOGIC ---
+                if (powerOn) {
+                    // If you want the physical "Power On" button to become 
+                    // unusable when forced off by Admin, keep these:
+                    powerOn.disabled = true;
+                    powerOn.textContent = "Offline";
+                    powerOn.style.backgroundColor = "#333";
+                    powerOn.style.cursor = "not-allowed";
+                }
+                if (powerOverlay) powerOverlay.classList.remove('hidden');
+                if (pdaScreen) pdaScreen.classList.add('screen-off');
+                
+                btnAdminPower.style.boxShadow = "none"; // Remove glow for OFF
+            }
+
+            // Update status lights after admin toggle
+            updateStatusLights();
+        });
+    }
         
         const adminUnlockBtn = el('btn-admin-unlock-all'); 
         if (adminUnlockBtn) {
@@ -1804,6 +2205,7 @@ const state = {
             if(pdaScreen) pdaScreen.classList.add('screen-off'); 
             state.poweredOn = false;
             saveGameProgress();
+            updateStatusLights();
         };
     
         const turnOnScreen = () => {
@@ -1811,6 +2213,7 @@ const state = {
             if(pdaScreen) pdaScreen.classList.remove('screen-off');
             state.poweredOn = true;
             saveGameProgress();
+            updateStatusLights();
         };
 
         if(!state.poweredOn) {
@@ -2042,6 +2445,28 @@ const state = {
                             state.unlockedFeatures.nanochat = false;
                             renderPrograms(); 
                         }
+
+                        // If the power resistor is being removed, ensure the PDA actually powers off
+                        if (item.parentElement.id === 'slot-r1') {
+                            // Prefer the shared helper if available
+                            if (typeof turnOffScreen === 'function') {
+                                turnOffScreen();
+                            } else {
+                                // Fallback: update UI/state directly
+                                if (powerBtn) {
+                                    powerBtn.textContent = "System Error";
+                                    powerBtn.style.backgroundColor = "#555";
+                                    powerBtn.disabled = true;
+                                    powerBtn.style.cursor = "not-allowed";
+                                }
+                                const pdaScreen = document.querySelector('.PDA-screen');
+                                const powerOverlay = document.getElementById('powerOverlay');
+                                if (pdaScreen) pdaScreen.classList.add('screen-off');
+                                if (powerOverlay) powerOverlay.classList.remove('hidden');
+                                state.poweredOn = false;
+                                saveGameProgress();
+                            }
+                        }
                     }
                     if (item.parentElement && item.parentElement.classList.contains('resistor-slot')) {
                         item.parentElement.style.boxShadow = "";
@@ -2135,16 +2560,23 @@ const state = {
                     document.removeEventListener('mousemove', onMouseMove);
                     document.removeEventListener('mouseup', onMouseUp);
 
+                    // 1. Logic for Screwdriver Interaction with Screws
                     if (item.classList.contains('screwdriver-prop')) {
+                        // Find the actual tip element inside the screwdriver
+                        const tip = item.querySelector('.tip');
+                        
                         screws.forEach(screw => {
-                            if (!screw.classList.contains('removed') && isOverlapping(item, screw)) {
+                            // Use the tip's position for the overlap check instead of the whole item
+                            if (!screw.classList.contains('removed') && isOverlapping(tip, screw)) {
                                 screw.classList.add('removed');
                                 const a = new Audio('/Audio/click_fast.ogg'); 
+                                a.play();
                                 checkPanelStatus();
                             }
                         });
                     }
 
+                    // 2. Logic for Resistor Interaction with Circuit Slots
                     if (item.classList.contains('resistor-prop')) {
                         const allSlots = document.querySelectorAll('.resistor-slot');
                         let placedSuccessfully = false;
@@ -2153,7 +2585,7 @@ const state = {
                             if (slot.children.length > 0) return;
 
                             if (backPanel && backPanel.classList.contains('detached') && isOverlapping(item, slot)) {
-                                
+                                // Reset styles to fit into the slot
                                 item.style.position = 'absolute';
                                 item.classList.remove('floating');
                                 item.style.left = ''; 
@@ -2178,7 +2610,6 @@ const state = {
                                     if (result.effects) {
                                         result.effects.forEach(cls => {
                                             if (cls === 'overlay-terminal' && !checkTerminalReady()) return;
-
                                             const el = document.querySelector('.' + cls);
                                             if (el) el.classList.add('active');
                                         });
@@ -2196,6 +2627,7 @@ const state = {
                         if (placedSuccessfully) return;
                     }
 
+                    // 3. Logic for returning items to the Drawer (Split Layout)
                     const drawerRect = drawerPanel.getBoundingClientRect();
                     const isOverDrawer = (
                         upEvent.clientX >= drawerRect.left &&
@@ -2205,20 +2637,50 @@ const state = {
                     );
 
                     if (isOverDrawer && drawerPanel.classList.contains('open')) {
+                        // Reset the item's appearance
                         item.classList.remove('floating');
-                        
-                        item.style.position = ''; 
-                        
-                        item.style.left = '';
-                        item.style.top = '';
+                        item.classList.remove('placed'); // Ensure 'placed' is removed if coming from circuit
+                        // item.style.position = ''; 
+                        // item.style.left = '';
+                        // item.style.top = '';
                         item.style.width = '';
                         item.style.height = '';
-                        item.style.transform = ''; 
+                        // item.style.transform = ''; 
                         
-                        if(item.classList.contains('resistor-prop')){
-                                document.querySelector('.resistor-kit').appendChild(item);
-                        } else {
-                                drawerZone.appendChild(item);
+                        // Ensure specific placement based on item type
+                        if (item.classList.contains('resistor-prop')) {
+                            // Put resistors in the top section
+                            const resistorZone = document.querySelector('.resistor-kit');
+                            if (resistorZone) {
+                                // 1. Set to absolute to break out of any layout flow
+                                item.style.position = 'absolute';
+
+                                // 2. Generate random position (keep away from edges to avoid clipping)
+                                // Using percentages (10% to 80%) so it scales with drawer size
+                                const randomX = Math.floor(Math.random() * 70) + 10; 
+                                const randomY = Math.floor(Math.random() * 60) + 10;
+                                const randomRotation = Math.floor(Math.random() * 360);
+
+                                item.style.left = `${randomX}%`;
+                                item.style.top = `${randomY}%`;
+                                item.style.transform = `rotate(${randomRotation}deg)`;
+
+                                resistorZone.appendChild(item);
+                            }
+                        }
+                        if (item.classList.contains('screwdriver-prop')) {
+                            const toolZone = document.querySelector('.drawer-inner-screwdriver-section');
+                            if (toolZone) {
+                                // Clear drag styles to allow CSS to take over again
+                                item.classList.remove('floating');
+                                item.style.position = '';
+                                item.style.top = '';
+                                item.style.left = '';
+                                item.style.width = '';
+                                item.style.height = '';
+                                
+                                toolZone.appendChild(item);
+                            }
                         }
                     }
                 };
