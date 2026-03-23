@@ -5,12 +5,20 @@
  */
 
 export function createSecretHandler(state, el, showView, ringtoneModal) {
-    const IMAGE_PATH = 'Images/';
+    // Detect if we are on GitHub Pages or Localhost
+    const isGitHubPages = window.location.hostname.includes('github.io');
+    const repoName = '/PDA/'; 
+    
+    // Set base path: GitHub Pages needs the repo name, local usually doesn't
+    const BASE_PATH = isGitHubPages ? repoName : '/';
+    const IMAGE_PATH = `${BASE_PATH}Images/`;
+    
     let htmlTemplates = document.createElement('div');
     
     async function loadTemplates() {
         try {
-            const response = await fetch('secrets.html');
+            // Use the same base path logic for the fetch
+            const response = await fetch(`${BASE_PATH}secrets.html`);
             const text = await response.text();
             htmlTemplates.innerHTML = text;
         } catch (err) {
