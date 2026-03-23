@@ -5,7 +5,7 @@
  */
 
 export function createSecretHandler(state, el, showView, ringtoneModal) {
-    const IMAGE_PATH = '../Images/';
+    const IMAGE_PATH = 'Images/';
     let htmlTemplates = document.createElement('div');
     
     async function loadTemplates() {
