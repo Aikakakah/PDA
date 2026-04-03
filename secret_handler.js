@@ -40,8 +40,14 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
             audio: '/Audio/Effects/static_burst.ogg',
             manicText: "Don't click again." // Manic text usually stays in JS for logic
         },
-        'garden_chess': {
+        'checkmate': {
             trigger: { type: 'nanochat', contact: 'Ronin Pallas', keyword: 'GARDEN' },
+            behavior: 'story',
+            image: IMAGE_PATH + 'SandyStars.png',
+            audio: '/Audio/Effects/static_burst.ogg'
+        },
+        'smoke_in_the_garden': {
+            trigger: { type: 'ringtone', code: 'AAAAAB' },
             behavior: 'story',
             image: IMAGE_PATH + 'SandyStars.png',
             audio: '/Audio/Effects/static_burst.ogg'
@@ -50,7 +56,8 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
 
     const FILE_SYSTEM = [
         { name: "Sol-131_arrivals.mp4", icon: "fa-video", secretKey: "sandy_stars", visible: true },
-        { name: "Garden_Chess.log", icon: "fa-file-code", secretKey: "garden_chess", visible: true }
+        { name: "checkmate.log", icon: "fa-file-code", secretKey: "checkmate", visible: true },
+        { name: "garden.log", icon: "fa-file-code", secretKey: "smoke_in_the_garden", visible: true }
     ];
 
     let currentSecret = null;
@@ -215,13 +222,18 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
                 ringtoneModal.classList.add('hidden');
                 return true;
             }
+            if (code.toUpperCase() === SECRETS.smoke_in_the_garden.trigger.code) {
+                openSecret('smoke_in_the_garden');
+                ringtoneModal.classList.add('hidden');
+                return true;
+            }
             return false;
         },
         checkNanoChatTrigger: (contact, message) => {
-            const garden = SECRETS.garden_chess;
+            const garden = SECRETS.checkmate;
             if (contact === garden.trigger.contact && message.toUpperCase().includes(garden.trigger.keyword)) {
-                state.unlockedFeatures.garden_chess = true;
-                openSecret('garden_chess');
+                state.unlockedFeatures.checkmate = true;
+                openSecret('checkmate');
                 return true;
             }
             return false;

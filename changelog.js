@@ -24,7 +24,8 @@ export const CHANGELOG_CONTENT = [
             "When PDA is first turned on, have it glitch out with an error stating it is in disrepair before opening to the homescreen. Error: Corrupted system files.",
             "All secrets should have screen go black then fade in normally",
             "Secrets from the menu should click back into the menu.",
-            "PDA expand button?"
+            "PDA expand button?",
+            "Have glitching on SandyStars trigger when scrolling past the part where she starts hallucinating"
             
 
         ]
