@@ -28,17 +28,23 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
     loadTemplates();
     // --- 1. The Registry ---
     const SECRETS = {
-        'sandy_stars': {
+        // 'sandy_stars': {
+        //     trigger: { type: 'ringtone', code: 'AAAAAA' },
+        //     behavior: 'manic',
+        //     images: {
+        //         initial: IMAGE_PATH + 'SandyStars.png',
+        //         manic: IMAGE_PATH + 'SandyStarsManic.png',
+        //         glitch1: IMAGE_PATH + 'SandyStarsGlitch1.png',
+        //         glitch2: IMAGE_PATH + 'SandyStarsGlitch2.png'
+        //     },
+        //     audio: '/Audio/Effects/static_burst.ogg',
+        //     manicText: "Don't click again." // Manic text usually stays in JS for logic
+        // },
+        'sandy_star': {
             trigger: { type: 'ringtone', code: 'AAAAAA' },
-            behavior: 'manic',
-            images: {
-                initial: IMAGE_PATH + 'SandyStars.png',
-                manic: IMAGE_PATH + 'SandyStarsManic.png',
-                glitch1: IMAGE_PATH + 'SandyStarsGlitch1.png',
-                glitch2: IMAGE_PATH + 'SandyStarsGlitch2.png'
-            },
-            audio: '/Audio/Effects/static_burst.ogg',
-            manicText: "Don't click again." // Manic text usually stays in JS for logic
+            behavior: 'story',
+            image: IMAGE_PATH + 'SandyStars.png',
+            audio: '/Audio/Effects/static_burst.ogg'
         },
         'checkmate': {
             trigger: { type: 'nanochat', contact: 'Ronin Pallas', keyword: 'GARDEN' },
@@ -55,7 +61,7 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
     };
 
     const FILE_SYSTEM = [
-        { name: "Sol-131_arrivals.mp4", icon: "fa-video", secretKey: "sandy_stars", visible: true },
+        { name: "Sol-131_arrivals.mp4", icon: "fa-video", secretKey: "sandy_star", visible: true },
         { name: "checkmate.log", icon: "fa-file-code", secretKey: "checkmate", visible: true },
         { name: "garden.log", icon: "fa-file-code", secretKey: "smoke_in_the_garden", visible: true }
     ];
@@ -217,8 +223,8 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
 
     return {
         handleSecretRingtone: (code) => {
-            if (code.toUpperCase() === SECRETS.sandy_stars.trigger.code) {
-                openSecret('sandy_stars');
+            if (code.toUpperCase() === SECRETS.sandy_star.trigger.code) {
+                openSecret('sandy_star');
                 ringtoneModal.classList.add('hidden');
                 return true;
             }
