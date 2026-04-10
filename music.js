@@ -66,7 +66,8 @@ export function createMusicModule(state, el, showView) {
                     <div class="music-playlist">
                         ${tracks.map((t, idx) => `
                             <div class="music-track ${idx === currentTrackIndex ? 'active' : ''}" data-track="${idx}">
-                                ${t.title}
+                                <div class="track-title">${t.title}</div>
+                                <div class="track-artist">${t.artist}</div>
                             </div>
                         `).join('')}
                  
@@ -87,9 +88,11 @@ export function createMusicModule(state, el, showView) {
                         </div>
                     </div>
                     <div class="music-controls">
-                        <button id="music-prev" title="Previous"><i class="fas fa-chevron-left"></i></button>
-                        <button id="music-play" title="${state.music.isPlaying ? 'Pause' : 'Play'}"><i class="fas fa-${playIcon}"></i></button>
-                        <button id="music-next" title="Next"><i class="fas fa-chevron-right"></i></button>
+                        <button id="music-prev" title="Previous"><i class="fas fa-step-backward"></i></button>
+                        <button id="music-rewind" title="Rewind"><i class="fas fa-arrow-rotate-left"></i></button>
+                        <button id="music-play" title="${state.music.isPlaying ? 'Pause' : 'Play'}"><i class="fas fa-fw fa-${playIcon}"></i></button>
+                        <button id="music-forward" title="Forward"><i class="fas fa-arrow-rotate-right"></i></button>
+                        <button id="music-next" title="Next"><i class="fas fa-step-forward"></i></button>
                     </div>
                 </div>
             </div>
@@ -116,6 +119,14 @@ export function createMusicModule(state, el, showView) {
                 startPlayback();
             }
             renderMusicProgram();
+        });
+
+        el('music-rewind')?.addEventListener('click', () => {
+            skipTime(-5);
+        });
+
+        el('music-forward')?.addEventListener('click', () => {
+            skipTime(5);
         });
 
         document.querySelectorAll('.music-track').forEach(button => {
@@ -240,7 +251,19 @@ export function createMusicModule(state, el, showView) {
 
     function startPlayback() {
         const track = tracks[currentTrackIndex];
-        stopPlayback();
+        
+        // Resume existing audio if it's the same track and paused
+        if (audioPlayer && !audioPlayer.ended) {
+            audioPlayer.play().catch(() => {});
+            state.music.isPlaying = true;
+            return;
+        }
+
+        // Otherwise, create a fresh audio object for this track
+        if (audioPlayer) {
+            audioPlayer.pause();
+            audioPlayer = null;
+        }
 
         if (track.src) {
             audioPlayer = new Audio(track.src);
@@ -260,6 +283,12 @@ export function createMusicModule(state, el, showView) {
         if (audioPlayer) {
             audioPlayer.pause();
         }
+    }
+
+    function skipTime(seconds) {
+        if (!audioPlayer || !Number.isFinite(audioPlayer.duration)) return;
+        audioPlayer.currentTime = Math.max(0, Math.min(audioPlayer.duration, audioPlayer.currentTime + seconds));
+        updateProgressUI();
     }
 
     return {

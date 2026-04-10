@@ -24,7 +24,10 @@ export const CHANGELOG_CONTENT = [
             "All secrets should have screen go black then fade in normally",
             "PDA expand button?",
 
-            "Have unlocking of Stardust song open and unlock the music player app"
+            "Have unlocking of Stardust song open and unlock the music player app",
+            "Add more songs to music player",
+            "Hide messages in music info",
+            
             
 
         ]
@@ -37,7 +40,8 @@ export const CHANGELOG_CONTENT = [
             "Fixed secret trigger manic logic.",
             "Manic states trigger on scroll.",
             "Added Checkmate art and story.",
-            "Fixed CRT noise on stories."
+            "Fixed CRT noise on stories.",
+            "Added music player."
         ]
     },
     {
