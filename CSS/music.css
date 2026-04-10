@@ -36,11 +36,27 @@
   overflow: hidden;
 }
 
-.songlist-sidebar {
+.music-playlist {
   width: 120px;
   background: #1e1e1f;
   border-right: 1px solid #333;
   overflow-y: auto;
+}
+.music-track {
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 0.9em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.music-track:hover {
+  background: #2b2b2e;
+}
+.music-track.active {
+  background: var(--accent);
+  color: #fff;
+  border-left: 3px solid var(--text);
 }
 
 .song-info {
@@ -83,14 +99,14 @@
 	letter-spacing: 0.04em;
 }
 
-.music-playlist {
+/* .music-playlist {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 10px;
 	justify-content: center;
-}
+} */
 
-.music-track {
+/* .music-track {
 	border: 1px solid var(--accent);
 	background: transparent;
 	color: var(--text);
@@ -98,16 +114,16 @@
 	border-radius: 6px;
 	cursor: pointer;
 	transition: background 0.2s, color 0.2s;
-}
+} */
 
-.music-track:hover {
+/* .music-track:hover {
 	background: rgba(94, 43, 99, 0.15);
 }
 
 .music-track.active {
 	background: var(--accent);
 	color: #111;
-}
+} */
 
 .music-controls {
 	display: flex;

@@ -49,7 +49,15 @@ export function createMusicModule(state, el, showView) {
         wrap.innerHTML = `
             <div class="music-header">Music Player</div>
             <div class="music-body">
-                <div class="songlist-sidebar" id="songlistSidebar"></div>
+                
+                    <div class="music-playlist">
+                        ${tracks.map((t, idx) => `
+                            <div class="music-track ${idx === currentTrackIndex ? 'active' : ''}" data-track="${idx}">
+                                ${t.title}
+                            </div>
+                        `).join('')}
+                 
+                </div>
                 <div class="song-info" id="songInfo">
                     <div class="music-title">${track.title}</div>
                     <div class="music-artist">${track.artist}</div>
@@ -58,13 +66,7 @@ export function createMusicModule(state, el, showView) {
                             <span>${playingLabel}</span>
                             <span>${track.duration}</span>
                         </div>
-                        <div class="music-playlist">
-                            ${tracks.map((t, idx) => `
-                                <button class="music-track ${idx === currentTrackIndex ? 'active' : ''}" data-track="${idx}">
-                                    ${t.title}
-                                </button>
-                            `).join('')}
-                        </div>
+                        
                     </div>
                     <div class="music-controls">
                         <button id="music-prev" title="Previous"><i class="fas fa-chevron-left"></i></button>
