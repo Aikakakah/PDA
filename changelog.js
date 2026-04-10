@@ -6,7 +6,6 @@ export const CHANGELOG_CONTENT = [
         date: "2655-10-27",
         changes: [
             "name change should not reset progress, but have other button to reset",
-            "fix sandystars, add better glitching, story",
             "should add glint when hovering over drawer handle",
             "fix manifest department header glitching",
             "double resistor (terminal) lights up around the single resistor when correct one is placed",
@@ -23,11 +22,20 @@ export const CHANGELOG_CONTENT = [
             "Instructions should update for hints or be based on progress",
             "When PDA is first turned on, have it glitch out with an error stating it is in disrepair before opening to the homescreen. Error: Corrupted system files.",
             "All secrets should have screen go black then fade in normally",
-            "Secrets from the menu should click back into the menu.",
             "PDA expand button?",
-            "Have glitching on SandyStars trigger when scrolling past the part where she starts hallucinating"
+
+            "Have unlocking of Stardust song open and unlock the music player app"
             
 
+        ]
+    },
+    {
+        version: "0.0.12",
+        date: "2026-04-10",
+        changes: [
+            "Nanochat correctly passes along message keywords.",
+            "Fixed secret trigger manic logic.",
+            "Manic states trigger on scroll."
         ]
     },
     {

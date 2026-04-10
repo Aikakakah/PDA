@@ -1,7 +1,6 @@
 /**
  * @module SecretHandler
  * Manages the unified Secret Engine for PDA.
- * Features: Shared CRT effects, Layered SandyStars glitches, and Stable Story blocks.
  */
 
 export function createSecretHandler(state, el, showView, ringtoneModal) {
@@ -26,50 +25,54 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
         }
     }
     loadTemplates();
-    // --- 1. The Registry ---
+
     const SECRETS = {
-        // 'sandy_stars': {
-        //     trigger: { type: 'ringtone', code: 'AAAAAA' },
-        //     behavior: 'manic',
-        //     images: {
-        //         initial: IMAGE_PATH + 'SandyStars.png',
-        //         manic: IMAGE_PATH + 'SandyStarsManic.png',
-        //         glitch1: IMAGE_PATH + 'SandyStarsGlitch1.png',
-        //         glitch2: IMAGE_PATH + 'SandyStarsGlitch2.png'
-        //     },
-        //     audio: '/Audio/Effects/static_burst.ogg',
-        //     manicText: "Don't click again." // Manic text usually stays in JS for logic
-        // },
-        'sandy_star': {
+        'sandy_stars': {
             trigger: { type: 'ringtone', code: 'AAAAAA' },
-            behavior: 'story',
-            image: IMAGE_PATH + 'SandyStars.png',
-            audio: '/Audio/Effects/static_burst.ogg'
+            behavior: 'manic',
+            images: {
+                initial: IMAGE_PATH + 'SandyStars.png',
+                manic: IMAGE_PATH + 'SandyStarsManic.png',
+                glitch1: IMAGE_PATH + 'SandyStarsGlitch1.png',
+                glitch2: IMAGE_PATH + 'SandyStarsGlitch2.png'
+            },
+            audio: '/Audio/Effects/static_burst.ogg',
         },
-        'checkmate': {
-            trigger: { type: 'nanochat', contact: 'Ronin Pallas', keyword: 'GARDEN' },
-            behavior: 'story',
-            image: IMAGE_PATH + 'SandyStars.png',
-            audio: '/Audio/Effects/static_burst.ogg'
-        },
-        'smoke_in_the_garden': {
+        'sandy_star': {
             trigger: { type: 'ringtone', code: 'AAAAAB' },
             behavior: 'story',
             image: IMAGE_PATH + 'SandyStars.png',
-            audio: '/Audio/Effects/static_burst.ogg'
-        }
+        },
+        'checkmate': {
+            trigger: { type: 'ringtone', code: 'AAAAAC' },
+            behavior: 'story',
+            image: IMAGE_PATH + 'Checkmate.png',
+        },
+        'smoke_in_the_garden': {
+            trigger: { type: 'ringtone', code: 'AAAAAD' },
+            behavior: 'story',
+            image: IMAGE_PATH + 'SandyStars.png',
+        },
+        'stardust': {
+            trigger: { type: 'nanochat', contact: 'Ronin Pallas', keyword: 'GARDEN' },
+            behavior: 'story',
+            image: IMAGE_PATH + 'SandyStars.png',
+        },
     };
 
     const FILE_SYSTEM = [
-        { name: "Sol-131_arrivals.mp4", icon: "fa-video", secretKey: "sandy_star", visible: true },
+        { name: "Sol-131_arrivals.mp4", icon: "fa-video", secretKey: "sandy_stars", visible: true },
+        { name: "sandy.log", icon: "fa-video", secretKey: "sandy_star", visible: true },
         { name: "checkmate.log", icon: "fa-file-code", secretKey: "checkmate", visible: true },
-        { name: "garden.log", icon: "fa-file-code", secretKey: "smoke_in_the_garden", visible: true }
+        { name: "garden.log", icon: "fa-file-code", secretKey: "smoke_in_the_garden", visible: true },
+        { name: "stardust.log", icon: "fa-file-code", secretKey: "stardust", visible: true }
     ];
 
     let currentSecret = null;
     let clickCount = 0;
     let glitchInterval = null;
     let originalGlitchStates = [];
+    let scrollObserver = null;
 
     // --- 2. CRT & Glitch Helpers ---
 
@@ -77,41 +80,13 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
         return `
             <div class="crt-scanlines"></div>
             <div class="crt-noise-wrapper">
-                <div class="crt-noise"></div>
                 <div class="crt-noise crt-noise-moving"></div>
             </div>
             <div class="glitch-overlay"></div>
         `;
     }
 
-    function startTextGlitch() {
-        const targets = [
-            { selector: '.title', text: 'PDA Systems' },
-            { selector: '.footer .left', text: null },
-            { selector: '.footer .right #serial', text: null }
-        ];
-        originalGlitchStates = [];
-        targets.forEach(t => {
-            const element = document.querySelector(t.selector);
-            if (element) {
-                originalGlitchStates.push({ el: element, txt: element.textContent });
-                element.textContent = t.text || element.textContent;
-                element.classList.add('glitch');
-                element.setAttribute('data-text', element.textContent);
-            }
-        });
-    }
-
-    function stopTextGlitch() {
-        originalGlitchStates.forEach(item => {
-            item.el.textContent = item.txt;
-            item.el.classList.remove('glitch');
-            item.el.removeAttribute('data-text');
-        });
-        originalGlitchStates = [];
-    }
-
-    // --- 3. Core Logic ---
+    // --- Core Logic ---
 
     function openSecret(key) {
         const config = SECRETS[key];
@@ -126,11 +101,9 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
         
         // Determine initial image (Manic uses 'initial', Story uses 'image')
         const bgImg = config.behavior === 'manic' ? config.images.initial : config.image;
-
-        // Grab the specific HTML block from your secrets.html file
         const template = htmlTemplates.querySelector(`[data-secret="${key}"]`);
         const contentHtml = template ? template.innerHTML : `<p>Error: Template for ${key} not found.</p>`;
-
+        
         screen.innerHTML = `
             <div class="secret-bg-layer turn-on" style="background-image: url('${bgImg}')">
                 ${getCrtOverlayHtml()}
@@ -141,39 +114,46 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
             </div>
         `;
 
+        // --- Scroll Trigger Logic ---
+        if (config.behavior === 'manic') {
+            const storyBox = screen.querySelector('.secret-story-box');
+            const triggers = storyBox.querySelectorAll('.manic-trigger');
+
+            scrollObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        startManicCycle();
+                    } else {
+                        stopManicCycle();
+                    }
+                });
+            }, { 
+                root: storyBox, // Watch visibility relative to the scrollable box
+                threshold: 0.1  // Trigger when 10% of the text is visible
+            });
+
+            triggers.forEach(t => scrollObserver.observe(t));
+        }
+
         if (config.audio) new Audio(config.audio).play().catch(() => {});
         
         // Interaction listener
         screen.onclick = (e) => {
             e.stopPropagation();
-            handleInteraction();
-        };
-    }
-
-    function handleInteraction() {
-        clickCount++;
-        if (currentSecret.behavior === 'manic') {
-            if (clickCount === 1) {
-                startManicCycle();
-            } else if (clickCount >= 3) {
-                closeSecret();
-            }
-        } else {
             closeSecret();
-        }
+        };
     }
 
     function startManicCycle() {
         const screen = el('secretScreen');
         const config = currentSecret;
+        if (!config) return;
+
+        const bgLayer = screen.querySelector('.secret-bg-layer');
         const glitchOverlay = screen.querySelector('.glitch-overlay');
         
-        // Base background becomes the "Manic" state
-        screen.style.backgroundImage = `url(${config.images.manic})`;
-        const hint = screen.querySelector('.secret-hint');
-        if (hint) hint.innerText = config.manicText;
+        if (bgLayer) bgLayer.style.backgroundImage = `url(${config.images.manic})`;
 
-        // Glitch rotation happens on the OVERLAY, not the background
         if (glitchInterval) clearInterval(glitchInterval);
         glitchInterval = setInterval(() => {
             const rand = Math.random();
@@ -187,19 +167,35 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
                 glitchOverlay.style.opacity = '0';
             }
         }, 130);
+    }
 
-        startTextGlitch();
+    function stopManicCycle() {
+        if (glitchInterval) clearInterval(glitchInterval);
+        
+        const screen = el('secretScreen');
+        const glitchOverlay = screen.querySelector('.glitch-overlay');
+        if (glitchOverlay) {
+            glitchOverlay.style.opacity = '0';
+        }
+        
+        // Revert to initial image if it's a manic secret
+        if (currentSecret && currentSecret.behavior === 'manic') {
+            const bgLayer = screen.querySelector('.secret-bg-layer');
+            if (bgLayer) bgLayer.style.backgroundImage = `url(${currentSecret.images.initial})`;
+        }
     }
 
     function closeSecret() {
-        if (glitchInterval) clearInterval(glitchInterval);
-        stopTextGlitch();
+        if (scrollObserver) {
+            scrollObserver.disconnect();
+            scrollObserver = null;
+        }
+        stopManicCycle(); // Ensure all effects stop
         const screen = el('secretScreen');
         screen.classList.add('hidden');
         screen.style.display = 'none';
         screen.innerHTML = '';
         currentSecret = null;
-        showView('programs');
     }
 
     // --- 4. API & Triggers ---
@@ -223,6 +219,11 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
 
     return {
         handleSecretRingtone: (code) => {
+            if (code.toUpperCase() === SECRETS.sandy_stars.trigger.code) {
+                openSecret('sandy_star');
+                ringtoneModal.classList.add('hidden');
+                return true;
+            }
             if (code.toUpperCase() === SECRETS.sandy_star.trigger.code) {
                 openSecret('sandy_star');
                 ringtoneModal.classList.add('hidden');
@@ -233,13 +234,34 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
                 ringtoneModal.classList.add('hidden');
                 return true;
             }
+            if (code.toUpperCase() === SECRETS.checkmate.trigger.code) {
+                openSecret('checkmate');
+                ringtoneModal.classList.add('hidden');
+                return true;
+            }
             return false;
         },
         checkNanoChatTrigger: (contact, message) => {
-            const garden = SECRETS.checkmate;
-            if (contact === garden.trigger.contact && message.toUpperCase().includes(garden.trigger.keyword)) {
-                state.unlockedFeatures.checkmate = true;
-                openSecret('checkmate');
+            const config = SECRETS.stardust;
+            if (!config) {
+                console.warn("Secret 'stardust' not found in registry.");
+                return false;
+            }
+            // Normalize both for a "fuzzy" match
+            const incomingContact = contact.toLowerCase().trim();
+            const targetContact = config.trigger.contact.toLowerCase().trim();
+            const incomingMessage = message.toUpperCase();
+            const targetKeyword = config.trigger.keyword;
+
+            if (incomingContact === targetContact && incomingMessage.includes(targetKeyword)) {
+                console.log("Triggering Stardust story...");
+                
+                // Ensure state object and unlockedFeatures exist
+                if (state && state.unlockedFeatures) {
+                    state.unlockedFeatures.stardust = true;
+                }
+
+                openSecret('stardust');
                 return true;
             }
             return false;

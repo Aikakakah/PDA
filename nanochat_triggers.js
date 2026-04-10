@@ -18,6 +18,10 @@ export function createNanoChatTriggers(secretHandler) {
                 secretHandler.unlockStardust();
             }
         }
+        // Trigger 2: Pass ALL messages to secret_handler so it can catch "GARDEN"
+        if (secretHandler && typeof secretHandler.checkNanoChatTrigger === 'function') {
+            secretHandler.checkNanoChatTrigger(contactName, messageText);
+        }
     }
 
     function playStardustAudio() {
