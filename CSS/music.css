@@ -1,11 +1,55 @@
 /* Music Player UI specific */
-.music-player {
+/* .music-player {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
 	height: 100%;
 	text-align: center;
+} */
+.music-player {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1a1a1b;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.music-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  height: 33px;
+  background: #242427;
+  border-bottom: 1px solid var(--panel);
+  padding: 0 3px 0 8px;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: var(--text);
+}
+
+.music-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.songlist-sidebar {
+  width: 120px;
+  background: #1e1e1f;
+  border-right: 1px solid #333;
+  overflow-y: auto;
+}
+
+.song-info {
+  flex: 1;
+  padding: 10px;
+  overflow-y: scroll;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .music-title {

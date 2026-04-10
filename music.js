@@ -9,6 +9,20 @@ export function createMusicModule(state, el, showView) {
             artist: 'NTTD Archive',
             duration: '2:18',
             src: './Audio/Stardust.mp3'
+        },
+        {
+            id: 'star',
+            title: 'Star',
+            artist: 'NTTD Archive',
+            duration: '2:18',
+            src: './Audio/Stardust.mp3'
+        },
+        {
+            id: 'dust',
+            title: 'Dust',
+            artist: 'NTTD Archive',
+            duration: '2:18',
+            src: './Audio/Stardust.mp3'
         }
     ];
 
@@ -33,27 +47,34 @@ export function createMusicModule(state, el, showView) {
         const wrap = document.createElement('div');
         wrap.className = 'music-player';
         wrap.innerHTML = `
-            <div class="cartridge-header">Music Player</div>
-            <div class="music-title">${track.title}</div>
-            <div class="music-artist">${track.artist}</div>
-            <div class="music-content">
-                <div class="music-track-info">
-                    <span>${playingLabel}</span>
-                    <span>${track.duration}</span>
-                </div>
-                <div class="music-playlist">
-                    ${tracks.map((t, idx) => `
-                        <button class="music-track ${idx === currentTrackIndex ? 'active' : ''}" data-track="${idx}">
-                            ${t.title}
-                        </button>
-                    `).join('')}
+            <div class="music-header">Music Player</div>
+            <div class="music-body">
+                <div class="songlist-sidebar" id="songlistSidebar"></div>
+                <div class="song-info" id="songInfo">
+                    <div class="music-title">${track.title}</div>
+                    <div class="music-artist">${track.artist}</div>
+                    <div class="music-content">
+                        <div class="music-track-info">
+                            <span>${playingLabel}</span>
+                            <span>${track.duration}</span>
+                        </div>
+                        <div class="music-playlist">
+                            ${tracks.map((t, idx) => `
+                                <button class="music-track ${idx === currentTrackIndex ? 'active' : ''}" data-track="${idx}">
+                                    ${t.title}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="music-controls">
+                        <button id="music-prev" title="Previous"><i class="fas fa-chevron-left"></i></button>
+                        <button id="music-play" title="${state.music.isPlaying ? 'Pause' : 'Play'}"><i class="fas fa-${playIcon}"></i></button>
+                        <button id="music-next" title="Next"><i class="fas fa-chevron-right"></i></button>
+                    </div>
                 </div>
             </div>
-            <div class="music-controls">
-                <button id="music-prev" title="Previous"><i class="fas fa-chevron-left"></i></button>
-                <button id="music-play" title="${state.music.isPlaying ? 'Pause' : 'Play'}"><i class="fas fa-${playIcon}"></i></button>
-                <button id="music-next" title="Next"><i class="fas fa-chevron-right"></i></button>
-            </div>
+            
+            
         `;
 
         programArea.innerHTML = '';
