@@ -1,4 +1,5 @@
 import { createNewsModule } from './news.js';
+import { createMusicModule } from './music.js';
 import { createSecretHandler } from './secret_handler.js';
 import { validateResistorDrop } from './Circuit/circuit.js';
 import { initializeBookSystem } from './Book/book.js'; 
@@ -277,7 +278,7 @@ const state = {
         { uid: 2, name: "Notekeeper", icon: "NK", type: "notekeeper" },
         { uid: 3, name: "Station news", icon: "News", type: "news" },
         { uid: 4, name: "NanoChat", icon: "NC", type: "nanochat" },
-        { uid: 5, name: "Settings", icon: "⛭", type: "settings" },
+        { uid: 5, name: "Music Player", icon: "MP", type: "music" },
         { uid: 6, name: "Terminal", icon: ">_", type: "terminal" }
     ],
     notes: ["Check filter", "Bring gloves"],
@@ -310,6 +311,10 @@ const state = {
                 ]
             }
         }
+    },
+    music: {
+        currentTrack: 0,
+        isPlaying: false
     },
     settings: {
         ringtone: ["A", "A", "A", "A", "A", "G"]
@@ -378,6 +383,7 @@ RULES_CONTENT.forEach(cat => {
 
     let newsModule = null;
     let secretHandler = null;
+    let musicModule = null;
     
     let changelogList = null;
     let rulesList = null;
@@ -689,7 +695,7 @@ if (exportBtn) {
         }, 250);
     });
 
-    /* --- NANOCHAT --- */
+    //#region --- NANOCHAT --- 
     let nanoChatTriggers = null; 
 
     function renderNanoChat() {
@@ -840,7 +846,7 @@ if (exportBtn) {
         renderSidebar();
         renderMessages();
     }
-
+    //#endregion
     // --- SAVE / LOAD SYSTEM ---
     function saveGameProgress() {
         const slots = {};
@@ -1271,6 +1277,9 @@ if (exportBtn) {
             saveGameProgress();
             updateStatusLights();
             if (newsModule) newsModule.renderNewsProgram(); 
+            break;
+        case 'music':
+            if (musicModule) musicModule.renderMusicProgram();
             break;
         case 'terminal': 
             // Viewing terminal clears the unread terminal indicator
@@ -1810,6 +1819,7 @@ if (exportBtn) {
         backPanel = document.querySelector('.pda-back-panel'); 
         newsModule = createNewsModule(state, el, showView, ringtoneModal);
         secretHandler = createSecretHandler(state, el, showView, ringtoneModal);
+        musicModule = createMusicModule(state, el, showView, ringtoneModal);
 
         nanoChatTriggers = createNanoChatTriggers(secretHandler);
        
@@ -1885,7 +1895,7 @@ if (exportBtn) {
             });
         }
 
-        // --- IDENTITY LOGIC ---
+        //#region --- IDENTITY LOGIC ---
         const identityModal = el('identityModal');
         const identityInput = el('identityInput');
         const identitySubmitBtn = el('identitySubmitBtn');
@@ -1929,6 +1939,7 @@ if (exportBtn) {
                 if (e.key === 'Enter') identitySubmitBtn.click();
             });
         }
+        //#endregion
 
         if (btnAdminId) {
             btnAdminId.addEventListener('click', () => {

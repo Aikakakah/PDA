@@ -35,7 +35,9 @@ export const CHANGELOG_CONTENT = [
         changes: [
             "Nanochat correctly passes along message keywords.",
             "Fixed secret trigger manic logic.",
-            "Manic states trigger on scroll."
+            "Manic states trigger on scroll.",
+            "Added Checkmate art and story.",
+            "Fixed CRT noise on stories."
         ]
     },
     {
