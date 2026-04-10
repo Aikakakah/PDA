@@ -27,6 +27,9 @@ export const CHANGELOG_CONTENT = [
             "Have unlocking of Stardust song open and unlock the music player app",
             "Add more songs to music player",
             "Hide messages in music info",
+            "Add pause/play in top of pda when music is playing",
+            "Have screen glitch a bit on triggering stardust nanochat before showing music player",
+            "Some apps should have more steps to unlock than just a resistor"
             
             
 

@@ -4,7 +4,7 @@
  * when specific messages are sent to specific contacts.
  */
 
-export function createNanoChatTriggers(secretHandler) {
+export function createNanoChatTriggers(secretHandler, musicModule, showView, renderPrograms) {
     /**
      * Checks if a message should trigger any special actions.
      * @param {string} contactName - The name of the contact the message is being sent to
@@ -16,6 +16,15 @@ export function createNanoChatTriggers(secretHandler) {
 
             if (secretHandler && typeof secretHandler.unlockStardust === 'function') {
                 secretHandler.unlockStardust();
+                // Open the music player when Stardust is triggered
+                if (musicModule && typeof musicModule.renderMusicProgram === 'function' && showView) {
+                    showView('program');
+                    musicModule.renderMusicProgram();
+                }
+                // Refresh the program grid to show music as unlocked
+                if (renderPrograms && typeof renderPrograms === 'function') {
+                    renderPrograms();
+                }
             }
         }
         // Trigger 2: Pass ALL messages to secret_handler so it can catch "GARDEN"

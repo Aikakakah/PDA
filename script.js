@@ -261,6 +261,7 @@ const state = {
         notekeeper: false,
         nanochat: false,
         news: false,
+        music: false,
         terminal: false,
         ringtone: false,
         power: false 
@@ -1231,7 +1232,7 @@ if (exportBtn) {
             
             let isLocked = false;
             
-            if (['nanochat', 'notekeeper', 'news', 'terminal'].includes(p.type)) {
+            if (['nanochat', 'notekeeper', 'news', 'music', 'terminal'].includes(p.type)) {
                 if (!state.unlockedFeatures[p.type]) {
                     isLocked = true;
                 }
@@ -1821,7 +1822,7 @@ if (exportBtn) {
         secretHandler = createSecretHandler(state, el, showView, ringtoneModal);
         musicModule = createMusicModule(state, el, showView, ringtoneModal);
 
-        nanoChatTriggers = createNanoChatTriggers(secretHandler);
+        nanoChatTriggers = createNanoChatTriggers(secretHandler, musicModule, showView, renderPrograms);
        
         restoreGameProgress();
         // Ensure UI status lights reflect the loaded state

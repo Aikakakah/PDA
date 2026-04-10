@@ -270,6 +270,7 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
         openFilesView: () => { showView('files'); renderFiles(); },
         unlockStardust: () => {
             state.unlockedFeatures.stardust = true;
+            state.unlockedFeatures.music = true;
             if (document.getElementById('view-files')?.classList.contains('active')) renderFiles();
         }
     };
