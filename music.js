@@ -7,7 +7,7 @@ export function createMusicModule(state, el, showView) {
             id: 'stardust',
             title: 'Stardust',
             artist: 'Hoagy Carmichael',
-            info: 'Composed in 1927 under the title of "Then I Will Be Satisfied," Mitchell Parish’ lyrical additions led this song to quick fame and the renaming. Recorded over 1,500 times, it now lives in the Great American Songbook.',
+            info: 'Composed in 1927 under the title of "Then I Will Be Satisfied," Mitchell Parish’ lyrical additions led this song to quick fame and the renaming of the song to "Stardust." Recorded over 1,500 times, it now lives in the Great American Songbook.',
             duration: '2:18',
             src: './Audio/Stardust.mp3'
         },
