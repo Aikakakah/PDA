@@ -41,6 +41,7 @@ export const CHANGELOG_CONTENT = [
         changes: [
             "Book text can't be highlighted",
             "Fixed file view back button",
+            "Fixed manifest glitching"
         ]
     },
     {

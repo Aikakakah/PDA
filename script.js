@@ -50,70 +50,148 @@ async function loadCircuitMarkup(containerId, filePath) {
 // --- Glitch Effect Class ---
 const GLITCH_CHARS = "☺Σ×Π#-_¯—→↓↑←0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZ";
 
+// class GlitchControllerOld {
+//     constructor(element) {
+//         this.selector = element;
+//         this.originalText = element.textContent;
+//         this.isGlitched = false;
+//         this.timeouts = [];
+//     }
+
+//     start() {
+//         if (this.isGlitched) return;
+//         this.isGlitched = true;
+//         this.loop();
+//     }
+
+//     stop() {
+//         this.isGlitched = false;
+//         this.timeouts.forEach(t => clearTimeout(t));
+//         this.timeouts = [];
+//         this.selector.textContent = this.originalText;
+//     }
+
+//     loop() {
+//         if (!this.isGlitched) return;
+
+//         // Randomize settings per cycle to mimic the original effect
+//         const randLetterNumber = 2 + Math.floor(Math.random() * 8);
+//         const randGlitchPauseTime = 100 + Math.floor(Math.random() * 2500);
+        
+//         // Prepare indices to glitch
+//         const charArray = this.originalText.split("");
+//         const indices = [];
+//         for(let i=0; i < randLetterNumber; i++) {
+//             indices.push(Math.floor(Math.random() * charArray.length));
+//         }
+
+//         // Run the fast flicker effect
+//         let count = 0;
+//         const maxCount = Math.floor(200 / 65); // derived from original 200ms duration / 65ms per letter
+
+//         const flicker = () => {
+//             if (!this.isGlitched) return;
+            
+//             if (count >= maxCount) {
+//                 // End of this glitch cycle, wait then loop
+//                 this.selector.textContent = this.originalText;
+//                 this.timeouts.push(setTimeout(() => this.loop(), randGlitchPauseTime));
+//             } else {
+//                 // Randomize characters
+//                 let tempString = [...charArray];
+//                 for(let i=0; i < indices.length; i++) {
+//                     const randChar = GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)];
+//                     const idx = indices[i];
+//                     if (tempString[idx] !== ' ') tempString[idx] = randChar;
+//                 }
+//                 this.selector.textContent = tempString.join("");
+//                 count++;
+//                 this.timeouts.push(setTimeout(flicker, 65));
+//             }
+//         };
+
+//         flicker();
+//     }
+// }
 class GlitchController {
     constructor(element) {
-        this.selector = element;
+        this.element = element;
         this.originalText = element.textContent;
+        this.chars = "░▒▓<>/▗▚▞Σ×Π#-_¯0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZ";
         this.isGlitched = false;
-        this.timeouts = [];
+        this.raf = null;
+        this.frame = 0;
+        this.glitchedText = this.originalText;
     }
 
+    // Starts the continuous "gibberish" scramble
     start() {
         if (this.isGlitched) return;
         this.isGlitched = true;
+        // Start with fully scrambled text
+        this.glitchedText = this.originalText
+            .split('')
+            .map(char => (char === ' ' ? ' ' : this.chars[Math.floor(Math.random() * this.chars.length)]))
+            .join('');
+        this.element.textContent = this.glitchedText;
         this.loop();
     }
 
+    // Stops immediately and shows original text
     stop() {
         this.isGlitched = false;
-        this.timeouts.forEach(t => clearTimeout(t));
-        this.timeouts = [];
-        this.selector.textContent = this.originalText;
+        if (this.raf) cancelAnimationFrame(this.raf);
+        this.element.textContent = this.originalText;
     }
 
+    // Continuous scramble loop
     loop() {
         if (!this.isGlitched) return;
 
-        // Randomize settings per cycle to mimic the original effect
-        const randLetterNumber = 2 + Math.floor(Math.random() * 8);
-        const randGlitchPauseTime = 100 + Math.floor(Math.random() * 2500);
-        
-        // Prepare indices to glitch
-        const charArray = this.originalText.split("");
-        const indices = [];
-        for(let i=0; i < randLetterNumber; i++) {
-            indices.push(Math.floor(Math.random() * charArray.length));
+        // Change one random character every second (assuming 60fps)
+        if (this.frame % 30 === 0) {
+            const positions = [];
+            for (let i = 0; i < this.originalText.length; i++) {
+                if (this.originalText[i] !== ' ') positions.push(i);
+            }
+            if (positions.length > 0) {
+                const randomIndex = positions[Math.floor(Math.random() * positions.length)];
+                const newText = this.glitchedText.split('');
+                newText[randomIndex] = this.chars[Math.floor(Math.random() * this.chars.length)];
+                this.glitchedText = newText.join('');
+                this.element.textContent = this.glitchedText;
+            }
         }
 
-        // Run the fast flicker effect
-        let count = 0;
-        const maxCount = Math.floor(200 / 65); // derived from original 200ms duration / 65ms per letter
+        this.frame++;
+        this.raf = requestAnimationFrame(() => this.loop());
+    }
 
-        const flicker = () => {
-            if (!this.isGlitched) return;
-            
-            if (count >= maxCount) {
-                // End of this glitch cycle, wait then loop
-                this.selector.textContent = this.originalText;
-                this.timeouts.push(setTimeout(() => this.loop(), randGlitchPauseTime));
-            } else {
-                // Randomize characters
-                let tempString = [...charArray];
-                for(let i=0; i < indices.length; i++) {
-                    const randChar = GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)];
-                    const idx = indices[i];
-                    if (tempString[idx] !== ' ') tempString[idx] = randChar;
-                }
-                this.selector.textContent = tempString.join("");
-                count++;
-                this.timeouts.push(setTimeout(flicker, 65));
+    // resolve() performs a "scramble-to-reveal" animation over time
+    resolve() {
+        this.isGlitched = false;
+        if (this.raf) cancelAnimationFrame(this.raf);
+
+        let iteration = 0;
+        const interval = setInterval(() => {
+            this.element.textContent = this.originalText
+                .split("")
+                .map((char, index) => {
+                    // Once iteration passes the character index, show the real letter
+                    if (index < iteration) return this.originalText[index];
+                    if (char === " ") return " ";
+                    return this.chars[Math.floor(Math.random() * this.chars.length)];
+                })
+                .join("");
+
+            if (iteration >= this.originalText.length) {
+                clearInterval(interval);
             }
-        };
-
-        flicker();
+            // Controlling the speed of the reveal
+            iteration += 15; 
+        }, 120);
     }
 }
-
 //#region Date format
 function formatSolTimestamp() {
     const now = new Date();
@@ -1356,60 +1434,70 @@ if (exportBtn) {
     //#endregion
     //#region Manifest
     function renderManifest() {
-        // 1. Cleanup previous glitches if any
-        manifestGlitches.forEach(g => g.stop());
-        manifestGlitches = [];
-    
-        const wrap = document.createElement('div');
-        wrap.className = 'crew-manifest';
-        wrap.innerHTML = `<div class="cartridge-header">${state.station} Crew Manifest</div><div class="manifest-list" id="manifestList"></div>`;
-        programArea.appendChild(wrap);
-        const manifestList = wrap.querySelector('#manifestList');
-    
-        const groupedCrew = state.crew.reduce((acc, member) => {
-            acc[member.rank] = acc[member.rank] || [];
-            acc[member.rank].push(member);
-            return acc;
-        }, {});
-    
-        for (const rank in groupedCrew) {
-            const rankHeader = document.createElement('h4');
-            rankHeader.textContent = rank;
-            manifestList.appendChild(rankHeader);
-    
-            groupedCrew[rank].forEach(member => {
-                const entry = document.createElement('div');
-                entry.className = 'manifest-entry';
-                
-                // Create elements manually so we can reference them
-                const nameEl = document.createElement('div');
-                nameEl.className = 'name';
-                nameEl.textContent = member.name;
-    
-                const roleEl = document.createElement('div');
-                roleEl.className = 'role';
-                roleEl.innerHTML = `${member.role}`;
-    
-                // --- GLITCH LOGIC ---
-                // If we haven't messaged them, start the glitch
-                if (!state.messagedCrew.has(member.name)) {
-                    const glitch = new GlitchController(nameEl);
-                    glitch.start();
-                    manifestGlitches.push(glitch);
-                    
-                    // Optional: Also glitch the role for extra obscurity
-                    // const roleGlitch = new GlitchController(roleEl);
-                    // roleGlitch.start();
-                    // manifestGlitches.push(roleGlitch);
-                }
-                // --------------------
-    
-                entry.appendChild(nameEl);
-                entry.appendChild(roleEl);
-                manifestList.appendChild(entry);
-            });
-        }
+    const programArea = el('programArea');
+    if (!programArea) return;
+
+    // Cleanup previous glitches
+    manifestGlitches.forEach(g => g.stop());
+    manifestGlitches = [];
+
+    const wrap = document.createElement('div');
+    wrap.className = 'crew-manifest';
+    wrap.innerHTML = `<div class="cartridge-header">${state.station} Crew Manifest</div><div class="manifest-list" id="manifestList"></div>`;
+    programArea.appendChild(wrap);
+
+    const manifestList = wrap.querySelector('#manifestList');
+    const groupedCrew = state.crew.reduce((acc, member) => {
+        acc[member.rank] = acc[member.rank] || [];
+        acc[member.rank].push(member);
+        return acc;
+    }, {});
+
+    for (const rank in groupedCrew) {
+        const rankHeader = document.createElement('h4');
+        rankHeader.textContent = rank;
+        manifestList.appendChild(rankHeader);
+
+        groupedCrew[rank].forEach(member => {
+            const entry = document.createElement('div');
+            entry.className = 'manifest-entry';
+
+            const nameEl = document.createElement('div');
+            nameEl.className = 'name';
+            nameEl.textContent = member.name;
+
+            const roleEl = document.createElement('div');
+            roleEl.className = 'role';
+            roleEl.textContent = member.role;
+
+            // --- GLITCH & DISCOVERY LOGIC ---
+            // Key discovery off of state.messagedCrew (from NanoChat)
+            const isDiscovered = state.messagedCrew.has(member.name);
+
+            if (!isDiscovered) {
+                const glitch = new GlitchController(nameEl);
+                glitch.start();
+                manifestGlitches.push(glitch);
+
+                // Option: Clicking the entry triggers the jh3y-style reveal
+                entry.style.cursor = 'help';
+                entry.addEventListener('click', () => {
+                    if (glitch.isGlitched) {
+                        glitch.resolve();
+                        state.messagedCrew.add(member.name); // Mark as discovered
+                        saveGameProgress();
+                        entry.style.cursor = 'default';
+                    }
+                }, { once: true });
+            }
+            // ---------------------------------
+
+            entry.appendChild(nameEl);
+            entry.appendChild(roleEl);
+            manifestList.appendChild(entry);
+        });
     }
+}
     //#endregion
     //#region Terminal
     function renderTerminal() {
