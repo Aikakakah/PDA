@@ -1895,26 +1895,13 @@ if (exportBtn) {
         const systemStatusView = el('systemStatusView');
         const backToSettingsBtn = el('backToSettingsBtn');
         const filesBackBtn = document.getElementById('btn-status-back');
-        const filesView = document.getElementById('files-view'); // Or the ID of your files container
 
-        // if (filesBackBtn) {
-        //     filesBackBtn.addEventListener('click', () => {
-        //         // Hide the current files view
-        //         if (filesView) filesView.classList.add('hidden');
-                
-        //         // Show the system status view
-        //         if (systemStatusView) {
-        //             systemStatusView.classList.remove('hidden');
-        //             // Ensure the parent modal or container is also visible
-        //             systemStatusView.style.display = 'block'; 
-        //         }
-        //     });
-        // }
-        
         if (filesBackBtn) {
             filesBackBtn.addEventListener('click', () => {
-                if(systemStatusView) systemStatusView.classList.add('hidden');
-                if(settingsList) settingsList.classList.remove('hidden');
+                renderSystemStatus();
+                showView('settings');
+                if (settingsList) settingsList.classList.add('hidden');
+                if (systemStatusView) systemStatusView.classList.remove('hidden');
             });
         }
 

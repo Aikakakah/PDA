@@ -37,9 +37,10 @@ export const CHANGELOG_CONTENT = [
     },
     {
         version: "0.0.12",
-        date: "2026-04-10",
+        date: "2026-04-13",
         changes: [
             "Book text can't be highlighted",
+            "Fixed file view back button",
         ]
     },
     {
