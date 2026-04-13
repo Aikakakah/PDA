@@ -505,33 +505,35 @@ body {
 /* --- Scrollbar Styling for Webkit Browsers (Chrome, Safari, Edge) --- */
 
 /* Track */
-::-webkit-scrollbar {
-  width: 8px;
-   height: 8px;
-   background: transparent; /* Makes the main track area invisible */
-}
+/* ::-webkit-scrollbar {
+   width: 5px;
+    margin-right: 5px;
+    padding: 1px;
+    border: none;
+   background: transparent;
+} */
 
 /* Handle (The movable part) */
-::-webkit-scrollbar-thumb {
-   background: #444448; /* Darker than the panel, but lighter than the track */
+/* ::-webkit-scrollbar-thumb {
+   background: #444448;
    border-radius: 10px;
-   border: 2px solid var(--inner); /* Creates a dark border to match the background */
-}
+   border: 2px solid var(--inner);
+} */
 
 /* Handle on hover */
-::-webkit-scrollbar-thumb:hover {
-   background: #55555c; /* Slightly lighter on hover */
-}
+/* ::-webkit-scrollbar-thumb:hover {
+   background: #55555c;
+} */
 
 /* Corner (where vertical and horizontal meet) */
-::-webkit-scrollbar-corner {
+/* ::-webkit-scrollbar-corner {
    background: transparent;
-}
+} */
 
-.view, .notes-wrap, .chat-messages, .manifest-list {
-   scrollbar-width: thin; /* "auto" or "thin" */
-   scrollbar-color: #444448 var(--inner); /* thumb color track color */
-}
+/* .view, .notes-wrap, .chat-messages {
+   scrollbar-width: thin;
+   scrollbar-color: #444448 var(--inner);
+} */
 
 
 

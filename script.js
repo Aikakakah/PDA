@@ -293,6 +293,8 @@ const state = {
         { name: "Sam Nighteyes", rank: "Dignitary", role: "Blueshield Officer" },
         { name: "Claire Vallis", rank: "Command", role: "Captain" },
         { name: "Lexi Tachibana-Hawking", rank: "Command", role: "Head of Personnel" },
+        { name: "Ronin T. Pallas", rank: "Command", role: "Head of Research and Development" },
+        { name: "Sandy Deathshed", rank: "Command", role: "Head of Security" },
         { name: "Ramona Orthall", rank: "Science", role: "Scientist" },
         { name: "Diablo", rank: "Science", role: "Chief Scientist" },
         { name: "Agena Sweets", rank: "Security", role: "Corpsman" },
@@ -1373,7 +1375,6 @@ if (exportBtn) {
         for (const rank in groupedCrew) {
             const rankHeader = document.createElement('h4');
             rankHeader.textContent = rank;
-            rankHeader.setAttribute('title', rank); //glitched manifest headers
             manifestList.appendChild(rankHeader);
     
             groupedCrew[rank].forEach(member => {
@@ -1387,7 +1388,7 @@ if (exportBtn) {
     
                 const roleEl = document.createElement('div');
                 roleEl.className = 'role';
-                roleEl.innerHTML = `<span class="rank">${member.rank}</span>: ${member.role}`;
+                roleEl.innerHTML = `${member.role}`;
     
                 // --- GLITCH LOGIC ---
                 // If we haven't messaged them, start the glitch
@@ -1397,9 +1398,9 @@ if (exportBtn) {
                     manifestGlitches.push(glitch);
                     
                     // Optional: Also glitch the role for extra obscurity
-                    const roleGlitch = new GlitchController(roleEl);
-                    roleGlitch.start();
-                    manifestGlitches.push(roleGlitch);
+                    // const roleGlitch = new GlitchController(roleEl);
+                    // roleGlitch.start();
+                    // manifestGlitches.push(roleGlitch);
                 }
                 // --------------------
     
@@ -1768,10 +1769,9 @@ if (exportBtn) {
     }
     //#endregion
     
+    //#region Hash Modal
     function setupHashModal() {
         const pdaScreen = document.querySelector('.PDA-screen');
-
-        // if (!pdaScreen || document.getElementById('osCopyModal')) return;
         if (!pdaScreen) return;
         
         // Bind Global Variables
@@ -1788,9 +1788,7 @@ if (exportBtn) {
         });
     
         document.getElementById('copyOsBtn')?.addEventListener('click', () => {
-            // FIX: Ensure we copy the full Token, not just the Hash
             copyToClipboard(getTransferToken());
-            
             const btn = document.getElementById('copyOsBtn');
             const originalText = btn.textContent;
             btn.textContent = "Copied Data!";
@@ -1812,6 +1810,7 @@ if (exportBtn) {
             }
         });
     }
+        //#endregion
 
     document.addEventListener('DOMContentLoaded', async () => {
         await loadBookMarkup('book-injection-point', './Book/book.html');
@@ -1872,8 +1871,6 @@ if (exportBtn) {
         
         el('closeOsModal')?.addEventListener('click', () => osCopyModal.classList.add('hidden'));
         
-        // REMOVED DUPLICATE 'copyOsBtn' LISTENER HERE TO PREVENT CONFLICT
-        
         applyOsBtn?.addEventListener('click', () => {
             const pastedHash = osPasteInput.value.trim();
             pasteFeedback.textContent = '';
@@ -1889,7 +1886,7 @@ if (exportBtn) {
             }
         });
 
-        // --- System Status UI Wiring ---
+        //#region --- System Status Page ---
         const systemStatusRow = el('systemStatusRow');
         const settingsList = el('settingsList');
         const systemStatusView = el('systemStatusView');
@@ -1930,6 +1927,7 @@ if (exportBtn) {
                 });
             });
         }
+        //#endregion
 
         //#region --- IDENTITY LOGIC ---
         const identityModal = el('identityModal');

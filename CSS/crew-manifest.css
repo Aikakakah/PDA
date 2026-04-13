@@ -14,15 +14,22 @@
     font-size: 0.9em;
 }
 
+div.manifest-list::-webkit-scrollbar {
+    width: 5px;
+    margin-right: 5px;
+    padding: 1px;
+    border: none;
+}
+
 .manifest-list h4 {
     color: var(--info);
     margin: 10px 0 2px;
     border-bottom: 1px solid #333;
     
     /* [GLITCH SETUP] */
-    position: relative; 
+    /* position: relative; 
     animation: headerGlitch 1s linear infinite;
-    letter-spacing: -1px; /* Adds to the glitch aesthetic */
+    letter-spacing: -1px; */
 }
 
 /* [GLITCH PSEUDO ELEMENTS] */
