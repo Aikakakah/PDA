@@ -639,7 +639,7 @@ body {
 
 
 
-/* Stylus */
+/*#region Stylus*/
 .stylus-slot-hole {
     position: absolute;
     top: 0px;
@@ -765,7 +765,7 @@ body.stylus-active.light-on * {
 .physical-stylus.lighting .stylus-beam {
     opacity: 1;
 }
-
+/*#endregion Stylus*/
 
 
 

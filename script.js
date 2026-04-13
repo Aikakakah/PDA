@@ -114,6 +114,7 @@ class GlitchController {
     }
 }
 
+//#region Date format
 function formatSolTimestamp() {
     const now = new Date();
     const month = String(now.getUTCMonth() + 1).padStart(2, '0');
@@ -122,7 +123,9 @@ function formatSolTimestamp() {
     const seconds = String(now.getUTCSeconds()).padStart(2, '0');
     return `SOL-${month}${day}.${hours}${seconds}`;
 }
+//#endregion
 
+//#region Resistors
 function randomizeResistorsInDrawer() {
     const kit = document.querySelector('.resistor-kit');
     if (!kit) return;
@@ -163,7 +166,9 @@ const resistorVisuals = {
     '10k': { b1: '#964B00', b2: '#000', b3: '#E67E22', b4: '#D4AF37' },
     '10':  { b1: '#964B00', b2: '#000', b3: '#000',    b4: '#D4AF37' }
 };
+//#endregion
     
+//#region Hash
 function getPersistentHash() {
     let hash = localStorage.getItem('pda_global_hash');
     if (!hash) {
@@ -233,6 +238,7 @@ function applyNewHash(input) {
 
     return false;
 }
+// #endregion
 
 // Global State Declaration
 const savedIdentity = localStorage.getItem('pda_user_identity');
@@ -344,7 +350,8 @@ RULES_CONTENT.forEach(cat => {
 (async () => {
     
     const preloadedNotes = {};
-    const noteNames = ["a","asharp","b","c","csharp","d","dsharp","e","f","fsharp","g","gsharp"];
+    // const noteNames = ["a","asharp","b","c","csharp","d","dsharp","e","f","fsharp","g","gsharp"];
+    const noteNames = ["a","b","c","d","e","f","g"];
     
     for (const n of noteNames) {
         const a = new Audio(`/Audio/${n}.ogg`);
@@ -414,7 +421,7 @@ RULES_CONTENT.forEach(cat => {
     }
 
     // --- ADMIN: Export Page Logic ---
-// --- ADMIN: Export Page Logic (Open in New Tab) ---
+//#region --- ADMIN: Export Page Logic (Open in New Tab) ---
 const exportBtn = document.getElementById('btn-admin-export');
 
 if (exportBtn) {
@@ -496,7 +503,8 @@ if (exportBtn) {
         }
     });
 }
-    /* --- RULES --- */
+//#endregion
+//#region Rules
     document.body.insertAdjacentHTML('beforeend', createRulesModalMarkup());
 
     let rulesModal = null;
@@ -646,8 +654,9 @@ if (exportBtn) {
                 }
             });
         }
+    //#endregion
 
-    /* --- CHANGELOG --- */
+    //#region --- CHANGELOG ---
     document.body.insertAdjacentHTML('beforeend', createChangelogModalMarkup(state.systemVersion));
 
     let changelogModal = null;
@@ -683,8 +692,9 @@ if (exportBtn) {
         `).join('');
         changelogModal.classList.remove('hidden'); 
     }
+    //#endregion
     
-    /* --- ID CARD --- */
+    //#region --- ID CARD ---
     let closeIdentityModal = null;
     closeIdentityModal = document.getElementById('closeIdentityModal');
 
@@ -695,7 +705,7 @@ if (exportBtn) {
             identityModal?.classList.add('hidden');
         }, 250);
     });
-
+ //#endregion
     //#region --- NANOCHAT --- 
     let nanoChatTriggers = null; 
 
@@ -848,7 +858,7 @@ if (exportBtn) {
         renderMessages();
     }
     //#endregion
-    // --- SAVE / LOAD SYSTEM ---
+    //#region --- SAVE / LOAD SYSTEM, Game progress ---
     function saveGameProgress() {
         const slots = {};
         const resistorSlots = document.querySelectorAll('.resistor-slot');
@@ -1016,7 +1026,10 @@ if (exportBtn) {
             location.reload();
         }
     }
-    const el = id => document.getElementById(id);
+     //#endregion
+    
+    //#region Discord bridge
+     const el = id => document.getElementById(id);
     
     const discordBridge = createTerminalBridge('http://localhost:3000', (msg) => {
         const logEntry = { 
@@ -1057,6 +1070,7 @@ if (exportBtn) {
         }
     });
     discordBridge.start();
+     //#endregion
     
     function showView(v) {
         if (!views || Object.keys(views).length === 0) return;
@@ -1069,7 +1083,7 @@ if (exportBtn) {
         }
     }
 
-    // SHINE EFFECT
+    //#region SHINE EFFECT
     const initializeShineEffect = () => {
         const pdaScreen = document.querySelector('.PDA-screen');
         const COOLDOWN_MS = 60 * 1000;
@@ -1086,7 +1100,8 @@ if (exportBtn) {
             });
         }
     };
-    
+     //#endregion
+
     function updateHome() {
         if (el('owner')) el('owner').textContent = state.owner; 
         if (el('idline')) el('idline').innerHTML = `${state.id}, <span id="job" class="job">${state.job}</span>`; 
@@ -1118,7 +1133,8 @@ if (exportBtn) {
             saveGameProgress(); 
         }
     }
-    
+
+    //#region --- SYSTEM STATUS RENDERING ---
     function renderSystemStatus() {
         const progressBar = el('statusProgressBar');
         const percentageText = el('statusPercentageText');
@@ -1201,9 +1217,8 @@ if (exportBtn) {
                 }, 1000);
             });
         }
-        // The broken duplicate block that was here has been removed.
     }
-
+ //#endregion
     
     function openOSModal() {
         if (!osCopyModal || !osModalDisplay) return;
@@ -1298,6 +1313,7 @@ if (exportBtn) {
         }
     }
 
+    //#region Notekeeper
     function renderNotekeeper() {
         const programArea = el('programArea');
         programArea.innerHTML = `
@@ -1335,7 +1351,8 @@ if (exportBtn) {
         noteInput.onkeydown = e => { if (e.key === 'Enter') addBtn.click(); };
         refreshNotes();
     }
-    
+    //#endregion
+    //#region Manifest
     function renderManifest() {
         // 1. Cleanup previous glitches if any
         manifestGlitches.forEach(g => g.stop());
@@ -1392,7 +1409,8 @@ if (exportBtn) {
             });
         }
     }
-
+    //#endregion
+    //#region Terminal
     function renderTerminal() {
         const programArea = document.getElementById('programArea');
         const serialNum = document.getElementById('serial') ? document.getElementById('serial').textContent : "AE-239A";
@@ -1587,7 +1605,9 @@ if (exportBtn) {
             inputField.focus();
         });
     }
-    
+    //#endregion
+
+    //#region Ringtone
     function playRingtone() {
         const currentRingtone = Array.from(document.querySelectorAll('.ringtone-note-input')).map(input => input.value.toUpperCase());
         
@@ -1616,7 +1636,7 @@ if (exportBtn) {
         }
         
         let i = 0;
-        const playNext = () => {
+        const playNext = async () => { // Add 'async' here
             if (i >= notes.length || i >= RINGTONE_LENGTH) return;
         
             const inputNote = notes[i].toUpperCase();
@@ -1628,13 +1648,7 @@ if (exportBtn) {
                 note = inputNote[0]?.toLowerCase();
             }
 
-            if (!note) {
-                i++;
-                setTimeout(playNext, NOTE_DELAY * 1000);
-                return;
-            }
-
-            if (!preloadedNotes[note]) { 
+            if (!note || !preloadedNotes[note]) {
                 i++;
                 setTimeout(playNext, NOTE_DELAY * 1000);
                 return;
@@ -1642,7 +1656,13 @@ if (exportBtn) {
 
             const audio = preloadedNotes[note]?.cloneNode() || new Audio(`${AUDIO_PATH}${note}.ogg`);
             audio.volume = VOLUME;
-            audio.play().catch(() => {});
+            
+            // Wait for the audio to actually start before ticking the timeout
+            try {
+                await audio.play(); 
+            } catch (e) {
+                console.warn("Audio playback failed", e);
+            }
         
             i++;
             setTimeout(playNext, NOTE_DELAY * 1000);
@@ -1650,7 +1670,9 @@ if (exportBtn) {
         
         playNext();
     }
+    //#endregion
 
+    //#region Status Light
     function updateStatusLights() {
         const pwr = document.getElementById('power-light');
         const ntf = document.getElementById('notification-light');
@@ -1681,7 +1703,9 @@ if (exportBtn) {
             con.classList.add('off');
         }
     }
+    //#endregion
     
+    //#region Circuit Validation
     function checkCircuitState() {
         if (state.adminOverride) {
             Object.keys(state.unlockedFeatures).forEach(k => state.unlockedFeatures[k] = true);
@@ -1742,6 +1766,7 @@ if (exportBtn) {
 
         saveGameProgress();
     }
+    //#endregion
     
     function setupHashModal() {
         const pdaScreen = document.querySelector('.PDA-screen');
@@ -1869,6 +1894,29 @@ if (exportBtn) {
         const settingsList = el('settingsList');
         const systemStatusView = el('systemStatusView');
         const backToSettingsBtn = el('backToSettingsBtn');
+        const filesBackBtn = document.getElementById('btn-status-back');
+        const filesView = document.getElementById('files-view'); // Or the ID of your files container
+
+        // if (filesBackBtn) {
+        //     filesBackBtn.addEventListener('click', () => {
+        //         // Hide the current files view
+        //         if (filesView) filesView.classList.add('hidden');
+                
+        //         // Show the system status view
+        //         if (systemStatusView) {
+        //             systemStatusView.classList.remove('hidden');
+        //             // Ensure the parent modal or container is also visible
+        //             systemStatusView.style.display = 'block'; 
+        //         }
+        //     });
+        // }
+        
+        if (filesBackBtn) {
+            filesBackBtn.addEventListener('click', () => {
+                if(systemStatusView) systemStatusView.classList.add('hidden');
+                if(settingsList) settingsList.classList.remove('hidden');
+            });
+        }
 
         if (systemStatusRow) {
             systemStatusRow.addEventListener('click', () => {
@@ -2350,7 +2398,7 @@ if (exportBtn) {
         }
     });
     
-    // --- REPAIR LOGIC ---
+    //#region --- CIRCUIT REPAIR LOGIC ---
     function initializeDraggableItems() {
         const items = document.querySelectorAll('.drawer-item');
         const drawerZone = document.getElementById('drawerDropZone');
@@ -2722,4 +2770,5 @@ if (exportBtn) {
             });
         }
     }
+    //#endregion
 })();

@@ -39,6 +39,13 @@ export const CHANGELOG_CONTENT = [
         version: "0.0.12",
         date: "2026-04-10",
         changes: [
+            "Book text can't be highlighted",
+        ]
+    },
+    {
+        version: "0.0.12",
+        date: "2026-04-10",
+        changes: [
             "Nanochat correctly passes along message keywords.",
             "Fixed secret trigger manic logic.",
             "Manic states trigger on scroll.",

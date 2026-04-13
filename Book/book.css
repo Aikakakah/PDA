@@ -96,6 +96,7 @@ Page Shadows: 4
   border: none;
   padding: 0;
   overflow: hidden;
+  user-select: none;
 }
 
 .my-page::before {

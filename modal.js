@@ -1,10 +1,5 @@
 // modal.js
-
-
-
-/**
- * Generates the HTML for the OS Hash / System Interface modal.
- */
+//#region OS Hash Modal
 export function createOSModalMarkup() {
     return `
         <div class="modal hash-modal hidden" id="osCopyModal">
@@ -37,20 +32,15 @@ export function createOSModalMarkup() {
         </div>
     `;
 }
+//#endregion
 
-
-
-
-
-/**
- * Generates the HTML for the Ringtone configuration modal.
- */
+//#region Ringtone Modal
 export function createRingtoneModalMarkup(currentRingtone) {
     const safeRingtone = currentRingtone || ["", "", "", "", "", ""];
     
     // We create input placeholders. Values are updated via JS on open to ensure sync.
     const inputHtml = safeRingtone.map((note, index) =>
-        `<input type="text" maxlength="2" data-note-index="${index}" class="ringtone-note-input" value="${note}">`
+        `<input type="text" maxlength="1" data-note-index="${index}" class="ringtone-note-input" value="${note}">`
     ).join('');
 
     return `
@@ -70,11 +60,11 @@ export function createRingtoneModalMarkup(currentRingtone) {
         </div>
     `;
 }
+//#endregion
 
 /* --- Embedded Modals --- */
 
-/* --- NANOCHAT --- */
-
+//#region NanoChat Modals
 export function createNanoChatNewContactModal() {
     return `
         <div class="modal nanochat-modal hidden" id="newChatModal">
@@ -90,11 +80,11 @@ export function createNanoChatNewContactModal() {
         </div>
     `;
 }
-
+//#endregion
 
 /* --- Popup Modals --- */
 
-/* --- CHANGELOG --- */
+//#region Changelog Modal
 export function createChangelogModalMarkup(systemVersion) {
     return `
         <div class="modal changelog-modal hidden" id="changelogModal">
@@ -108,8 +98,9 @@ export function createChangelogModalMarkup(systemVersion) {
         </div>
     `;
 }
+//#endregion
 
-/* --- ID CARD --- */
+//#region ID Card Modal
 export function createIdentityModalMarkup() {
     return `
         <div class="modal identity-modal hidden" id="identityModal">
@@ -126,8 +117,9 @@ export function createIdentityModalMarkup() {
         </div>
     `;
 }
+//#endregion
 
-/* --- RULES --- */
+//#region Rules Modal
 export function createRulesModalMarkup() {
     return `
         <div class="modal rules-modal hidden" id="rulesModal">
@@ -144,3 +136,4 @@ export function createRulesModalMarkup() {
         </div>
     `;
 }
+//#endregion
