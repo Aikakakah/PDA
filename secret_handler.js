@@ -45,8 +45,11 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
         },
         'checkmate': {
             trigger: { type: 'ringtone', code: 'AAAAAC' },
-            behavior: 'story',
-            image: IMAGE_PATH + 'Checkmate.png',
+            behavior: 'manic',
+            images: {
+                initial: IMAGE_PATH + 'Checkmate.png',
+                manic: IMAGE_PATH + 'Checkmate-F7.png'
+            }
         },
         'smoke_in_the_garden': {
             trigger: { type: 'ringtone', code: 'AAAAAD' },
@@ -88,7 +91,7 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
 
     // --- Core Logic ---
 
-    function openSecret(key) {
+    async function openSecret(key) {
         const config = SECRETS[key];
         if (!config) return;
 
@@ -104,8 +107,23 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
         const template = htmlTemplates.querySelector(`[data-secret="${key}"]`);
         const contentHtml = template ? template.innerHTML : `<p>Error: Template for ${key} not found.</p>`;
         
+        // Preload images for manic secrets to prevent background vanishing on first trigger
+        if (config.behavior === 'manic') {
+            const images = [config.images.initial, config.images.manic];
+            if (config.images.glitch1) images.push(config.images.glitch1);
+            if (config.images.glitch2) images.push(config.images.glitch2);
+            await Promise.all(images.map(imgSrc => new Promise((resolve) => {
+                const img = new Image();
+                img.onload = resolve;
+                img.onerror = resolve; // Continue even if load fails
+                img.src = imgSrc;
+            })));
+        }
+        
         screen.innerHTML = `
-            <div class="secret-bg-layer turn-on" style="background-image: url('${bgImg}')">
+            <div class="secret-bg-layer turn-on">
+                <div class="bg-initial" style="background-image: url('${bgImg}')"></div>
+                <div class="bg-manic" style="background-image: url('${config.behavior === 'manic' ? config.images.manic : bgImg}'); opacity: 0;"></div>
                 ${getCrtOverlayHtml()}
             </div>
             
@@ -149,10 +167,12 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
         const config = currentSecret;
         if (!config) return;
 
-        const bgLayer = screen.querySelector('.secret-bg-layer');
+        const bgInitial = screen.querySelector('.bg-initial');
+        const bgManic = screen.querySelector('.bg-manic');
         const glitchOverlay = screen.querySelector('.glitch-overlay');
         
-        if (bgLayer) bgLayer.style.backgroundImage = `url(${config.images.manic})`;
+        if (bgInitial) bgInitial.style.opacity = '0';
+        if (bgManic) bgManic.style.opacity = '1';
 
         if (glitchInterval) clearInterval(glitchInterval);
         glitchInterval = setInterval(() => {
@@ -173,15 +193,14 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
         if (glitchInterval) clearInterval(glitchInterval);
         
         const screen = el('secretScreen');
+        const bgInitial = screen.querySelector('.bg-initial');
+        const bgManic = screen.querySelector('.bg-manic');
         const glitchOverlay = screen.querySelector('.glitch-overlay');
+        
+        if (bgInitial) bgInitial.style.opacity = '1';
+        if (bgManic) bgManic.style.opacity = '0';
         if (glitchOverlay) {
             glitchOverlay.style.opacity = '0';
-        }
-        
-        // Revert to initial image if it's a manic secret
-        if (currentSecret && currentSecret.behavior === 'manic') {
-            const bgLayer = screen.querySelector('.secret-bg-layer');
-            if (bgLayer) bgLayer.style.backgroundImage = `url(${currentSecret.images.initial})`;
         }
     }
 

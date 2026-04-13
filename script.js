@@ -134,6 +134,8 @@ class GlitchController {
             .map(char => (char === ' ' ? ' ' : this.chars[Math.floor(Math.random() * this.chars.length)]))
             .join('');
         this.element.textContent = this.glitchedText;
+        // Prevent line height changes from varying character heights
+        this.element.style.lineHeight = '1';
         this.loop();
     }
 
@@ -142,6 +144,8 @@ class GlitchController {
         this.isGlitched = false;
         if (this.raf) cancelAnimationFrame(this.raf);
         this.element.textContent = this.originalText;
+        // Reset line height
+        this.element.style.lineHeight = '';
     }
 
     // Continuous scramble loop
