@@ -1304,6 +1304,104 @@ if (exportBtn) {
     }
  //#endregion
     
+//#region --- External Files Render ---
+    function renderExternalFiles() {
+        const container = el('externalFilesView');
+        container.innerHTML = '';
+
+        const title = document.createElement('div');
+        title.className = 'cartridge-header';
+        title.textContent = 'External Files';
+        container.appendChild(title);
+
+        const circleRow = document.createElement('div');
+        circleRow.className = 'external-circle-row';
+
+        const states = Array(6).fill('off');
+        let allGreen = false;
+        let allPurple = false;
+
+        const circles = [];
+
+        for (let i = 0; i < 6; i++) {
+            const circle = document.createElement('div');
+            circle.className = 'external-circle off';
+            circle.addEventListener('click', () => {
+                if (allGreen) {
+                    states[i] = 'blue';
+                    allGreen = false;
+                } else if (allPurple) {
+                    states[i] = 'white';
+                    allPurple = false;
+                } else if (states[i] === 'off') {
+                    const purpleCount = states.filter(s => s === 'purple').length;
+                    if (purpleCount === 5) {
+                        states[i] = 'purple';
+                    } else {
+                        states[i] = 'green';
+                    }
+                } else if (states[i] === 'green') {
+                    states[i] = 'red';
+                } else if (states[i] === 'red') {
+                    states[i] = 'off';
+                } else if (states[i] === 'blue') {
+                    states[i] = 'off';
+                    if (i > 0 && states[i-1] !== 'white') {
+                        if (states[i-1] === 'red') {
+                            states[i-1] = 'purple';
+                        } else {
+                            states[i-1] = 'blue';
+                        }
+                    }
+                    if (i < 5 && states[i+1] !== 'white') {
+                        if (states[i+1] === 'red') {
+                            states[i+1] = 'purple';
+                        } else {
+                            states[i+1] = 'blue';
+                        }
+                    }
+                } else if (states[i] === 'purple') {
+                    states[i] = 'blue';
+                } else if (states[i] === 'white') {
+                    states[i] = 'purple';
+                }
+
+                if (states.every(s => s === 'green')) {
+                    allGreen = true;
+                }
+                if (states.every(s => s === 'purple')) {
+                    allPurple = true;
+                }
+
+                updateCircles();
+
+                if (states.join(',') === 'off,blue,green,white,red,purple') {
+                    // Unlock files, show stories page
+                    container.innerHTML = '';
+                    const title = document.createElement('div');
+                    title.className = 'cartridge-header';
+                    title.textContent = 'Stories';
+                    container.appendChild(title);
+                    const storiesList = document.createElement('div');
+                    storiesList.className = 'stories-list';
+                    storiesList.innerHTML = '<p>Stories content will be loaded here.</p>';
+                    container.appendChild(storiesList);
+                }
+            });
+            circles.push(circle);
+            circleRow.appendChild(circle);
+        }
+
+        function updateCircles() {
+            circles.forEach((circle, i) => {
+                circle.className = 'external-circle ' + states[i];
+            });
+        }
+
+        container.appendChild(circleRow);
+    }
+ //#endregion
+
     function openOSModal() {
         if (!osCopyModal || !osModalDisplay) return;
         osModalDisplay.textContent = state.systemHash;
@@ -1990,8 +2088,10 @@ if (exportBtn) {
         //#region --- System Status Page ---
         const systemStatusRow = el('systemStatusRow');
         const terminalAccessRow = el('terminalAccessRow');
+        const externalFilesRow = el('externalFilesRow');
         const settingsList = el('settingsList');
         const systemStatusView = el('systemStatusView');
+        const externalFilesView = el('externalFilesView');
         const backToSettingsBtn = el('backToSettingsBtn');
         const filesBackBtn = document.getElementById('btn-status-back');
 
@@ -2025,6 +2125,14 @@ if (exportBtn) {
                 terminalAccessRow.style.opacity = '0.5';
                 terminalAccessRow.style.cursor = 'not-allowed';
             }
+        }
+
+        if (externalFilesRow) {
+            externalFilesRow.addEventListener('click', () => {
+                renderExternalFiles();
+                if(settingsList) settingsList.classList.add('hidden');
+                if(externalFilesView) externalFilesView.classList.remove('hidden');
+            });
         }
 
         // Function to update terminal row state when circuit is repaired
@@ -2164,6 +2272,10 @@ if (exportBtn) {
                     document.querySelectorAll('.nav-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
                     btn.setAttribute('aria-pressed', 'true');
                     if (programTitleMini) programTitleMini.classList.add('hidden');
+                    if (tab === 'settings') {
+                        const externalFilesView = el('externalFilesView');
+                        if (externalFilesView) externalFilesView.classList.add('hidden');
+                    }
                     if (tab) showView(tab);
                 });
             });
