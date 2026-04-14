@@ -1305,27 +1305,41 @@ if (exportBtn) {
  //#endregion
     
 //#region --- External Files Render ---
-    function renderExternalFiles() {
-        const container = el('externalFilesView');
-        container.innerHTML = '';
+async function renderExternalFiles() {
+    const container = el('externalFilesView');
+    container.innerHTML = '';
 
-        const title = document.createElement('div');
-        title.className = 'cartridge-header';
-        title.textContent = 'External Files';
-        container.appendChild(title);
+    // Check if the puzzle is already solved
+    const isSolved = state.puzzles.has('secret_files');
 
-        const circleRow = document.createElement('div');
-        circleRow.className = 'external-circle-row';
+    const wrap = document.createElement('div');
+    wrap.className = 'external-files-wrap';
+    container.appendChild(wrap);
 
-        const states = Array(6).fill('off');
-        let allGreen = false;
-        let allPurple = false;
+    const title = document.createElement('div');
+    title.className = 'cartridge-header';
+    title.textContent = 'External Files';
+    wrap.appendChild(title);
 
-        const circles = [];
+    // Add 'solved' class if puzzle is complete
+    const circleRow = document.createElement('div');
+    circleRow.className = 'external-circle-row' + (isSolved ? ' solved' : '');
 
-        for (let i = 0; i < 6; i++) {
-            const circle = document.createElement('div');
-            circle.className = 'external-circle off';
+    // If solved, hardcode the winning state. Otherwise, start 'off'.
+    const winningCombo = ['off', 'blue', 'green', 'white', 'red', 'purple'];
+    const states = isSolved ? [...winningCombo] : Array(6).fill('off');
+    
+    let allGreen = false;
+    let allPurple = false;
+
+    const circles = [];
+
+    for (let i = 0; i < 6; i++) {
+        const circle = document.createElement('div');
+        circle.className = 'external-circle ' + states[i];
+        
+        // Only allow clicking if the puzzle is unsolved
+        if (!isSolved) {
             circle.addEventListener('click', () => {
                 if (allGreen) {
                     states[i] = 'blue';
@@ -1375,31 +1389,88 @@ if (exportBtn) {
 
                 updateCircles();
 
+                // Check win condition
                 if (states.join(',') === 'off,blue,green,white,red,purple') {
-                    // Unlock files, show stories page
-                    container.innerHTML = '';
-                    const title = document.createElement('div');
-                    title.className = 'cartridge-header';
-                    title.textContent = 'Stories';
-                    container.appendChild(title);
-                    const storiesList = document.createElement('div');
-                    storiesList.className = 'stories-list';
-                    storiesList.innerHTML = '<p>Stories content will be loaded here.</p>';
-                    container.appendChild(storiesList);
+                    markPuzzleComplete('secret_files');
+                    renderExternalFiles(); // Re-render to load the files
                 }
             });
-            circles.push(circle);
-            circleRow.appendChild(circle);
         }
-
-        function updateCircles() {
-            circles.forEach((circle, i) => {
-                circle.className = 'external-circle ' + states[i];
-            });
-        }
-
-        container.appendChild(circleRow);
+        circles.push(circle);
+        circleRow.appendChild(circle);
     }
+
+    function updateCircles() {
+        circles.forEach((circle, i) => {
+            circle.className = 'external-circle ' + states[i];
+        });
+    }
+
+    wrap.appendChild(circleRow);
+
+    // --- RENDER FILES IF SOLVED ---
+    if (isSolved) {
+        const body = document.createElement('div');
+        body.className = 'files-body';
+        
+        const sidebar = document.createElement('div');
+        sidebar.className = 'files-sidebar';
+        
+        const content = document.createElement('div');
+        content.className = 'files-content';
+        
+        body.appendChild(sidebar);
+        body.appendChild(content);
+        wrap.appendChild(body);
+
+        content.innerHTML = "<p class='muted'>Decrypting files...</p>";
+
+        try {
+            // Fetch the external HTML file directly
+            const response = await fetch('./external_files.html');
+            const htmlString = await response.text();
+            
+            // Parse it into a temporary DOM object
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, 'text/html');
+            const templatesContainer = doc.getElementById('externalfile-templates');
+            
+            if (templatesContainer && templatesContainer.children.length > 0) {
+                const files = Array.from(templatesContainer.children);
+                
+                files.forEach((fileEl, index) => {
+                    const fileTitle = fileEl.getAttribute('file-title') || `File ${index + 1}`;
+                    
+                    // Look specifically for your .file-content div
+                    const innerContent = fileEl.querySelector('.file-content');
+                    const fileHTML = innerContent ? innerContent.innerHTML : fileEl.innerHTML;
+
+                    const sidebarItem = document.createElement('div');
+                    sidebarItem.className = 'file-item';
+                    sidebarItem.textContent = fileTitle;
+                    
+                    sidebarItem.addEventListener('click', () => {
+                        Array.from(sidebar.children).forEach(c => c.classList.remove('active'));
+                        sidebarItem.classList.add('active');
+                        content.innerHTML = fileHTML;
+                    });
+
+                    sidebar.appendChild(sidebarItem);
+
+                    // Auto-select the first file
+                    if (index === 0) {
+                        sidebarItem.click();
+                    }
+                });
+            } else {
+                content.innerHTML = "<p class='muted'>No file index found.</p>";
+            }
+        } catch (error) {
+            console.error("Could not load external_files.html:", error);
+            content.innerHTML = "<p class='danger'>Error: File system unreachable.</p>";
+        }
+    }
+}
  //#endregion
 
     function openOSModal() {

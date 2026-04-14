@@ -259,7 +259,7 @@ body {
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     will-change: transform;
-    text-shadow: 0 0 1px rgba(228, 255, 228, 0.4);
+    /* text-shadow: 0 0 1px rgba(228, 255, 228, 0.4); */
 }
 
 .PDA-screen::before {

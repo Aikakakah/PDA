@@ -1,4 +1,4 @@
-.external-files-container {
+/* .external-files-container {
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -49,4 +49,114 @@
 
 .external-circle.white {
     background-color: white;
+} */
+
+.external-files-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    background: linear-gradient(180deg, #1e1e1f, #1a1a1b);
+    border-radius: 6px;
+    padding: 5px;
+    color: var(--text);
+    overflow: hidden; /* Prevent full container scroll, let inner elements scroll */
+}
+
+/* Base wrap for flex layout */
+.external-files-wrap {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.external-circle-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-top: 40px;
+    margin-bottom: 20px;
+    transition: all 0.5s ease;
+}
+
+/* Solved State for Circles */
+.external-circle-row.solved {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    gap: 10px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--muted);
+}
+
+.external-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.4s ease;
+    border: 2px solid var(--text);
+}
+
+/* Shrink circles when solved */
+.external-circle-row.solved .external-circle {
+    width: 20px;
+    height: 20px;
+    border-width: 1px;
+    cursor: default; /* Disable interaction visually */
+}
+
+/* Colors */
+.external-circle.off { background-color: #333; }
+.external-circle.green { background-color: green; }
+.external-circle.red { background-color: red; }
+.external-circle.blue { background-color: blue; }
+.external-circle.purple { background-color: purple; }
+.external-circle.white { background-color: white; }
+
+/* NanoChat-style Split View */
+.files-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    animation: fadeIn 0.5s ease forwards;
+}
+
+.files-sidebar {
+    width: 20%;
+    border-right: 1px solid var(--muted);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.file-item {
+    padding: 12px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.9em;
+    transition: background 0.2s;
+}
+
+.file-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.file-item.active {
+    background: rgba(255, 255, 255, 0.15);
+    font-weight: bold;
+    color: var(--accent, #fff); /* Fallback to white if no accent var */
+}
+
+.files-content {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    line-height: 1.4;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
