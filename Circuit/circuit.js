@@ -4,41 +4,41 @@
 // We map the HTML ID of the slot -> The Ohm value required -> The visual effects to trigger
 export const RESISTOR_CONFIG = [
     {
-        slotId: 'slot-r1',
+        slotId: 'slot-r1', //P1
         requiredOhms: '220',
         effects: ['overlay-battery'],
         action: 'repair'
     },
     {
-        slotId: 'slot-r2',
+        slotId: 'slot-r2',  //C9
         requiredOhms: '100',
         effects: ['overlay-communication'],
         action: 'standard',
         feature: 'nanochat'
     },
     {
-        slotId: 'slot-r3',
+        slotId: 'slot-r3',  //M1
         requiredOhms: '10k',
         effects: ['overlay-notekeeper'],
         action: 'standard',
         feature: 'notekeeper' // Linked to Notekeeper
     },
     {
-        slotId: 'slot-r4',
+        slotId: 'slot-r4',  //T7
         requiredOhms: '220',
         effects: ['overlay-terminal'],
         action: 'standard',
         feature: 'terminal'   // Linked to Terminal (Part 1)
     },
     {
-        slotId: 'slot-r5',
+        slotId: 'slot-r5',  //T4
         requiredOhms: '10k',
         effects: ['overlay-terminal'],
         action: 'standard',
         feature: 'terminal'   // Linked to Terminal (Part 2)
     },
     {
-        slotId: 'slot-r6',
+        slotId: 'slot-r6',  //F7
         requiredOhms: '10',
         effects: ['overlay-speakers'],
         action: 'standard',

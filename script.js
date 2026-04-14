@@ -368,7 +368,7 @@ const state = {
         { uid: 3, name: "Station news", icon: "News", type: "news" },
         { uid: 4, name: "NanoChat", icon: "NC", type: "nanochat" },
         { uid: 5, name: "Music Player", icon: "MP", type: "music" },
-        { uid: 6, name: "Terminal", icon: ">_", type: "terminal" }
+        { uid: 6, name: "Settings", icon: "⚙", type: "settings" }
     ],
     notes: ["Check filter", "Bring gloves"],
     crew: [
@@ -1343,7 +1343,8 @@ if (exportBtn) {
 
             tile.innerHTML = `<div class="glyph">${p.icon}</div><div class="label">${p.name}</div>`;
             
-            if (!isLocked) {
+            // Settings is always clickable, others require unlock
+            if (!isLocked || p.type === 'settings') {
                 tile.addEventListener('click', () => openProgram(p));
             }
             
@@ -1803,6 +1804,10 @@ if (exportBtn) {
         if (state.adminOverride) {
             Object.keys(state.unlockedFeatures).forEach(k => state.unlockedFeatures[k] = true);
             renderPrograms();
+            // Update terminal row state if function exists
+            if (typeof updateTerminalRowState === 'function') {
+                updateTerminalRowState();
+            }
             return;
         }
 
@@ -1839,6 +1844,10 @@ if (exportBtn) {
         } else { state.unlockedFeatures.terminal = false; }
 
         renderPrograms();
+        // Update terminal row state if function exists
+        if (typeof updateTerminalRowState === 'function') {
+            updateTerminalRowState();
+        }
 
         // Ensure power state matches the board: if the power resistor is missing, power must be off
         const r1Ok = isRepaired('slot-r1', '220');
@@ -1980,6 +1989,7 @@ if (exportBtn) {
 
         //#region --- System Status Page ---
         const systemStatusRow = el('systemStatusRow');
+        const terminalAccessRow = el('terminalAccessRow');
         const settingsList = el('settingsList');
         const systemStatusView = el('systemStatusView');
         const backToSettingsBtn = el('backToSettingsBtn');
@@ -2000,6 +2010,47 @@ if (exportBtn) {
                 if(settingsList) settingsList.classList.add('hidden');
                 if(systemStatusView) systemStatusView.classList.remove('hidden');
             });
+        }
+
+        if (terminalAccessRow) {
+            // Set initial visual state and attach/detach handler based on unlock state
+            if (state.unlockedFeatures.terminal) {
+                terminalAccessRow.style.opacity = '1';
+                terminalAccessRow.style.cursor = 'pointer';
+                terminalAccessRow.addEventListener('click', () => {
+                    openProgram({ type: 'terminal', name: 'Terminal' });
+                    showView('program');
+                });
+            } else {
+                terminalAccessRow.style.opacity = '0.5';
+                terminalAccessRow.style.cursor = 'not-allowed';
+            }
+        }
+
+        // Function to update terminal row state when circuit is repaired
+        function updateTerminalRowState() {
+            const row = el('terminalAccessRow'); // Re-query to get fresh reference
+            if (!row) return;
+            
+            if (state.unlockedFeatures.terminal) {
+                row.style.opacity = '1';
+                row.style.cursor = 'pointer';
+                const desc = row.querySelector('.setting-desc');
+                if (desc) desc.textContent = 'Access System Terminal';
+                
+                // Clone to clear old listeners
+                const newRow = row.cloneNode(true);
+                row.parentNode.replaceChild(newRow, row);
+                newRow.addEventListener('click', () => {
+                    openProgram({ type: 'terminal', name: 'Terminal' });
+                    showView('program');
+                });
+            } else {
+                row.style.opacity = '0.5';
+                row.style.cursor = 'not-allowed';
+                const desc = row.querySelector('.setting-desc');
+                if (desc) desc.textContent = 'Access System Terminal';
+            }
         }
 
         if (backToSettingsBtn) {
