@@ -82,10 +82,10 @@
 
 /* Solved State for Circles */
 .external-circle-row.solved {
-    margin-top: 10px;
-    margin-bottom: 10px;
+    margin-top: 0px;
+    margin-bottom: 0px;
     gap: 10px;
-    padding-bottom: 15px;
+    padding-bottom: 5px;
     border-bottom: 1px solid var(--muted);
 }
 
@@ -108,10 +108,10 @@
 
 /* Colors */
 .external-circle.off { background-color: #333; }
-.external-circle.green { background-color: green; }
+.external-circle.green { background-color: rgb(88, 203, 88); }
 .external-circle.red { background-color: red; }
-.external-circle.blue { background-color: blue; }
-.external-circle.purple { background-color: purple; }
+.external-circle.blue { background-color: rgb(93, 203, 228); }
+.external-circle.purple { background-color: rgb(131, 26, 131); }
 .external-circle.white { background-color: white; }
 
 /* NanoChat-style Split View */
@@ -151,10 +151,30 @@
 
 .files-content {
     flex: 1;
-    padding: 15px;
+    padding: 5px;
     overflow-y: auto;
     line-height: 1.4;
 }
+
+.files-content p {
+    /* color: #00ff33; */
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 13px;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    unicode-bidi: isolate;
+    margin-top: 0%;
+}
+
+.files-content b { /*Bold text*/
+    font-weight: 600 !important;
+}
+
+.files-content err { color: #ff3333; }
+.files-content.system { color: #00ccff; }
+.files-content.muted { color: #555; }
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }

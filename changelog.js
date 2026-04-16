@@ -7,7 +7,6 @@ export const CHANGELOG_CONTENT = [
         changes: [
             "name change should not reset progress, but have other button to reset",
             "should add glint when hovering over drawer handle",
-            "fix manifest department header glitching",
             "double resistor (terminal) lights up around the single resistor when correct one is placed",
             "mobile support needs scaling",
             "add textures to pda",
@@ -29,14 +28,25 @@ export const CHANGELOG_CONTENT = [
             "Hide messages in music info",
             "Add pause/play in top of pda when music is playing",
             "Have screen glitch a bit on triggering stardust nanochat before showing music player",
-            "Some apps should have more steps to unlock than just a resistor"
+            "Some apps should have more steps to unlock than just a resistor",
+
+            "Ringtone modal should keep inside PDA screen bounds",
+            "Add note from Jasper 'I uploaded some of the files I had sent to LAMBDA-2X7A. Due to security risks, I did implement a firewall but I think you should be able to figure it out.'",
             
             
 
         ]
     },
     {
-        version: "0.0.12",
+        version: "0.0.14",
+        date: "2026-04-14",
+        changes: [
+            "Added external files and puzzle to access",
+            "Swapped terminal and settings button",
+        ]
+    },
+    {
+        version: "0.0.13",
         date: "2026-04-13",
         changes: [
             "Book text can't be highlighted",

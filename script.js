@@ -1318,7 +1318,7 @@ async function renderExternalFiles() {
 
     const title = document.createElement('div');
     title.className = 'cartridge-header';
-    title.textContent = 'External Files';
+    // title.textContent = 'External Files';
     wrap.appendChild(title);
 
     // Add 'solved' class if puzzle is complete
