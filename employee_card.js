@@ -90,7 +90,15 @@ export function createEmployeeCard(member, isDiscovered = false, onBack = null) 
 
     // Wire the back button
     const backBtn = card.querySelector('.employee-back-btn');
-    if (backBtn) backBtn.addEventListener('click', () => { if (typeof onBack === 'function') onBack(); });
+    if (backBtn) backBtn.addEventListener('click', () => {
+        // Prefer explicit onBack handler (should return to manifest). Fallback to filesBackBtn.
+        if (typeof onBack === 'function') {
+            onBack();
+            return;
+        }
+        const filesBackBtn = document.getElementById('btn-status-back');
+        if (filesBackBtn) filesBackBtn.click();
+    });
 
     return card;
 

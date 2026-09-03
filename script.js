@@ -1624,6 +1624,8 @@ async function renderExternalFiles() {
     function renderManifest() {
     const programArea = el('programArea');
     if (!programArea) return;
+    // Clear program area so re-rendering replaces any existing card/content
+    programArea.innerHTML = '';
 
     // Cleanup previous glitches
     manifestGlitches.forEach(g => g.stop());
