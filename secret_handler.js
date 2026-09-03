@@ -54,7 +54,7 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
         'smoke_in_the_garden': {
             trigger: { type: 'ringtone', code: 'AAAAAD' },
             behavior: 'story',
-            image: IMAGE_PATH + 'SandyStars.png',
+            image: IMAGE_PATH + 'Recovery.png',
         },
         'stardust': {
             trigger: { type: 'nanochat', contact: 'Ronin Pallas', keyword: 'GARDEN' },
