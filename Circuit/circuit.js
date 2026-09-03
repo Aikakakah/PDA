@@ -42,7 +42,7 @@ export const RESISTOR_CONFIG = [
         requiredOhms: '10',
         effects: ['overlay-speakers'],
         action: 'standard',
-        feature: 'news'       // Linked to Station News
+        feature: 'manifest'    // Linked to Crew Manifest
     }
 ];
 

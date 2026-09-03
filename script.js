@@ -16,6 +16,8 @@ import {
     createRulesModalMarkup
 } from './modal.js';
 
+import { createEmployeeCard, resolveCrewFromNanochat, EMPLOYEES } from './employee_card.js';
+
 // Helper to inject HTML from file
 async function loadBookMarkup(containerId, filePath) {
     try {
@@ -348,6 +350,7 @@ const state = {
     unlockedFeatures: {
         notekeeper: false,
         nanochat: false,
+        manifest: false,
         news: false,
         music: false,
         terminal: false,
@@ -365,7 +368,7 @@ const state = {
     programs: [
         { uid: 1, name: "Crew manifest", icon: "CM", type: "manifest" },
         { uid: 2, name: "Notekeeper", icon: "NK", type: "notekeeper" },
-        { uid: 3, name: "Station news", icon: "News", type: "news" },
+        // Station news removed; manifest unlocked by circuit
         { uid: 4, name: "NanoChat", icon: "NC", type: "nanochat" },
         { uid: 5, name: "Music Player", icon: "MP", type: "music" },
         { uid: 6, name: "Settings", icon: "⚙", type: "settings" }
@@ -923,6 +926,17 @@ if (exportBtn) {
                 if (!state.messagedCrew.has(currentContactName)) {
                     state.messagedCrew.add(currentContactName);
                 }
+
+                // Also resolve any crew member that this nanochat contact should unlock
+                try {
+                    const contactId = state.nanochat.currentContact;
+                    const resolved = resolveCrewFromNanochat(contactId) || resolveCrewFromNanochat(currentContactName);
+                    if (resolved && !state.messagedCrew.has(resolved)) {
+                        state.messagedCrew.add(resolved);
+                    }
+                } catch (e) {
+                    console.warn('Nanochat -> crew resolve failed', e);
+                }
                 if (nanoChatTriggers) {
                     nanoChatTriggers.checkAndTrigger(currentContactName, text);
                     markPuzzleComplete('secret_chat');
@@ -1229,7 +1243,7 @@ if (exportBtn) {
         const statusOS = el('statusOS');
         
         // Define puzzle completion logic
-        const hardwareIds = ['fix_power', 'fix_nanochat', 'fix_notekeeper', 'fix_news', 'fix_terminal'];
+        const hardwareIds = ['fix_power', 'fix_nanochat', 'fix_notekeeper', 'fix_manifest', 'fix_terminal'];
         const secretIds = ['secret_ringtone', 'secret_chat'];
         const hardwareDone = hardwareIds.filter(id => state.puzzles.has(id)).length;
         // We calculate secrets using state.puzzles (the correct way), not state.secrets
@@ -1500,7 +1514,7 @@ async function renderExternalFiles() {
             
             let isLocked = false;
             
-            if (['nanochat', 'notekeeper', 'news', 'music', 'terminal'].includes(p.type)) {
+            if (['nanochat', 'notekeeper', 'manifest', 'music', 'terminal'].includes(p.type)) {
                 if (!state.unlockedFeatures[p.type]) {
                     isLocked = true;
                 }
@@ -1644,26 +1658,30 @@ async function renderExternalFiles() {
             roleEl.className = 'role';
             roleEl.textContent = member.role;
 
-            // --- GLITCH & DISCOVERY LOGIC ---
-            // Key discovery off of state.messagedCrew (from NanoChat)
-            const isDiscovered = state.messagedCrew.has(member.name);
+            // Clicking an entry should open the employee card immediately.
+            // If we have a predefined EMPLOYEES entry for this crew member, use it
+            // Otherwise show the classified card.
+            function showEmployee(member, discovered) {
+                programArea.innerHTML = '';
 
-            if (!isDiscovered) {
-                const glitch = new GlitchController(nameEl);
-                glitch.start();
-                manifestGlitches.push(glitch);
+                const card = createEmployeeCard(
+                    member,
+                    discovered,
+                    () => renderManifest()
+                );
 
-                // Option: Clicking the entry triggers the jh3y-style reveal
-                entry.style.cursor = 'help';
-                entry.addEventListener('click', () => {
-                    if (glitch.isGlitched) {
-                        glitch.resolve();
-                        state.messagedCrew.add(member.name); // Mark as discovered
-                        saveGameProgress();
-                        entry.style.cursor = 'default';
-                    }
-                }, { once: true });
+                programArea.appendChild(card);
             }
+
+            entry.style.cursor = 'pointer';
+            entry.addEventListener('click', () => {
+                // Try to find a matching EMPLOYEES entry by exact name
+                const empDef = EMPLOYEES.find(e => e.name === member.name) || EMPLOYEES.find(e => e.name === 'CLASSIFIED');
+                const merged = Object.assign({}, member, empDef);
+                const discovered = empDef && empDef.name !== 'CLASSIFIED';
+                showEmployee(merged, discovered);
+            });
+
             // ---------------------------------
 
             entry.appendChild(nameEl);
@@ -2001,9 +2019,9 @@ async function renderExternalFiles() {
         } else { state.unlockedFeatures.notekeeper = false; }
 
         if (isRepaired('slot-r6', '10')) {
-            state.unlockedFeatures.news = true;
-            markPuzzleComplete('fix_news');
-        } else { state.unlockedFeatures.news = false; }
+            state.unlockedFeatures.manifest = true;
+            markPuzzleComplete('fix_manifest');
+        } else { state.unlockedFeatures.manifest = false; }
 
         const r4Ok = isRepaired('slot-r4', '220');
         const r5Ok = isRepaired('slot-r5', '10k');
