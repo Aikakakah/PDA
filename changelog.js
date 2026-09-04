@@ -32,9 +32,22 @@ export const CHANGELOG_CONTENT = [
 
             "Ringtone modal should keep inside PDA screen bounds",
             "Add note from Jasper 'I uploaded some of the files I had sent to LAMBDA-2X7A. Due to security risks, I did implement a firewall but I think you should be able to figure it out.'",
+            "Crew manifest info should unlock when certain puzzles are solved, such as the story ones. Have the PDA chime and show a notification bubble on the manifest and bold the name until clicked.",
+            "Crew manifest should contain corrupted files (that can't be solved) and classified files (that can be solved)",
+            "Have dialogue bubble pop up for Jasper comments. Sol-80 could be 'Poor girl... if only I knew'. It should pop up above the PDA. Real responses from jasper should show up in this way when the terminal isn't open.",
+            "Remove eject PDA ID button and replace with play/pause for music player.",
+            "PDA power button should flip the PDA over.",
             
             
 
+        ]
+    },
+    {
+        version: "0.0.15",
+        date: "2026-09-04",
+        changes: [
+            "Removed news",
+            "Added character bios to crew manifest",
         ]
     },
     {

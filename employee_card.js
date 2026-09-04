@@ -5,35 +5,50 @@ export const EMPLOYEES = [
     {
         name: 'CLASSIFIED',
         nicknames: [],
-        job: 'CLASSIFIED',
-        height: '',
-        src: '',
-        image: 'Images/Employees/Classified.png',
-        rank: 'CLASSIFIED',
         role: 'CLASSIFIED',
-        notes: 'CLASSIFIED'
+        department: 'CLASSIFIED',
+        clearance: 'CLASSIFIED',
+        height: '',
+        eyecolor: '',
+        features: '',
+        notes: 'CLASSIFIED',
+        image: 'Images/Employees/Classified.png',
     },
     {
         name: 'Ronin T. Pallas',
         nicknames: ['pallas', 'ronin'],
-        job: 'Research Director',
-        height: "6'3\"",
-        src: './Audio/Stardust.mp3',
-        image: 'Images/Employees/Pallas.png',
-        rank: 'Command',
         role: 'Head of Research and Development',
-        notes: 'Prefers secure comms.'
+        department: 'Science',
+        clearance: 'Level 5',
+        height: "6'3\"",
+        eyecolor: "Blue",
+        features: "Two scars on left eye, scar on left cheek.",
+        notes: 'Inform of new subjects immediately.',
+        image: 'Images/Employees/Pallas.png',
     },
     {
-        name: 'Sam Nighteyes',
-        nicknames: ['sam'],
-        job: 'Blueshield Officer',
-        height: "6'0\"",
-        src: '',
-        image: 'Images/Employees/sam_nighteyes.png',
-        rank: 'Dignitary',
-        role: 'Blueshield Officer',
-        notes: ''
+        name: 'Ramona Orthall',
+        nicknames: [],
+        role: '',
+        department: 'Science',
+        clearance: 'Level 4*',
+        height: "5'4\"",
+        eyecolor: 'Blue',
+        features: 'Prosthetic arms, spinal implant, biosynthesized right eye.',
+        notes: 'Clearance is only granted within her department. Assume level 0 clearance elsewhere. Highly dangerous.',
+        image: 'Images/Employees/Ramona.png',
+    },
+    {
+        name: 'Sandy Deathshed',
+        nicknames: [],
+        role: 'Head of Security',
+        department: 'Security',
+        clearance: 'Level 5',
+        height: "5'10\"",
+        eyecolor: 'Red',
+        features: 'Moth person, tan fur, pink wings.',
+        notes: 'Refer to Sandy for all security matters. Do not allow Dr. Pallas to bypass her authority.',
+        image: 'Images/Employees/Sandy.png',
     }
 ];
 
@@ -80,10 +95,21 @@ export function createEmployeeCard(member, isDiscovered = false, onBack = null) 
                 <h2 class="employee-name">${isDiscovered ? member.name : 'Classified'}</h2>
                 <div class="employee-role">${isDiscovered ? (member.role || '') : ''}</div>
                 <div class="employee-details">
-                    ${isDiscovered ? (`<div><strong>Rank:</strong> ${member.rank || ''}</div><div><strong>Notes:</strong> ${member.notes || ''}</div>`) : '<div class="muted">Contact restricted</div>'}
+                    ${isDiscovered ? (`
+                        <div><strong>Department:</strong> ${member.department || ''}</div>
+                        <div><strong>Clearance:</strong> ${member.clearance || ''}</div>
+                        <div><strong>Height:</strong> ${member.height || ''}</div>
+                        <div><strong>Eye Color:</strong> ${member.eyecolor || ''}</div>
+                        <div><strong>Defining Features:</strong> ${member.features || ''}</div>
+                        <div><strong>Notes:</strong> ${member.notes || ''}</div>
+                        `
+                    ) : '<div class="muted">Contact restricted</div>'}
                 </div>
                 <div class="employee-actions">
-                    <button class="employee-back-btn">Back</button>
+                    <button class="employee-back-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    </button>
+                    
                 </div>
             </div>
         `;

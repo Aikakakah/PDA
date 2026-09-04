@@ -18,3 +18,45 @@
 .employee-info {
     flex: 1;
 }
+
+.employee-name h2{
+    margin: 0;
+    font-size: 1.5em;
+    color: var(--accent);
+}
+
+h2.employee-name{
+    margin: 0;
+    font-size: 1.5em;
+    color: var(--accent);
+}
+
+.employee-role{
+    margin: 0;
+    font-size: 0.8em;
+    color: var(--secondary);
+    font-style: italic;
+}
+
+.employee-back-btn {
+    background: transparent;
+    border: 1px solid var(--muted);
+    color: var(--muted);
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 2px 6px;
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+}
+.employee-back-btn:hover {
+    border-color: var(--text);
+    color: var(--text);
+}
+
+.employee-details {
+    margin-top: 3px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
