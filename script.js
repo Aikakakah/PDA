@@ -1,6 +1,7 @@
 import { createNewsModule } from './news.js';
 import { createMusicModule } from './music.js';
 import { createSecretHandler } from './secret_handler.js';
+import { createDialogueRevealHandler } from './dialogue_reveal.js';
 import { validateResistorDrop } from './Circuit/circuit.js';
 import { initializeBookSystem } from './Book/book.js'; 
 import { createNanoChatTriggers } from './nanochat_triggers.js';
@@ -2180,6 +2181,7 @@ async function renderExternalFiles() {
         const systemStatusRow = el('systemStatusRow');
         const terminalAccessRow = el('terminalAccessRow');
         const externalFilesRow = el('externalFilesRow');
+        const secretFilesRow = el('secretFilesRow');
         const settingsList = el('settingsList');
         const systemStatusView = el('systemStatusView');
         const externalFilesView = el('externalFilesView');
@@ -2223,6 +2225,12 @@ async function renderExternalFiles() {
                 renderExternalFiles();
                 if(settingsList) settingsList.classList.add('hidden');
                 if(externalFilesView) externalFilesView.classList.remove('hidden');
+            });
+        }
+
+        if (secretFilesRow) {
+            secretFilesRow.addEventListener('click', () => {
+                if (secretHandler) secretHandler.openFilesView();
             });
         }
 

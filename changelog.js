@@ -43,6 +43,14 @@ export const CHANGELOG_CONTENT = [
         ]
     },
     {
+        version: "0.0.16",
+        date: "2026-09-07",
+        changes: [
+            "Can access secrets from settings menu",
+            "Added dialogue stories.",
+        ]
+    },
+    {
         version: "0.0.15",
         date: "2026-09-04",
         changes: [

@@ -9,7 +9,7 @@ export function createTerminalBridge(apiUrl, onMessageReceived) {
     // Internal polling function
     const poll = async () => {
         try {
-            const response = await fetch(`${apiUrl}/api/messages?since=${lastTimestamp}`);
+            // const response = await fetch(`${apiUrl}/api/messages?since=${lastTimestamp}`);
             if (!response.ok) return; // Server might be down, ignore
 
             const data = await response.json();

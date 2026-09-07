@@ -4,19 +4,20 @@
  */
 
 export function createSecretHandler(state, el, showView, ringtoneModal) {
-    // Detect if we are on GitHub Pages or Localhost
+    // --- Environment Setup & Constants ---
     const isGitHubPages = window.location.hostname.includes('github.io');
     const repoName = '/PDA/'; 
-    
-    // Set base path: GitHub Pages needs the repo name, local usually doesn't
     const BASE_PATH = isGitHubPages ? repoName : '/';
     const IMAGE_PATH = `${BASE_PATH}Images/`;
     
     let htmlTemplates = document.createElement('div');
-    
+    let currentSecret = null;
+    let glitchInterval = null;
+    let scrollObserver = null;
+    let dialogueHandler = null;
+
     async function loadTemplates() {
         try {
-            // Use the same base path logic for the fetch
             const response = await fetch(`${BASE_PATH}secrets.html`);
             const text = await response.text();
             htmlTemplates.innerHTML = text;
@@ -61,6 +62,11 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
             behavior: 'story',
             image: IMAGE_PATH + 'SandyStars.png',
         },
+        'sandychat': {
+            trigger: { type: 'nanochat', contact: 'Ronin Pallas', keyword: 'SANDY' },
+            behavior: 'dialogue',
+            image: IMAGE_PATH + 'dialogue_background.png',
+        },
     };
 
     const FILE_SYSTEM = [
@@ -68,16 +74,11 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
         { name: "sandy.log", icon: "fa-video", secretKey: "sandy_star", visible: true },
         { name: "checkmate.log", icon: "fa-file-code", secretKey: "checkmate", visible: true },
         { name: "garden.log", icon: "fa-file-code", secretKey: "smoke_in_the_garden", visible: true },
-        { name: "stardust.log", icon: "fa-file-code", secretKey: "stardust", visible: true }
+        { name: "stardust.log", icon: "fa-file-code", secretKey: "stardust", visible: true },
+        { name: "sandychat.log", icon: "fa-file-code", secretKey: "sandychat", visible: true }
     ];
 
-    let currentSecret = null;
-    let clickCount = 0;
-    let glitchInterval = null;
-    let originalGlitchStates = [];
-    let scrollObserver = null;
-
-    // --- 2. CRT & Glitch Helpers ---
+    // --- Helpers ---
 
     function getCrtOverlayHtml() {
         return `
@@ -89,83 +90,83 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
         `;
     }
 
-    // --- Core Logic ---
+    // --- Behavior Blocks ---
 
-    async function openSecret(key) {
-        const config = SECRETS[key];
-        if (!config) return;
+    const BehaviorHandlers = {
+        story: {
+            render: (config, contentHtml) => `
+                <div class="secret-bg-layer turn-on">
+                    <div class="bg-initial" style="background-image: url('${config.image}')"></div>
+                    <div class="bg-manic" style="background-image: url('${config.image}'); opacity: 0;"></div>
+                    ${getCrtOverlayHtml()}
+                </div>
+                <div class="secret-content-layer">${contentHtml}</div>
+            `,
+            attach: () => {}
+        },
 
-        currentSecret = config;
-        clickCount = 0;
-        const screen = el('secretScreen');
-        
-        screen.classList.remove('hidden');
-        screen.style.display = 'block';
-        
-        // Determine initial image (Manic uses 'initial', Story uses 'image')
-        const bgImg = config.behavior === 'manic' ? config.images.initial : config.image;
-        const template = htmlTemplates.querySelector(`[data-secret="${key}"]`);
-        const contentHtml = template ? template.innerHTML : `<p>Error: Template for ${key} not found.</p>`;
-        
-        // Preload images for manic secrets to prevent background vanishing on first trigger
-        if (config.behavior === 'manic') {
-            const images = [config.images.initial, config.images.manic];
-            if (config.images.glitch1) images.push(config.images.glitch1);
-            if (config.images.glitch2) images.push(config.images.glitch2);
-            await Promise.all(images.map(imgSrc => new Promise((resolve) => {
-                const img = new Image();
-                img.onload = resolve;
-                img.onerror = resolve; // Continue even if load fails
-                img.src = imgSrc;
-            })));
+        manic: {
+            preload: async (config) => {
+                const images = [config.images.initial, config.images.manic];
+                if (config.images.glitch1) images.push(config.images.glitch1);
+                if (config.images.glitch2) images.push(config.images.glitch2);
+
+                await Promise.all(images.map(imgSrc => new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                    img.src = imgSrc;
+                })));
+            },
+            render: (config, contentHtml) => `
+                <div class="secret-bg-layer turn-on">
+                    <div class="bg-initial" style="background-image: url('${config.images.initial}')"></div>
+                    <div class="bg-manic" style="background-image: url('${config.images.manic}'); opacity: 0;"></div>
+                    ${getCrtOverlayHtml()}
+                </div>
+                <div class="secret-content-layer">${contentHtml}</div>
+            `,
+            attach: (screen) => {
+                const storyBox = screen.querySelector('.secret-story-box');
+                if (!storyBox) return;
+
+                const triggers = storyBox.querySelectorAll('.manic-trigger');
+                scrollObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            startManicCycle();
+                        } else {
+                            stopManicCycle();
+                        }
+                    });
+                }, { root: storyBox, threshold: 0.1 });
+
+                triggers.forEach(t => scrollObserver.observe(t));
+            }
+        },
+
+        dialogue: {
+            render: (config, contentHtml) => `
+                <div class="secret-bg-layer turn-on">
+                    <div class="bg-initial" style="background-image: url('${config.image}')"></div>
+                    ${getCrtOverlayHtml()}
+                </div>
+                <div class="secret-dialogue-layer">${contentHtml}</div>
+            `,
+            attach: (screen, key, contactInfo, messageInfo) => {
+                if (dialogueHandler) {
+                    dialogueHandler.handleDialogueReveal(key, contactInfo, messageInfo);
+                }
+            }
         }
-        
-        screen.innerHTML = `
-            <div class="secret-bg-layer turn-on">
-                <div class="bg-initial" style="background-image: url('${bgImg}')"></div>
-                <div class="bg-manic" style="background-image: url('${config.behavior === 'manic' ? config.images.manic : bgImg}'); opacity: 0;"></div>
-                ${getCrtOverlayHtml()}
-            </div>
-            
-            <div class="secret-content-layer">
-                ${contentHtml}
-            </div>
-        `;
+    };
 
-        // --- Scroll Trigger Logic ---
-        if (config.behavior === 'manic') {
-            const storyBox = screen.querySelector('.secret-story-box');
-            const triggers = storyBox.querySelectorAll('.manic-trigger');
-
-            scrollObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        startManicCycle();
-                    } else {
-                        stopManicCycle();
-                    }
-                });
-            }, { 
-                root: storyBox, // Watch visibility relative to the scrollable box
-                threshold: 0.1  // Trigger when 10% of the text is visible
-            });
-
-            triggers.forEach(t => scrollObserver.observe(t));
-        }
-
-        if (config.audio) new Audio(config.audio).play().catch(() => {});
-        
-        // Interaction listener
-        screen.onclick = (e) => {
-            e.stopPropagation();
-            closeSecret();
-        };
-    }
+    // --- Manic State Loop ---
 
     function startManicCycle() {
         const screen = el('secretScreen');
         const config = currentSecret;
-        if (!config) return;
+        if (!config || !config.images) return;
 
         const bgInitial = screen.querySelector('.bg-initial');
         const bgManic = screen.querySelector('.bg-manic');
@@ -177,10 +178,10 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
         if (glitchInterval) clearInterval(glitchInterval);
         glitchInterval = setInterval(() => {
             const rand = Math.random();
-            if (rand < 0.12) {
+            if (rand < 0.12 && config.images.glitch1) {
                 glitchOverlay.style.backgroundImage = `url(${config.images.glitch1})`;
                 glitchOverlay.style.opacity = '1';
-            } else if (rand < 0.24) {
+            } else if (rand < 0.24 && config.images.glitch2) {
                 glitchOverlay.style.backgroundImage = `url(${config.images.glitch2})`;
                 glitchOverlay.style.opacity = '1';
             } else {
@@ -199,9 +200,49 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
         
         if (bgInitial) bgInitial.style.opacity = '1';
         if (bgManic) bgManic.style.opacity = '0';
-        if (glitchOverlay) {
-            glitchOverlay.style.opacity = '0';
+        if (glitchOverlay) glitchOverlay.style.opacity = '0';
+    }
+
+    // --- Core Logic ---
+
+    async function openSecret(key, contactInfo = null, messageInfo = null) {
+        const config = SECRETS[key];
+        if (!config) return;
+
+        currentSecret = config;
+        const screen = el('secretScreen');
+        const handler = BehaviorHandlers[config.behavior];
+
+        if (!handler) {
+            console.error(`Unknown secret behavior: ${config.behavior}`);
+            return;
         }
+
+        screen.classList.remove('hidden');
+        screen.style.display = 'block';
+
+        // Preload assets if required by the behavior block
+        if (handler.preload) {
+            await handler.preload(config);
+        }
+
+        const template = htmlTemplates.querySelector(`[data-secret="${key}"]`);
+        const contentHtml = template ? template.innerHTML : `<p>Error: Template for ${key} not found.</p>`;
+
+        // Render DOM layout
+        screen.innerHTML = handler.render(config, contentHtml);
+
+        // Attach listeners and behavior events
+        handler.attach(screen, key, contactInfo, messageInfo);
+
+        if (config.audio) {
+            new Audio(config.audio).play().catch(() => {});
+        }
+        
+        screen.onclick = (e) => {
+            e.stopPropagation();
+            closeSecret();
+        };
     }
 
     function closeSecret() {
@@ -209,7 +250,8 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
             scrollObserver.disconnect();
             scrollObserver = null;
         }
-        stopManicCycle(); // Ensure all effects stop
+        stopManicCycle();
+        
         const screen = el('secretScreen');
         screen.classList.add('hidden');
         screen.style.display = 'none';
@@ -217,7 +259,57 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
         currentSecret = null;
     }
 
-    // --- 4. API & Triggers ---
+    // --- Dialogue Interface Helpers ---
+
+    function addDialogueMessage(character, message, position = 'left', portraitImageUrl = null) {
+        const screen = el('secretScreen');
+        const thread = screen.querySelector('#dialogueThread');
+        if (!thread) return;
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `dialogue-message ${position}`;
+        
+        const portrait = document.createElement('div');
+        portrait.className = 'dialogue-portrait';
+        
+        if (portraitImageUrl) {
+            const img = document.createElement('img');
+            img.src = portraitImageUrl;
+            img.alt = character;
+            portrait.appendChild(img);
+        } else {
+            portrait.classList.add('no-image');
+            portrait.textContent = '[NO IMAGE]';
+        }
+        
+        const textDiv = document.createElement('div');
+        textDiv.className = 'dialogue-text';
+        
+        // const nameSpan = document.createElement('div');
+        // nameSpan.className = 'character-name';
+        // nameSpan.textContent = character;
+        
+        const contentSpan = document.createElement('div');
+        contentSpan.className = 'message-content';
+        contentSpan.textContent = message;
+        
+        // textDiv.appendChild(nameSpan);
+        textDiv.appendChild(contentSpan);
+        messageDiv.appendChild(portrait);
+        messageDiv.appendChild(textDiv);
+        
+        thread.appendChild(messageDiv);
+        
+        setTimeout(() => { thread.scrollTop = thread.scrollHeight; }, 10);
+    }
+
+    function clearDialogueThread() {
+        const screen = el('secretScreen');
+        const thread = screen.querySelector('#dialogueThread');
+        if (thread) thread.innerHTML = '';
+    }
+
+    // --- File System & Views ---
 
     function renderFiles() {
         const list = el('fileList');
@@ -236,52 +328,36 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
         });
     }
 
+    // --- Public API ---
+
     return {
         handleSecretRingtone: (code) => {
-            if (code.toUpperCase() === SECRETS.sandy_stars.trigger.code) {
-                openSecret('sandy_star');
-                ringtoneModal.classList.add('hidden');
-                return true;
-            }
-            if (code.toUpperCase() === SECRETS.sandy_star.trigger.code) {
-                openSecret('sandy_star');
-                ringtoneModal.classList.add('hidden');
-                return true;
-            }
-            if (code.toUpperCase() === SECRETS.smoke_in_the_garden.trigger.code) {
-                openSecret('smoke_in_the_garden');
-                ringtoneModal.classList.add('hidden');
-                return true;
-            }
-            if (code.toUpperCase() === SECRETS.checkmate.trigger.code) {
-                openSecret('checkmate');
-                ringtoneModal.classList.add('hidden');
-                return true;
+            const upperCode = code.toUpperCase();
+            for (const [key, config] of Object.entries(SECRETS)) {
+                if (config.trigger?.type === 'ringtone' && config.trigger.code === upperCode) {
+                    openSecret(key);
+                    ringtoneModal.classList.add('hidden');
+                    return true;
+                }
             }
             return false;
         },
         checkNanoChatTrigger: (contact, message) => {
-            const config = SECRETS.stardust;
-            if (!config) {
-                console.warn("Secret 'stardust' not found in registry.");
-                return false;
-            }
-            // Normalize both for a "fuzzy" match
-            const incomingContact = contact.toLowerCase().trim();
-            const targetContact = config.trigger.contact.toLowerCase().trim();
-            const incomingMessage = message.toUpperCase();
-            const targetKeyword = config.trigger.keyword;
-
-            if (incomingContact === targetContact && incomingMessage.includes(targetKeyword)) {
-                console.log("Triggering Stardust story...");
+            for (const [key, config] of Object.entries(SECRETS)) {
+                if (config.trigger?.type !== 'nanochat' || config.behavior !== 'dialogue') continue;
                 
-                // Ensure state object and unlockedFeatures exist
-                if (state && state.unlockedFeatures) {
-                    state.unlockedFeatures.stardust = true;
-                }
+                const incomingContact = contact.toLowerCase().trim();
+                const targetContact = config.trigger.contact.toLowerCase().trim();
+                const incomingMessage = message.toUpperCase();
+                const targetKeyword = config.trigger.keyword;
 
-                openSecret('stardust');
-                return true;
+                if (incomingContact === targetContact && incomingMessage.includes(targetKeyword)) {
+                    if (state?.unlockedFeatures) {
+                        state.unlockedFeatures[key] = true;
+                    }
+                    openSecret(key, contact, message);
+                    return true;
+                }
             }
             return false;
         },
@@ -291,6 +367,10 @@ export function createSecretHandler(state, el, showView, ringtoneModal) {
             state.unlockedFeatures.stardust = true;
             state.unlockedFeatures.music = true;
             if (document.getElementById('view-files')?.classList.contains('active')) renderFiles();
-        }
+        },
+        addDialogueMessage,
+        clearDialogueThread,
+        closeSecret,
+        setDialogueHandler: (handler) => { dialogueHandler = handler; }
     };
 }
